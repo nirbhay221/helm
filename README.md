@@ -255,7 +255,29 @@ The hackathon field is heavily concentrated in money in and buyer protection: ag
 
 ---
 
-## 15. Roadmap
+## 15. Extended levers and optional modules
+
+Helm's loop has two core levers in the first build (buy and pay). The business money problem has more levers and more decision aids, and three of the earlier candidates plug in as genuine extensions. They are documented here as roadmap and optional modules, not part of the first build. The rule holds: a thing having a real role is not a reason to build it now. Build the brain and one core arm first.
+
+ - **Mint (a third lever: pricing, the inflow side).** Helm can respond to variance not only by changing what it buys and pays, but by changing what it charges. Mint designs the pricing and subscription structure (tiers, packaging, dynamic adjustment), executed through Orders and Subscriptions, so price becomes a control input the controller can move when demand drifts from forecast. Honest caveats: pricing optimization is a mature, well funded external category (Pricefx shipped pricing agents in 2025, Zilliant shipped a pricing MCP server, Vendavo and PROS compete), so Helm should incorporate or wrap pricing logic as a lever rather than try to out build a dedicated pricing platform, and the optimizer needs willingness-to-pay data that is usually synthetic in a demo. The novelty is pricing as one lever inside a closed loop, not a standalone pricing engine.
+
+ - **Candor (a decision aid: resolve calls the controller cannot compute).** The controller decides cleanly when inputs are measurable. Some decisions have no objective ground truth (is this supplier's quality acceptable, which qualitative option is better, was a contribution legitimate). Candor is a peer-prediction mechanism (Bayesian Truth Serum and its robust and multi-task variants) that elicits an honest answer to an unmeasurable question by rewarding reports that are surprisingly common and that accurately predict others, then feeds that answer back to the controller as an input. Honest caveats: peer prediction needs a large enough panel to be incentive compatible and is empirically underproven at scale, and a near neighbor already exists in the wild (a crypto, on-chain peer-prediction settlement for subjective agent work), so Candor's distinct value here is as an internal resolver inside the controller on fiat PayPal rails, not a standalone settlement product. This is the least proven of the three.
+
+ - **Seignior (an optional arm: govern a customer loyalty currency).** If the business runs a points or rewards program, that program is a currency Helm can manage: earn rates, expiry, and a points-to-cash redemption rate, redeemed through PayPal Payouts. Seignior sets a redemption policy that caps the outstanding points liability and keeps spend on budget. Honest caveats: this applies only to businesses that run a points program, it is a large self-contained subsystem, and loyalty liability is an audited accounting area (points are a performance obligation under ASC 606, and breakage estimates need historical cohort data and audit-ready documentation, not model output alone), so any policy must be defensible to finance, not just optimal.
+
+---
+
+## 16. Considered and set aside
+
+Recorded so the full decision trail is in one place and these are not re-proposed:
+
+ - **Groundswell (fiat quadratic funding for public goods).** No clean fit inside a for-profit business steering to a forecast. Quadratic funding allocates a sponsor pool to community projects by breadth of support, which does not plug into the buy, pay, and price loop. Set aside unless the business specifically runs community or grant allocation.
+ - **Cadence (compile a contract into a PayPal billing lifecycle).** Set aside because recurring billing is a solved commercial category (Stripe Billing, Chargebee, Zuora, and contract-to-billing tools such as Stigg and Tabs), so the headline claim does not survive the incumbent test.
+ - **Industry seams searched and closed.** Health, agriculture, government and public sector, mobility and travel, and retail and consumer were each searched and closed: in each, the clean money rails are either held by funded incumbents or blocked by custody and regulation (payroll, insurance claims, and government disbursement are off limits), leaving no maker where a PayPal rail is the natural money leg.
+
+---
+
+## 17. Roadmap
 
  - In scope for the first build: the brain, one arm, the Payouts MCP tool, the closed loop, and the single demo screen.
  - Near term: the second arm, Tollgate, richer forecast error modeling, and scenario variety.
@@ -263,6 +285,6 @@ The hackathon field is heavily concentrated in money in and buyer protection: ag
 
 ---
 
-## 16. License
+## 18. License
 
 See LICENSE. Released under the MIT License.
