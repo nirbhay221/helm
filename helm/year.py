@@ -106,7 +106,7 @@ def runtime(y: Year, imagine_runs: int = 100):
 
     validator_twin = Twin(DemandModel(base=120.0, elasticity=y.world.demand.elasticity), PRICE_CENTS / 100, {s.id: s.lead_weeks for s in SUPPLIERS})
     brain = Helm(validator_twin, y.plan, y.limits, list(SUPPLIERS), imagine_runs=imagine_runs)
-    return Runtime(y.world, brain, y.origin, y.affiliates)
+    return Runtime(y.world, brain, y.origin, y.affiliates, budget=y.budget, base_plan=y.plan)
 
 
 def run_days(y: Year, app, rt, start: date, end: date, thread_id: str, owner=None) -> list[dict]:
@@ -124,3 +124,20 @@ def run_days(y: Year, app, rt, start: date, end: date, thread_id: str, owner=Non
         y.world.run_day(d)
         d += timedelta(days=1)
     return journal
+
+
+def run_year_days(y: Year, app, start: date, end: date, thread_id: str, owner=None) -> list[dict]:
+    """Drive the world day by day through the parent day graph (monthly and weekly levels as subgraphs)."""
+    from helm.graph import run_day
+
+    out = []
+    d = start
+    while d <= end:
+        res = run_day(app, d, thread_id, owner)
+        if "__interrupt__" in res:
+            return out + [{"day": d.isoformat(), "paused": res["__interrupt__"][0].value}]
+        if res.get("ran"):
+            out.append({"day": d.isoformat(), "ran": res["ran"], "month": res.get("month"), "week": res.get("week")})
+        y.world.run_day(d)
+        d += timedelta(days=1)
+    return out

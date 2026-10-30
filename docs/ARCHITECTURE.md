@@ -57,6 +57,42 @@ flowchart TD
 
 On a reject the producer re-plans with an adjustment that answers the reason: cut spend after a cash reject, take the smallest order across nudged forecasts after an instability reject, weigh cash more after losing to doing nothing. After two rejections Helm holds.
 
+## Time levels and the LangGraph structure (built 30 Oct)
+
+Real dates, calendar months, Monday-to-Sunday weeks. Every stock and money movement is an event in an append-only daily ledger in integer cents (`helm/ledger.py`); every week, month and year figure is summed from days, so all levels agree to the cent. The owner's annual budget is set by month and spread to days with exact integer splitting (`helm/budget.py`). A week that crosses a month end is split by day for reporting, and belongs to the month that holds its Thursday for budgeting (the ISO rule).
+
+```mermaid
+flowchart TD
+  D["Day graph (parent, checkpointed)"] --> R{What is due today?}
+  R -->|1st of month| M["Monthly subgraph"]
+  R -->|Monday| W["Weekly subgraph"]
+  R -->|other days| E[done]
+  M -->|also a Monday| W
+  subgraph Monthly
+    A[assess: budget vs actual, full-year outlook] --> S[strategist: rebalance remaining months, capped by what the lever can move]
+    S --> PL[planner: month targets, weekly targets from days, purchase and commission budgets]
+    PL --> C{check plan}
+    C -->|problems| T[tighten] --> PL
+    C --> SO{{"interrupt: owner signs off the month"}} --> CM[commit]
+  end
+  subgraph Weekly
+    SE[sense] --> PR[produce] --> V{validate}
+    V -->|reject| AD[adjust] --> PR
+    V -->|pass| X[execute, idempotent] --> CF{confirm: read back}
+    V -->|outside approved month budget, or 3 rejects| AP{{"interrupt: owner approves, edits or rejects"}}
+    AP --> X
+    CF -->|mismatch| ST{{"interrupt: money stops"}}
+    CF --> J[journal]
+  end
+```
+
+* Subgraphs are compiled without their own checkpointer, so they share the parent's; an interrupt anywhere pauses the day and a `Command(resume=...)` on the same thread resumes it exactly, including after a restart (tested on SQLite).
+* On resume LangGraph re-runs the paused node, so approval nodes never move money; only `execute` does, and every order and payout carries an idempotency key built from the thread and the week.
+
+**Where a person is required:** the annual budget; the monthly sign-off (with the standing, the rebalanced targets and the change from budget); any weekly move outside the approved month budget or the owner's limits; any week where no plan passes the validator; and any read-back mismatch. **Oversight without a pause:** the journal with every reference, checkpoint history for replaying any decision.
+
+**Full-year run (seed 7, viral video tripling demand for three weeks from 9 March):** 12 monthly sign-offs, 2 weekly escalations (both in the viral spike, when the restock needed more than March's approved purchase budget), 6,910 units sold against a budget of 6,257, revenue 165,840 against 150,168, 194 units of lost sales (all in the spike), and cash never below the floor.
+
 ## Why this design (research)
 
 - **Models read and explain, solvers decide.** LLMs used as end-to-end inventory solvers pay a "hallucination tax"; a hybrid where the model extracts parameters and a solver decides cut cost 32.1% vs GPT-4o end to end, and perfect information did not fix the model's version. Duan, Hu, Jiang, [arXiv 2601.00121](https://arxiv.org/abs/2601.00121).

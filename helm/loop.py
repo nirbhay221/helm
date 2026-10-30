@@ -158,11 +158,11 @@ class Helm:
         )
 
     def _validate(self, state: State, fc: Forecast, vfc: Forecast, action: Action, limits: Limits,
-                  weights: navigator.Weights) -> list[Verdict]:
+                  weights: navigator.Weights, envelope_limits: Limits | None = None) -> list[Verdict]:
         out = [gates.constraints(action, state, self.business, self.suppliers)]
         if not out[-1].passed:
             return out
-        out.append(gates.envelope(action, self.limits))  # always the owner's original limits
+        out.append(gates.envelope(action, envelope_limits or self.limits))  # the owner's approved envelope
         if not out[-1].passed:
             return out
 
