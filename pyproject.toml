@@ -1,0 +1,19 @@
+[project]
+name = "helm"
+version = "0.1.0"
+description = "An autopilot that steers a business back to its forecast, settled on PayPal."
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["helm*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

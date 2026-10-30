@@ -6,6 +6,14 @@ Helm is a money brain for a business that runs on agents. It takes money in from
 
 This repository is the full specification and build plan for Helm. It is written so that a developer can pick it up cold and build it end to end. Read the Overview and Architecture first, then the Build Plan.
 
+> **Status (30 Oct 2026):** the v2 architecture, a producer and an independent validator, is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), with the research each design rule rests on. The decision core runs: business twin, conformal forecaster, robust receding-horizon Navigator, supplier-mix MILP, five validator gates, and the control loop. Try it:
+>
+> ```bash
+> pip install -e ".[dev]"
+> python -m pytest -q
+> python -m helm.bench --seeds 8
+> ```
+
 ---
 
 ## 1. The one paragraph version
