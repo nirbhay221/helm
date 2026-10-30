@@ -446,7 +446,24 @@ def build_day(rt: Runtime, checkpointer=None):
         d = date.fromisoformat(state["day"])
         if d.day == 1 and rt.budget is not None and d >= rt.budget.cal.year_start:
             return "monthly"
-        return "weekly" if d.weekday() == 0 else "done"
+        if d.weekday() == 0 or tripwire(d):
+            return "weekly"
+        return "done"
+
+    def tripwire(d: date) -> str:
+        """Daily check. A projected stockout before the fastest supplier can deliver, or cash close
+        to the floor, forces an immediate re-plan instead of waiting for Monday."""
+        days = rt.world.ledger.days()
+        if len(days) < 7:
+            return ""
+        daily = sum(x.demand for x in days[-7:]) / 7
+        fastest = 7 * min(s.lead_weeks for s in rt.brain.suppliers)
+        incoming = sum(u for a, u, _ in rt.world.pipeline if a <= d + timedelta(days=fastest))
+        if days[-1].stock_end + incoming < daily * (fastest + 1):
+            return "stockout"
+        if days[-1].cash_end / 100 < 1.2 * rt.brain.business.cash_floor:
+            return "cash"
+        return ""
 
     def monthly(state: DayState, config) -> dict:
         d = date.fromisoformat(state["day"])
@@ -457,8 +474,10 @@ def build_day(rt: Runtime, checkpointer=None):
         return "weekly" if date.fromisoformat(state["day"]).weekday() == 0 else "done"
 
     def weekly(state: DayState, config) -> dict:
+        d = date.fromisoformat(state["day"])
+        label = "weekly" if d.weekday() == 0 or d.day == 1 else f"tripwire:{tripwire(d)}"
         out = week_app.invoke({"monday": state["day"]}, config)
-        return {"week": out.get("journal", {}), "ran": state.get("ran", []) + ["weekly"]}
+        return {"week": out.get("journal", {}), "ran": state.get("ran", []) + [label]}
 
     def done(state: DayState) -> dict:
         return {}

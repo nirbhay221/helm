@@ -90,3 +90,17 @@ def test_a_full_quarter_through_the_day_graph():
     assert asks.count("approve_month") == 3
     assert sum(1 for r in out if "weekly" in r["ran"]) == 13
     assert set(rt.month_plans) == {"2026-01", "2026-02", "2026-03"}
+
+
+def test_daily_tripwire_replans_midweek_when_a_stockout_is_coming():
+    from helm.ledger import Event
+    y = build_year()
+    rt = runtime(y, imagine_runs=30)
+    app = graph.build_day(rt, InMemorySaver())
+    rt.month_plans["2026-01"] = {"units": 556, "purchase_budget": 9000.0, "commission_budget": 900.0}
+    # Wednesday with almost no stock and nothing arriving: Helm must not wait for Monday.
+    y.world.ledger.append(Event(date(2025, 12, 31), "sale", units=y.world.stock() - 5, cents=0))
+    y.world.pipeline.clear()
+    out = graph.run_day(app, date(2026, 1, 7), "t", owner=lambda p: {"decision": "approve"})
+    assert out["ran"] == ["tripwire:stockout"]
+    assert out["week"]["orders"]
