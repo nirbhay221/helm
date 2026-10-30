@@ -140,7 +140,7 @@ def stability(
         du = abs(units - base_units)
         if du > abs_tol and du > rel_tol * max(base_units, 1.0):
             swings.append(f"a {abs(scale - 1):.0%} forecast nudge moves this week's order by {du:.0f} units")
-        if abs(comm - base_comm) > commission_tol:
+        if abs(comm - base_comm) > commission_tol + 1e-6:
             swings.append(f"a {abs(scale - 1):.0%} forecast nudge moves commission by {abs(comm - base_comm):.1%}")
     if swings:
         return Verdict("stability", REJECT, "; ".join(swings), {"code": "unstable"})

@@ -39,6 +39,8 @@ class Weights:
     lost_sale: float = 6.0  # per unit of demand not served
     floor_breach: float = 50.0  # per dollar below the cash floor
     commission_step: float = 0.05  # largest weekly change in commission rate
+    commission_change: float = 400.0  # cost per unit of commission-rate change, so the rate does not flip-flop
+    sales_shortfall: float = 3.0  # per unit sold below the budget's weekly sales
 
 
 @dataclass(frozen=True)
@@ -104,10 +106,14 @@ def plan(
         for t in range(H):
             wk = w0 + t
             c = shared("comm", t, s, limits.commission_min, limits.commission_max)
+            up, down = m.var(f"cup_{t}_{s}"), m.var(f"cdn_{t}_{s}")
             if c_prev is None:
                 m.add({c: 1}, lo=state.commission_rate - w.commission_step, hi=state.commission_rate + w.commission_step)
+                m.eq({c: 1, up: -1, down: 1}, state.commission_rate)
             else:
                 m.add({c: 1, c_prev: -1}, lo=-w.commission_step, hi=w.commission_step)
+                m.eq({c: 1, c_prev: -1, up: -1, down: 1}, 0.0)
+            m.minimize({up: prob * w.commission_change, down: prob * w.commission_change})
             c_prev = c
 
             # Arrivals: known pipeline plus orders this plan places that land this week.
@@ -158,6 +164,10 @@ def plan(
             dc_p, dc_n = m.var(f"dcp_{t}_{s}"), m.var(f"dcn_{t}_{s}")
             m.eq({cash: 1, dc_p: -1, dc_n: 1}, target(business.cash_target, t + 1))
 
+            if business.sales_target:
+                short = m.var(f"short_{t}_{s}")
+                m.add({sales: 1, short: 1}, lo=target(business.sales_target, t))
+                m.minimize({short: prob * w.sales_shortfall})
             m.minimize({
                 di_p: prob * w.inventory, di_n: prob * w.inventory,
                 dc_n: prob * w.cash,

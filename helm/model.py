@@ -45,6 +45,7 @@ class BusinessPlan:
     cash_target: tuple[float, ...]
     cash_floor: float
     price: float
+    sales_target: tuple[float, ...] = ()  # units the budget expects sold each week; empty means not tracked
 
 
 @dataclass(frozen=True)
