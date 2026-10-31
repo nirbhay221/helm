@@ -103,7 +103,7 @@ flowchart TD
 - **Imagine before acting.** Reason-Imagine-Act, [arXiv 2605.24004](https://arxiv.org/abs/2605.24004).
 - **Plan for the spread.** Conformal decision-making for inventory, [arXiv 2412.13159](https://arxiv.org/abs/2412.13159), [arXiv 2609.23170](https://arxiv.org/abs/2609.23170).
 - **Referral rewards can't be fully sybil-proof**, so cap and hold back. [arXiv 1304.7432](https://arxiv.org/abs/1304.7432), [arXiv 2005.13224](https://arxiv.org/abs/2005.13224).
-- **Simple, explicit agent structure** with an evaluator-optimizer loop (Anthropic, *Building effective agents*); a separate risk gate after the decider as in TradingAgents and FinCon ([arXiv 2407.06567](https://arxiv.org/abs/2407.06567)).
+- **Simple, explicit agent structure** with an evaluator-optimizer loop (produce, evaluate, revise); a separate risk gate after the decider as in TradingAgents and FinCon ([arXiv 2407.06567](https://arxiv.org/abs/2407.06567)).
 
 ## Benchmark (`python -m helm.bench`)
 
