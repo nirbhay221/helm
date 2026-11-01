@@ -9,6 +9,8 @@ evaluation summary.
 """
 from __future__ import annotations
 
+import functools
+
 from arms.awardsmith import AwardsmithSolver, DiscountTier, SupplierQuote, naive_single_supplier_cost
 from arms.payout_engine import Contribution, Party, run_payout_engine
 from council.loop import HelmLoop
@@ -159,3 +161,15 @@ def build_dashboard_data() -> dict:
                                       for o in base_sim.history), 2),
         },
     }
+
+
+@functools.lru_cache(maxsize=1)
+def dashboard_data_cached() -> dict:
+    """The dashboard payload, computed once and reused.
+
+    A full build runs the controller loop plus a 120-scenario evaluation (about
+    five seconds). The inputs are fixed seeds, so the result is identical every
+    time; recomputing it on each page load would make every visitor wait. The
+    server warms this once at startup and serves the cached payload thereafter.
+    """
+    return build_dashboard_data()

@@ -1,10 +1,17 @@
-# Helm core (deterministic spine) - no API keys needed to run the demo loop
-ortools>=9.10
-numpy>=1.26
-pytest>=8.0
+# Helm runtime, pinned for reproducible deploys.
+# The deployed dashboard runs entirely in demo mode and needs no secrets.
 
-# PayPal + model + API layer (added as those phases are built)
-requests>=2.31
-python-dotenv>=1.0
-fastapi>=0.110
-uvicorn>=0.29
+# Deterministic spine: optimization + numerics
+ortools==9.15.6755
+numpy==2.5.4
+
+# PayPal + model + API layer
+requests==2.34.2
+python-dotenv==1.2.4
+
+# Web server for the dashboard
+fastapi==0.162.0
+uvicorn==0.54.0
+
+# Dev only (not needed to serve the app)
+pytest==9.2.0

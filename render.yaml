@@ -1,0 +1,30 @@
+# Render Blueprint: one public web service for the Helm dashboard.
+# Deploy by connecting this repo on Render (New -> Blueprint) and applying.
+# The service runs in demo mode out of the box; the sync:false secrets below are
+# optional and set in the Render dashboard, never committed.
+services:
+  - type: web
+    name: helm
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn ui.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: DEMO_MODE
+        value: "1"
+      # Optional: set these in the Render dashboard to enable the live model and
+      # real PayPal sandbox calls. Left unset, the dashboard stays in demo mode.
+      - key: HELM_LLM_BASE_URL
+        sync: false
+      - key: HELM_LLM_API_KEY
+        sync: false
+      - key: HELM_LLM_MODEL
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
