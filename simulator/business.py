@@ -92,8 +92,13 @@ class BusinessSim:
     def done(self) -> bool:
         return self.t >= self.n_periods
 
-    def step(self, order_qty: float) -> Observation:
-        """Advance one period. `order_qty` is this period's supplier order."""
+    def step(self, order_qty: float, order_cost: float | None = None) -> Observation:
+        """Advance one period. `order_qty` is this period's supplier order.
+
+        `order_cost`, if given, is the actual amount paid for that order (as
+        computed by the buying arm from real supplier quotes). If omitted, the
+        order is costed at the flat ``unit_cost`` (used by the standalone
+        controller demo and tests)."""
         order_qty = max(0.0, float(order_qty))
 
         # 1. arrivals scheduled for now
@@ -112,7 +117,8 @@ class BusinessSim:
 
         # 4. place + pay for this period's order; schedule its arrival
         if order_qty > 0:
-            self.cash -= self.p.unit_cost * order_qty
+            cost = self.p.unit_cost * order_qty if order_cost is None else float(order_cost)
+            self.cash -= cost
             self._pipeline[self.t + self.p.lead_time] = (
                 self._pipeline.get(self.t + self.p.lead_time, 0.0) + order_qty
             )
