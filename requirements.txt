@@ -1,0 +1,10 @@
+# Helm core (deterministic spine) - no API keys needed to run the demo loop
+ortools>=9.10
+numpy>=1.26
+pytest>=8.0
+
+# PayPal + model + API layer (added as those phases are built)
+requests>=2.31
+python-dotenv>=1.0
+fastapi>=0.110
+uvicorn>=0.29
