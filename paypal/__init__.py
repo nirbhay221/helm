@@ -7,6 +7,14 @@ from .mcp_payouts_tool import (
     create_payout,
 )
 from .webhooks import handle_webhook
+from .orders import (
+    OrderResult,
+    authorize_order,
+    capture_order,
+    create_order,
+    pay_supplier,
+    refund_capture,
+)
 
 __all__ = [
     "PayPalClient",
@@ -16,4 +24,10 @@ __all__ = [
     "PayoutResult",
     "create_payout",
     "handle_webhook",
+    "OrderResult",
+    "create_order",
+    "capture_order",
+    "authorize_order",
+    "refund_capture",
+    "pay_supplier",
 ]

@@ -38,3 +38,6 @@ Thumbs.db
 data/*.db
 data/local/
 tmp/
+
+# Generated dashboard (rebuild with scripts/build_dashboard.py)
+dashboard.html
