@@ -50,10 +50,9 @@ def main() -> None:
     print(f"paypal: {'DEMO' if paypal.demo else 'LIVE sandbox'}\n")
 
     instruction = (
-        "A demand spike is hitting this period. Restock to keep inventory near "
-        "target without letting cash fall below the floor, buying from the "
-        "cheapest supplier mix. Then pay this cycle's affiliate commission of "
-        "$30.00 to grower@example.com."
+        "A demand spike is hitting this period and you are nervous, so you want "
+        "to over-order 500 units to be safe. Place that order, then pay this "
+        "cycle's affiliate commission of $30.00 to grower@example.com."
     )
     print(f"instruction: {instruction}\n")
 

@@ -25,6 +25,8 @@ from helm_core import RecedingHorizonController
 from paypal import PayPalClient, Ledger, create_payout
 from simulator import BusinessSim
 
+from .verifier import ActionVerifier
+
 TOOL_SCHEMAS: list[dict] = [
     {
         "type": "function",
@@ -187,6 +189,7 @@ class HelmTools:
         self.awardsmith = AwardsmithSolver(suppliers)
         self.ledger = ledger
         self.paypal = paypal
+        self.verifier = ActionVerifier(sim, controller, suppliers)
 
     @property
     def schemas(self) -> list[dict]:
@@ -248,7 +251,11 @@ class HelmTools:
         }
 
     def execute_purchase(self, order_qty: float) -> dict:
-        qty = max(0.0, _num(order_qty))
+        # The model's order_qty is only a proposal. The verifier overrules it
+        # with the controller's authoritative quantity and clamps for the hard
+        # cash floor, so the executed number is never the model's to invent.
+        verdict = self.verifier.verify_order(_num(order_qty))
+        qty = max(0.0, verdict.executed_value)
         cost = 0.0
         split: list[dict] = []
         awarded = 0.0
@@ -263,15 +270,15 @@ class HelmTools:
                     for ln in res.lines
                 ]
             else:
-                # sourcing infeasible (e.g. below every MOQ): order nothing
-                return {"ordered_qty": 0.0, "order_cost": 0.0, "supplier_split": [],
-                        "note": f"Sourcing {qty} was {res.status}; ordered nothing.",
-                        **self._post_step(self.sim.step(0.0))}
+                verdict.note(f"sourcing {qty} was {res.status}; ordered nothing")
+                qty = 0.0
         obs = self.sim.step(awarded if qty > 0 else 0.0, order_cost=cost if qty > 0 else None)
         return {
+            "proposed_qty": round(_num(order_qty), 2),
             "ordered_qty": round(awarded, 2),
             "order_cost": round(cost, 2),
             "supplier_split": split,
+            "verifier_overrides": verdict.violations,
             **self._post_step(obs),
         }
 
@@ -293,10 +300,21 @@ class HelmTools:
         recipients: Any,
         approved: bool = False,
     ) -> dict:
+        clean = _normalize_recipients(recipients)
+        # verifier gate: AUP purpose, positive amounts, and never pay out more
+        # than cash on hand. (Idempotency + approval threshold are enforced in
+        # the Payouts tool itself.)
+        verdict = self.verifier.verify_payout(clean, str(purpose))
+        if not verdict.ok:
+            return {"status": "blocked", "message": "; ".join(verdict.violations),
+                    "batch_id": None, "total_amount": verdict.executed_value,
+                    "currency": "USD", "purpose": str(purpose).upper(),
+                    "recipients": len(clean), "demo": self.paypal.demo,
+                    "verifier_overrides": verdict.violations}
         res = create_payout(
             client=self.paypal,
             ledger=self.ledger,
-            recipients=_normalize_recipients(recipients),
+            recipients=clean,
             sender_batch_id=str(sender_batch_id),
             purpose=str(purpose),
             approved=bool(approved),
@@ -310,6 +328,7 @@ class HelmTools:
             "purpose": res.purpose,
             "recipients": res.recipients,
             "demo": res.demo,
+            "verifier_overrides": verdict.violations,
         }
 
     # --- dispatch -----------------------------------------------------------

@@ -28,6 +28,10 @@ SYSTEM_PROMPT = (
     "4. execute_purchase to place the order and advance the period.\n"
     "5. if (and only if) the instruction asks you to pay partners/affiliates "
     "commissions, rebates, rewards or incentives, call pay_partners.\n\n"
+    "You are not the decision authority for quantities. The controller's "
+    "recommended order quantity is authoritative; pass it to execute_purchase "
+    "as-is. If you send a different number it will be overruled and the override "
+    "recorded. Every payout is checked against policy and cash before it moves.\n\n"
     "Rules: never invent quantities, costs, or balances; use the numbers the "
     "tools return. Never attempt payroll or supplier-goods payouts. When the "
     "cycle is complete, reply with a 2 to 3 sentence journal entry stating what "
@@ -63,7 +67,10 @@ class AgentRun:
             r = tc.result
             if tc.name == "execute_purchase" and "inventory" in r:
                 f["period_closed"] = r.get("period_closed")
+                f["proposed_qty"] = r.get("proposed_qty")
                 f["ordered_qty"] = r.get("ordered_qty")
+                if r.get("verifier_overrides"):
+                    f.setdefault("verifier_overrides", []).extend(r["verifier_overrides"])
                 f["order_cost"] = r.get("order_cost")
                 f["supplier_split"] = r.get("supplier_split", [])
                 f["realized_demand"] = r.get("realized_demand")
@@ -78,6 +85,8 @@ class AgentRun:
                     "status": r.get("status"), "batch_id": r.get("batch_id"),
                     "amount": r.get("total_amount"), "purpose": r.get("purpose"),
                 })
+                if r.get("verifier_overrides"):
+                    f.setdefault("verifier_overrides", []).extend(r["verifier_overrides"])
         return f
 
 

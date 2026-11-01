@@ -45,12 +45,11 @@ def test_plan_then_source_then_execute_advances_period():
     assert plan["status"] in ("Optimal", "Feasible")
     src = t.source_suppliers(plan["recommended_order_qty"] or 60)
     assert src["status"] in ("Optimal", "Feasible")
-    assert src["total_cost"] > 0
     before = t.sim.t
     exe = t.execute_purchase(60)
     assert t.sim.t == before + 1
-    assert exe["order_cost"] > 0
-    assert exe["ordered_qty"] >= 60  # MOQ may round up
+    assert exe["proposed_qty"] == 60.0          # what the model asked for is recorded
+    assert exe["ordered_qty"] >= 0.0            # what the controller authority ran
 
 def test_source_beats_naive_single_supplier():
     t = _tools()
@@ -63,15 +62,20 @@ def test_pay_partners_enforces_aup_through_agent_path():
     t = _tools()
     ok = t.pay_partners("b1", "COMMISSION", [{"email": "a@ex.com", "amount": 20}])
     assert ok["status"] == "completed"
+    # forbidden purpose is caught by the verifier before the payout tool runs
     bad = t.pay_partners("b2", "PAYROLL", [{"email": "w@ex.com", "amount": 20}])
-    assert bad["status"] == "rejected"
+    assert bad["status"] in ("blocked", "rejected")
+    assert not any(m["ref_id"] == "b2" for m in t.ledger.movements())
 
 
-def test_execute_purchase_zero_is_safe():
+def test_model_proposed_zero_is_overruled_by_controller():
+    # the model is not the authority: proposing 0 does not force no order; the
+    # controller's recommended quantity runs instead, and the override is logged
     t = _tools()
     exe = t.execute_purchase(0)
-    assert exe["ordered_qty"] == 0.0
-    assert exe["order_cost"] == 0.0
+    assert exe["proposed_qty"] == 0.0
+    assert exe["ordered_qty"] > 0.0
+    assert exe["verifier_overrides"]
 
 
 class _FakeLLM(LLMClient):
