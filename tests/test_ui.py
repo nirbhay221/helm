@@ -22,6 +22,10 @@ def test_dashboard_data_is_complete_and_serializable():
     # equal-length series for charting
     v = d["variance"]
     assert len(v["periods"]) == len(v["forecast_demand"]) == len(v["actual_demand"])
+    # the demand driving the demo is the REAL recorded series, not synthetic
+    from simulator.real_demand import P263_WEEKLY
+    assert v["actual_demand"] == [float(x) for x in P263_WEEKLY]
+    assert "UCI" in v["source"]
     # fully JSON-serializable (it is sent to the browser)
     json.dumps(d)
 

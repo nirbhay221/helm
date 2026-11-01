@@ -60,7 +60,7 @@ _TEMPLATE = """<!doctype html>
 
   <div class="panel">
     <h2>The money shot: variance opens, then closes</h2>
-    <p>A demand shock pushes actual demand above the forecast. Helm restocks; inventory holds near target while an uncontrolled business drifts.</p>
+    <p>Actual demand is a real recorded weekly sales series (UCI product P263), not synthetic. It surges well above the flat plan, then collapses. Helm restocks on the realized state; inventory holds near target while an uncontrolled business drifts and stocks out.</p>
     <div class="grid">
       <div><canvas id="varianceChart"></canvas></div>
       <div><canvas id="inventoryChart"></canvas></div>

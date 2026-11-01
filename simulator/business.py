@@ -31,6 +31,9 @@ class BusinessParams:
     cash_floor: float = 0.0
     baseline_demand: float = 40.0
     demand_noise_sd: float = 4.0
+    # If set, actual demand replays this recorded series (period t -> value) instead
+    # of baseline + gaussian noise. Lets the sim run on real, non-synthetic demand.
+    demand_series: list[float] | None = None
 
 
 @dataclass
@@ -105,9 +108,14 @@ class BusinessSim:
         arrived = self._pipeline.pop(self.t, 0.0)
         self.inventory += arrived
 
-        # 2. realize demand (forecast + noise + shock)
-        noise = float(self.rng.normal(0.0, self.p.demand_noise_sd))
-        demand = self.p.baseline_demand + noise + self._shocks.get(self.t, 0.0)
+        # 2. realize demand: replay a real recorded series if given, else
+        #    synthesize it as baseline + gaussian noise. Injected shocks (if any)
+        #    add on top of either.
+        if self.p.demand_series is not None and self.t < len(self.p.demand_series):
+            demand = float(self.p.demand_series[self.t]) + self._shocks.get(self.t, 0.0)
+        else:
+            noise = float(self.rng.normal(0.0, self.p.demand_noise_sd))
+            demand = self.p.baseline_demand + noise + self._shocks.get(self.t, 0.0)
         demand = max(0.0, demand)
 
         # 3. sales and revenue

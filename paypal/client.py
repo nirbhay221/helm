@@ -17,7 +17,9 @@ class PayPalClient:
     def __init__(self, env: dict | None = None) -> None:
         env = env if env is not None else os.environ
         self.client_id = env.get("PAYPAL_CLIENT_ID", "") or ""
-        self.secret = env.get("PAYPAL_SECRET", "") or ""
+        # PayPal's own naming is CLIENT_SECRET; accept the short PAYPAL_SECRET too
+        # so a credential set under either name actually goes live (not silently demo).
+        self.secret = (env.get("PAYPAL_CLIENT_SECRET") or env.get("PAYPAL_SECRET") or "")
         self.paypal_env = env.get("PAYPAL_ENV", "sandbox") or "sandbox"
         demo_flag = (env.get("DEMO_MODE", "1") or "1") == "1"
         self.demo = demo_flag or not (self.client_id and self.secret)

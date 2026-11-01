@@ -18,9 +18,9 @@ from evaluation import constant_policy, evaluate, run_policy
 from helm_core import ControllerParams, RecedingHorizonController
 from paypal import Ledger, PayPalClient
 from simulator import BusinessParams, BusinessSim
+from simulator.real_demand import P263_WEEKLY, PLANNED_DEMAND, PRODUCT_CODE
 
-SHOCK_PERIODS = (6, 7, 8, 9)
-SHOCK_DELTA = 45.0
+N_PERIODS = len(P263_WEEKLY)
 
 
 def _suppliers() -> list[SupplierQuote]:
@@ -32,17 +32,14 @@ def _suppliers() -> list[SupplierQuote]:
 
 
 def _scenario_params() -> BusinessParams:
+    # Real recorded demand (UCI product P263). The business plans around a flat
+    # PLANNED_DEMAND; the actual series surges and collapses on its own.
     return BusinessParams(
         price=20.0, unit_cost=8.0, lead_time=1,
-        init_inventory=120.0, init_cash=2000.0, target_inventory=120.0,
-        cash_floor=0.0, baseline_demand=40.0, demand_noise_sd=4.0,
+        init_inventory=40.0, init_cash=1500.0, target_inventory=40.0,
+        cash_floor=0.0, baseline_demand=PLANNED_DEMAND,
+        demand_series=list(P263_WEEKLY),
     )
-
-
-def _with_shocks(sim: BusinessSim) -> BusinessSim:
-    for p in SHOCK_PERIODS:
-        sim.inject_shock(p, SHOCK_DELTA)
-    return sim
 
 
 def build_dashboard_data() -> dict:
@@ -50,12 +47,13 @@ def build_dashboard_data() -> dict:
     suppliers = _suppliers()
     controller = RecedingHorizonController(ControllerParams(horizon=8))
 
-    # Helm run (controller + Awardsmith + journal) and an uncontrolled baseline
-    helm_sim = _with_shocks(BusinessSim(params, seed=7, n_periods=20))
+    # Helm run (controller + Awardsmith + journal) and an uncontrolled baseline,
+    # both on the same real demand series so the only difference is the control.
+    helm_sim = BusinessSim(params, seed=7, n_periods=N_PERIODS)
     loop = HelmLoop(helm_sim, controller, suppliers)
     journal = loop.run()
 
-    base_sim = _with_shocks(BusinessSim(params, seed=7, n_periods=20))
+    base_sim = BusinessSim(params, seed=7, n_periods=N_PERIODS)
     run_policy(base_sim, constant_policy())
 
     periods = [o.period for o in helm_sim.history]
@@ -63,7 +61,7 @@ def build_dashboard_data() -> dict:
         "periods": periods,
         "forecast_demand": [o.forecast_demand for o in helm_sim.history],
         "actual_demand": [o.demand for o in helm_sim.history],
-        "shock_periods": list(SHOCK_PERIODS),
+        "source": f"real recorded weekly demand, UCI product {PRODUCT_CODE}",
     }
     inventory = {
         "periods": periods,
