@@ -1,8 +1,8 @@
-"""The single dashboard screen: the control journal and the money shots.
+"""The single dashboard screen: Helm running a creator-marketplace treasury.
 
 One HTML string, no build step. It reads its data from an embedded
 `window.HELM_DATA` (static build) or, if absent, fetches `/api/data` (live
-server), so the same page works both ways. Charts are Chart.js from a CDN.
+server). Charts are Chart.js from a CDN.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ _TEMPLATE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Helm Control Journal</title>
+<title>Helm Creator Treasury</title>
 <script src="__CHART_JS__"></script>
 <style>
   :root {
@@ -33,7 +33,7 @@ _TEMPLATE = """<!doctype html>
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
   .card .k { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.6px; }
   .card .v { font-size:24px; font-weight:650; margin-top:4px; }
-  .card .v.good { color:var(--good); } .card .v.accent { color:var(--accent); }
+  .card .v.good { color:var(--good); } .card .v.accent { color:var(--accent); } .card .v.bad { color:var(--bad); }
   .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
   @media (max-width:820px){ .grid { grid-template-columns:1fr; } }
   .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
@@ -46,50 +46,42 @@ _TEMPLATE = """<!doctype html>
   th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
   .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; }
   .tag.good { background:rgba(54,211,153,.15); color:var(--good); }
-  .tag.bad { background:rgba(240,104,104,.15); color:var(--bad); }
+  .tag.hold { background:rgba(246,195,67,.15); color:var(--warn); }
   .foot { color:var(--muted); font-size:12px; padding:8px 16px 32px; max-width:1180px; margin:0 auto; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Helm &mdash; control journal</h1>
-  <div class="sub">Forecast variance opens, the controller acts, PayPal moves the money, the gap closes. Every number below is produced by the running system.</div>
+  <h1>Helm &mdash; creator marketplace treasury</h1>
+  <div class="sub">A platform collects buyer money, owes creators their earnings, and must stay reserved against chargebacks. Helm decides what to pay each creator and when, and moves it on PayPal. Every number below is produced by the running system.</div>
 </header>
 <main>
   <div class="cards" id="cards"></div>
 
   <div class="panel">
-    <h2>The money shot: variance opens, then closes</h2>
-    <p>Actual demand is a real recorded weekly sales series (UCI product P263), not synthetic. It surges well above the flat plan, then collapses. Helm restocks on the realized state; inventory holds near target while an uncontrolled business drifts and stocks out.</p>
+    <h2>The money shot: revenue variance opens, the controller stays solvent</h2>
+    <p>A viral spike pushes actual GMV far above the flat plan, then it collapses as the spike's chargebacks land. Helm keeps cash above the floor-plus-reserve line throughout.</p>
     <div class="grid">
-      <div><canvas id="varianceChart"></canvas></div>
-      <div><canvas id="inventoryChart"></canvas></div>
+      <div><canvas id="gmvChart"></canvas></div>
+      <div><canvas id="cashChart"></canvas></div>
     </div>
   </div>
 
   <div class="grid">
-    <div class="panel"><h2>Cash vs floor</h2><p>Helm spends only cash it holds; the floor is never a soft suggestion.</p><canvas id="cashChart"></canvas></div>
-    <div class="panel"><h2>Awardsmith: optimal buy vs naive</h2><p>Cheapest supplier mix under MOQ, capacity and volume discounts.</p><canvas id="awardChart"></canvas></div>
-  </div>
-
-  <div class="grid">
-    <div class="panel"><h2>Bulwark: cheating earns nothing</h2><p>A Sybil cheat inflates the naive take; hardening collapses it to the honest share.</p><canvas id="bulwarkChart"></canvas></div>
-    <div class="panel"><h2>Honest evaluation vs base-stock</h2><p>Across many randomized scenarios. Deviation is the controller's own objective (shown for context); the verifier eliminates cash breaches.</p><canvas id="evalChart"></canvas></div>
+    <div class="panel"><h2>Creators get paid fast</h2><p>Periods the oldest unpaid creator balance has waited, under Helm.</p><canvas id="waitChart"></canvas></div>
+    <div class="panel"><h2>The payout frontier: reserve shortfall</h2><p>Total dollars under-reserved against chargebacks. Paying everyone immediately is reckless; Helm carries a fraction of it.</p><canvas id="frontierChart"></canvas></div>
   </div>
 
   <div class="panel">
-    <h2>The AI earns its place: a signal only a language model can read</h2>
-    <p>A promotion is announced two weeks before it lands. That announcement is free text the controller cannot use. The signal desk turns it into a bounded, verified demand bump; the controller pre-positions stock. Scored on stockouts and lost sales, not the controller's own objective, so the win is not circular.</p>
-    <div class="grid">
-      <div><canvas id="signalChart"></canvas></div>
-      <div id="signalNote" style="font-size:13px; color:var(--muted); display:flex; flex-direction:column; justify-content:center; gap:8px"></div>
-    </div>
+    <h2>Payout engine: cheating earns nothing</h2>
+    <p>A Sybil creator inflates the naive split; hardening collapses it to the honest share. Global creators are withheld at treaty rates (Tollgate) and the batch settles atomically (Keystone).</p>
+    <canvas id="bulwarkChart"></canvas>
   </div>
 
   <div class="panel">
-    <h2>Control journal</h2>
-    <p>Per cycle: what the controller targeted, what Awardsmith bought and from whom, the cost, and the resulting state.</p>
-    <div style="overflow-x:auto"><table id="journal"></table></div>
+    <h2>Payout batches to creators (PayPal Payouts)</h2>
+    <p>What Helm paid each creator per cycle, the PayPal batch id, and whether the human-approval gate held a large batch.</p>
+    <div style="overflow-x:auto"><table id="runs"></table></div>
   </div>
 </main>
 <div class="foot" id="foot"></div>
@@ -104,15 +96,13 @@ _TEMPLATE = """<!doctype html>
   Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
   const money = v => '$' + Number(v).toLocaleString(undefined,{maximumFractionDigits:0});
 
-  // headline cards
-  const cd = data.cumulative_deviation;
-  const closed = Math.round(100*(1 - cd.helm/cd.uncontrolled));
-  const aw = data.awardsmith, bw = data.payout_engine.bulwark, ev = data.evaluation;
+  const h = data.headline, ctx = data.context;
+  const cut = Math.round(100*(1 - h.shortfall_helm/Math.max(1,h.shortfall_pay_all)));
   const cards = [
-    ['variance closed', closed + '%', 'good'],
-    ['Awardsmith saving', aw.savings!=null? money(aw.savings):'n/a', 'accent'],
-    ['cheat defeated', bw.defeated? 'yes':'no', bw.defeated?'good':''],
-    ['cash breaches (verifier)', ev.cash_breaches.raw_helm + ' → ' + ev.cash_breaches.verified_helm, 'good'],
+    ['paid to creators', money(h.creators_paid_total), 'accent'],
+    ['avg creator wait', h.helm_avg_wait + ' wk', 'good'],
+    ['reserve risk cut vs reckless', cut + '%', 'good'],
+    ['cash floor breaches', String(h.floor_breaches_helm), h.floor_breaches_helm? 'bad':'good'],
   ];
   document.getElementById('cards').innerHTML = cards.map(c =>
     `<div class="card"><div class="k">${c[0]}</div><div class="v ${c[2]||''}">${c[1]}</div></div>`).join('');
@@ -126,62 +116,45 @@ _TEMPLATE = """<!doctype html>
     type:'bar', data:{labels, datasets:[{data:values, backgroundColor:colors, borderRadius:6}]},
     options:{responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}}});
 
-  const v = data.variance;
-  line('varianceChart', v.periods, [
-    {label:'forecast demand', data:v.forecast_demand, borderColor:C('--target'), borderDash:[6,4]},
-    {label:'actual demand', data:v.actual_demand, borderColor:C('--warn'), backgroundColor:'rgba(246,195,67,.08)', fill:true},
+  const g = data.gmv;
+  line('gmvChart', g.periods, [
+    {label:'planned GMV', data:g.forecast, borderColor:C('--target'), borderDash:[6,4]},
+    {label:'actual GMV', data:g.actual, borderColor:C('--warn'), backgroundColor:'rgba(246,195,67,.08)', fill:true},
   ]);
-  const inv = data.inventory;
-  line('inventoryChart', inv.periods, [
-    {label:'target', data:inv.target, borderColor:C('--target'), borderDash:[6,4]},
-    {label:'Helm', data:inv.helm, borderColor:C('--good'), borderWidth:2},
-    {label:'uncontrolled', data:inv.uncontrolled, borderColor:C('--bad')},
+  const cf = data.cashflow;
+  line('cashChart', cf.periods, [
+    {label:'cash', data:cf.cash, borderColor:C('--accent'), backgroundColor:'rgba(78,161,255,.08)', fill:true},
+    {label:'floor + reserve', data:cf.floor_plus_reserve, borderColor:C('--bad'), borderDash:[4,4]},
+    {label:'owed to creators', data:cf.owed, borderColor:C('--muted')},
   ]);
-  const cash = data.cash;
-  line('cashChart', cash.periods, [
-    {label:'Helm cash', data:cash.helm, borderColor:C('--accent'), backgroundColor:'rgba(78,161,255,.08)', fill:true},
-    {label:'floor', data:cash.periods.map(()=>cash.floor), borderColor:C('--bad'), borderDash:[4,4]},
+  line('waitChart', data.creator_wait.periods, [
+    {label:'oldest unpaid (weeks)', data:data.creator_wait.oldest_wait, borderColor:C('--good'), borderWidth:2},
   ]);
-  bar('awardChart', ['optimal mix','naive single'],
-    [aw.optimal_cost, aw.naive_cost], [C('--good'), C('--muted')]);
+  const fr = data.frontier;
+  bar('frontierChart', ['pay everyone','monthly','Helm'],
+    [fr.pay_all.reserve_shortfall, fr.monthly.reserve_shortfall, fr.helm.reserve_shortfall],
+    [C('--bad'), C('--target'), C('--good')]);
+  const bw = data.payout_engine.bulwark;
   bar('bulwarkChart', ['naive take','hardened take','honest share'],
     [bw.naive_cheater_take, bw.hardened_cheater_take, bw.honest_share],
     [C('--bad'), C('--good'), C('--target')]);
-  new Chart(document.getElementById('evalChart'), {type:'bar',
-    data:{labels:['mean deviation','avg inventory'], datasets:[
-      {label:'Helm', data:[ev.deviation.helm, ev.avg_inventory.helm], backgroundColor:C('--good'), borderRadius:6},
-      {label:'base-stock', data:[ev.deviation.base_stock, ev.avg_inventory.base_stock], backgroundColor:C('--muted'), borderRadius:6}]},
-    options:{responsive:true, scales:{x:{grid:{display:false}}}}});
 
-  // signal desk: lost sales for three policies on the same real demand path
-  const sg = data.signal;
-  const P = sg.policies;
-  bar('signalChart', ['base-stock','Helm (no signal)','Helm + signal'],
-    [P.base_stock.lost_units, P.helm.lost_units, P.helm_signal.lost_units],
-    [C('--muted'), C('--warn'), C('--good')]);
-  const dEntries = Object.entries(sg.proposed_delta).map(([k,v]) => `+${v} at week ${k}`).join(', ');
-  document.getElementById('signalNote').innerHTML =
-    `<div>Signal (seen at week ${sg.promo_week-2}): <span style="color:var(--ink)">"${sg.signal_text}"</span></div>`+
-    `<div>Signal desk proposes <span style="color:var(--accent)">${dEntries||'no change'}</span> (plan is ${sg.plan}/wk); verifier admits it: <span style="color:var(--good)">${sg.verified}</span>.</div>`+
-    `<div>Real demand at week ${sg.promo_week} = <span style="color:var(--ink)">${sg.promo_demand}</span>. Stockouts: base-stock ${P.base_stock.stockouts}, Helm no-signal ${P.helm.stockouts}, Helm + signal <span style="color:var(--good)">${P.helm_signal.stockouts}</span>.</div>`+
-    `<div>Without the language model the promo note is unread text and the controller walks into stockouts; with it, lost sales go to zero.</div>`;
-
-  // journal table
-  const head = ['Cycle','Target','Bought','From','Cost','Inv after','Cash after','Deviation'];
-  const rows = data.journal.map(j => {
-    const sup = j.suppliers.map(s=>`${s.name} ${s.qty}@${s.price}`).join(', ') || '—';
-    return `<tr><td>${j.period}</td><td>${j.order_target}</td><td>${j.ordered_qty}</td>
-      <td style="text-align:left">${sup}</td><td>${money(j.order_cost)}</td>
-      <td>${j.inventory_after}</td><td>${money(j.cash_after)}</td><td>${j.deviation_after}</td></tr>`;
+  const rows = data.payout_runs.map(r => {
+    const who = r.recipients.map(x=>`${x.creator} ${money(x.amount)}`).join(', ') || '—';
+    const held = r.status !== 'completed';
+    return `<tr><td>wk${r.period}</td><td style="text-align:left">${who}</td>
+      <td>${money(r.total)}</td><td>${r.batch_id||'—'}</td>
+      <td><span class="tag ${held?'hold':'good'}">${r.status}</span></td></tr>`;
   }).join('');
-  document.getElementById('journal').innerHTML =
-    '<thead><tr>'+head.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+rows+'</tbody>';
+  document.getElementById('runs').innerHTML =
+    '<thead><tr><th>Cycle</th><th>Creators paid</th><th>Total</th><th>PayPal batch</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody>';
 
-  const pe = data.payout_engine, ks = pe.keystone, tg = pe.tollgate;
+  const pe = data.payout_engine, tg = pe.tollgate, ks = pe.keystone;
   document.getElementById('foot').innerHTML =
-    `Payout engine: Mete split fair by contribution · Bulwark hardening = ${bw.hardening_applied.join(', ')||'none needed'} · `+
-    `Clearwright legal: ${pe.clearwright_ok} · Tollgate withheld ${money(tg.withheld)} of ${money(tg.gross)} · `+
-    `Keystone ${ks.status}, batch ${ks.batch_id}, conserved ${ks.conserved}. Evaluation over ${ev.n} randomized scenarios.`;
+    `Context: a ~$${ctx.market_size_b}B creator economy, ~${ctx.creators_m}M creators, up to ${ctx.late_pct}% paid late. `+
+    `Bulwark hardening: ${bw.hardening_applied.join(', ')||'none needed'} (cheat defeated: ${bw.defeated}). `+
+    `Clearwright legal: ${pe.clearwright_ok}. Tollgate withheld ${money(tg.withheld)} of ${money(tg.gross)} for global creators. `+
+    `Keystone ${ks.status}, batch ${ks.batch_id}, conserved ${ks.conserved}.`;
 })();
 </script>
 </body>

@@ -1,175 +1,67 @@
-"""Build the single source of truth for the dashboard.
+"""The single source of truth for the dashboard: the creator-marketplace story.
 
 Runs the whole system once and returns a JSON-serializable payload the charts
-read: the variance money shot (forecast vs actual, inventory vs target, with
-Helm holding the line while an uncontrolled baseline drifts), cash against the
-floor, the per-cycle control journal, Awardsmith's supplier split beating the
-naive buy, the payout engine's Bulwark before/after and tax, and the honest
-evaluation summary.
+read: the GMV variance (a viral spike the flat plan never saw), cash against the
+floor-plus-reserve line, how fast creators get paid, the payout frontier (Helm
+versus the naive extremes), a sample of real-shaped payout batches to creators,
+and the payout engine (fair split, fraud hardening, cross-border withholding).
 """
 from __future__ import annotations
 
 import functools
 
-from agent.signals import SignalDesk
-from agent.verifier import ActionVerifier
-from arms.awardsmith import AwardsmithSolver, DiscountTier, SupplierQuote, naive_single_supplier_cost
 from arms.payout_engine import Contribution, Party, run_payout_engine
-from council.loop import HelmLoop
-from evaluation import (base_stock_policy, constant_policy, evaluate, helm_policy,
-                        helm_signal_policy, run_policy)
-from helm_core import ControllerParams, RecedingHorizonController
+from marketplace import (CashPayoutController, CashPayoutParams, Creator,
+                         CreatorMarketplace, MarketplaceParams, helm_payout_policy,
+                         pay_all_now_policy, pay_monthly_policy, run_marketplace,
+                         run_marketplace_live)
 from paypal import Ledger, PayPalClient
-from simulator import BusinessParams, BusinessSim
-from simulator.real_demand import P263_WEEKLY, PLANNED_DEMAND, PRODUCT_CODE
 
-N_PERIODS = len(P263_WEEKLY)
+# a viral spike, then a collapse while the spike's chargebacks land
+GMV = [1000]*5 + [1800, 2600, 3000, 2600, 1800] + [350, 300, 350, 450, 600] + [900]*9
 
+CREATORS = [
+    Creator("Ava", "ava-creator@personal.example.com", weight=3.0),
+    Creator("Ben", "ben-creator@personal.example.com", weight=2.0),
+    Creator("Cy", "cy-creator@personal.example.com", weight=1.0),
+]
 
-def _suppliers() -> list[SupplierQuote]:
-    return [
-        SupplierQuote("Alpha", [DiscountTier(0, 9.0)], capacity=200),
-        SupplierQuote("Beta", [DiscountTier(0, 8.5), DiscountTier(40, 8.0)], capacity=200),
-        SupplierQuote("Gamma", [DiscountTier(50, 7.5)], capacity=120),
-    ]
-
-
-def _scenario_params() -> BusinessParams:
-    # Real recorded demand (UCI product P263). The business plans around a flat
-    # PLANNED_DEMAND; the actual series surges and collapses on its own.
-    return BusinessParams(
-        price=20.0, unit_cost=8.0, lead_time=1,
-        init_inventory=40.0, init_cash=1500.0, target_inventory=40.0,
-        cash_floor=0.0, baseline_demand=PLANNED_DEMAND,
-        demand_series=list(P263_WEEKLY),
-    )
+# cited context for the headline (see the research in the README)
+CONTEXT = {"market_size_b": 314, "creators_m": 207, "late_pct": 87}
 
 
-def _signal_panel() -> dict:
-    """The LLM's real job: read an announced promotion (free text) that the
-    controller cannot see, turn it into a bounded, verified forecast bump, and
-    let the controller pre-position stock. Scored on stockouts and lost sales
-    (NOT the controller's own deviation objective), so a win here is not
-    circular. Built with the deterministic fallback parser so the page needs no
-    network at startup; the live model path is in scripts/demo_signal.py."""
-    promo_week = 24
-    signal_text = (
-        "Marketing booked a major promotion for week 24; in past promos this "
-        "product sold roughly triple its normal weekly volume that week."
-    )
-    p = BusinessParams(
-        price=20.0, unit_cost=8.0, lead_time=2,
-        init_inventory=40.0, init_cash=4000.0, target_inventory=40.0,
-        cash_floor=0.0, baseline_demand=PLANNED_DEMAND, demand_series=list(P263_WEEKLY),
-    )
-    cparams = ControllerParams(horizon=8, unit_cost=p.unit_cost, price=p.price,
-                               cash_floor=p.cash_floor, lead_time=p.lead_time)
-    controller = RecedingHorizonController(cparams)
-
-    proposed = SignalDesk(llm=None).interpret(
-        signal_text, current_period=22, baseline_demand=PLANNED_DEMAND, horizon=8)
-    verifier = ActionVerifier(BusinessSim(p, seed=7, n_periods=len(P263_WEEKLY)),
-                              controller, _suppliers())
-    verdict, adj = verifier.verify_forecast_adjustment(
-        proposed, current_period=22, baseline_demand=PLANNED_DEMAND, horizon=8)
-
-    def _run(policy):
-        return run_policy(BusinessSim(p, seed=7, n_periods=len(P263_WEEKLY)), policy)
-
-    def _pol(m):
-        return {"stockouts": m.stockout_periods, "fill": m.fill_rate,
-                "lost_units": round((1 - m.fill_rate) * sum(P263_WEEKLY))}
-
-    return {
-        "signal_text": signal_text,
-        "promo_week": promo_week,
-        "promo_demand": P263_WEEKLY[promo_week],
-        "plan": PLANNED_DEMAND,
-        "proposed_delta": {int(k): round(v, 1) for k, v in adj.period_deltas.items()},
-        "verified": bool(verdict.ok),
-        "policies": {
-            "base_stock": _pol(_run(base_stock_policy())),
-            "helm": _pol(_run(helm_policy(controller))),
-            "helm_signal": _pol(_run(helm_signal_policy(controller, adj))),
-        },
-    }
+def _params() -> MarketplaceParams:
+    return MarketplaceParams(
+        baseline_gmv=1000.0, take_rate=0.12, refund_rate=0.05, chargeback_rate=0.12,
+        chargeback_lag=2, chargeback_window=4, reserve_rate=0.30, cash_floor=300.0,
+        init_cash=900.0, demand_series=[float(x) for x in GMV])
 
 
-def build_dashboard_data() -> dict:
-    params = _scenario_params()
-    suppliers = _suppliers()
-    controller = RecedingHorizonController(ControllerParams(horizon=8))
+def _controller() -> CashPayoutController:
+    return CashPayoutController(CashPayoutParams(
+        horizon=8, take_rate=0.12, refund_rate=0.05, chargeback_rate=0.12))
 
-    # Helm run (controller + Awardsmith + journal) and an uncontrolled baseline,
-    # both on the same real demand series so the only difference is the control.
-    helm_sim = BusinessSim(params, seed=7, n_periods=N_PERIODS)
-    loop = HelmLoop(helm_sim, controller, suppliers)
-    journal = loop.run()
 
-    base_sim = BusinessSim(params, seed=7, n_periods=N_PERIODS)
-    run_policy(base_sim, constant_policy())
+def _sim() -> CreatorMarketplace:
+    return CreatorMarketplace(_params(), seed=7, n_periods=len(GMV))
 
-    periods = [o.period for o in helm_sim.history]
-    variance = {
-        "periods": periods,
-        "forecast_demand": [o.forecast_demand for o in helm_sim.history],
-        "actual_demand": [o.demand for o in helm_sim.history],
-        "source": f"real recorded weekly demand, UCI product {PRODUCT_CODE}",
-    }
-    inventory = {
-        "periods": periods,
-        "target": [o.target_inventory for o in helm_sim.history],
-        "helm": [o.inventory for o in helm_sim.history],
-        "uncontrolled": [o.inventory for o in base_sim.history],
-    }
-    cash = {
-        "periods": periods,
-        "helm": [o.cash for o in helm_sim.history],
-        "floor": params.cash_floor,
-    }
-    journal_rows = [{
-        "period": j.period,
-        "order_target": round(j.order_target, 1),
-        "ordered_qty": round(j.ordered_qty, 1),
-        "order_cost": round(j.order_cost, 2),
-        "suppliers": [{"name": n, "qty": round(q, 1), "price": p} for n, q, p in j.supplier_split],
-        "inventory_after": round(j.inventory_after, 1),
-        "cash_after": round(j.cash_after, 2),
-        "deviation_after": j.deviation_after,
-    } for j in journal]
 
-    # Awardsmith panel: a restock above the cheapest supplier's capacity, so the
-    # optimal multi-supplier split genuinely beats the naive single-supplier buy
-    target = 150.0
-    award = AwardsmithSolver(suppliers).allocate(target)
-    naive = naive_single_supplier_cost(suppliers, target)
-    awardsmith = {
-        "target": target,
-        "lines": [{"supplier": l.supplier, "quantity": l.quantity,
-                   "unit_price": l.unit_price, "line_cost": l.line_cost}
-                  for l in award.lines],
-        "optimal_cost": award.total_cost,
-        "naive_cost": None if naive == float("inf") else naive,
-        "savings": None if naive == float("inf") else round(naive - award.total_cost, 2),
-    }
-
-    # Payout engine panel (demo PayPal)
+def _payout_engine_panel() -> dict:
     client, ledger = PayPalClient(env={"DEMO_MODE": "1"}), Ledger()
     pe = run_payout_engine(
         1000.0,
-        [Contribution("A", {"c1", "c2", "c3", "c4"}),
-         Contribution("B", {"c3", "c4", "c5"}),
-         Contribution("C", {"c5", "c6"})],
-        [Party("A", 400), Party("B", 300), Party("C", 150)],
-        Party("Z", 500, cluster="Z", honest=False),
-        {"A": {"email": "a@ex.com", "country": "US"},
-         "B": {"email": "b@ex.com", "country": "IN"},
-         "C": {"email": "c@ex.com", "country": "BR"},
-         "Z": {"email": "z@ex.com", "country": "US"}},
+        [Contribution("Ava", {"c1", "c2", "c3", "c4"}),
+         Contribution("Ben", {"c3", "c4", "c5"}),
+         Contribution("Cy", {"c5", "c6"})],
+        [Party("Ava", 400), Party("Ben", 300), Party("Cy", 150)],
+        Party("Sybil", 500, cluster="Sybil", honest=False),
+        {"Ava": {"email": "ava@ex.com", "country": "US"},
+         "Ben": {"email": "ben@ex.com", "country": "IN"},
+         "Cy": {"email": "cy@ex.com", "country": "BR"},
+         "Sybil": {"email": "z@ex.com", "country": "US"}},
         client, ledger, sender_batch_id="dash-payengine", purpose="COMMISSION",
         fail_items=set(), approved=True)
-    payout_engine = {
-        "mete": pe.mete.shares,
+    return {
         "bulwark": {
             "naive_cheater_take": pe.bulwark.naive_cheater_take,
             "hardened_cheater_take": pe.bulwark.hardened_cheater_take,
@@ -182,46 +74,72 @@ def build_dashboard_data() -> dict:
                      "withheld": pe.tollgate.total_withheld,
                      "net": pe.tollgate.total_net},
         "keystone": {"status": pe.keystone.status, "batch_id": pe.keystone.batch_id,
-                     "paid": pe.keystone.paid_total, "conserved": pe.keystone.conserved},
+                     "conserved": pe.keystone.conserved},
     }
 
-    # Honest evaluation (smaller n for responsiveness)
-    ev = evaluate(n=120, seed=0)
-    evaluation = {
-        "n": ev["n_scenarios"],
-        "deviation": {"helm": ev["helm_mean_deviation"], "base_stock": ev["base_stock_mean_deviation"]},
-        "fill": {"helm": ev["helm_mean_fill"], "base_stock": ev["base_stock_mean_fill"]},
-        "avg_inventory": {"helm": ev["helm_mean_avg_inventory"],
-                          "base_stock": ev["base_stock_mean_avg_inventory"]},
-        "cash_breaches": {"raw_helm": ev["helm_total_cash_breaches"],
-                          "verified_helm": ev["helm_verified_total_cash_breaches"],
-                          "base_stock": ev["base_stock_total_cash_breaches"]},
+
+def build_dashboard_data() -> dict:
+    floor = _params().cash_floor
+
+    # Helm run, keeping the per-period trajectory for the charts
+    sim_h = _sim()
+    helm_metrics = run_marketplace(sim_h, helm_payout_policy(_controller()))
+    hist = sim_h.history
+    periods = [o.period for o in hist]
+
+    gmv = {
+        "periods": periods,
+        "forecast": [o.forecast_gmv for o in hist],
+        "actual": [o.gmv for o in hist],
     }
+    cashflow = {
+        "periods": periods,
+        "cash": [o.cash for o in hist],
+        "floor_plus_reserve": [round(floor + o.reserve_required, 2) for o in hist],
+        "owed": [o.owed for o in hist],
+    }
+    creator_wait = {"periods": periods, "oldest_wait": [o.oldest_wait for o in hist]}
+
+    # the payout frontier: Helm vs the naive extremes
+    pay_all = run_marketplace(_sim(), pay_all_now_policy())
+    monthly = run_marketplace(_sim(), pay_monthly_policy(4))
+
+    def _m(m):
+        return {"avg_wait": m.avg_wait, "reserve_breaches": m.reserve_breaches,
+                "reserve_shortfall": m.reserve_shortfall, "cash_floor_breaches": m.cash_floor_breaches,
+                "total_paid": m.total_paid}
+    frontier = {"pay_all": _m(pay_all), "monthly": _m(monthly), "helm": _m(helm_metrics)}
+
+    # a sample of real-shaped payout batches to creators (demo mode, no network)
+    client, ledger = PayPalClient(env={"DEMO_MODE": "1"}), Ledger()
+    runs = run_marketplace_live(_sim(), _controller(), CREATORS, client, ledger)
+    payout_runs = [{
+        "period": r.period, "total": r.payout_total, "batch_id": r.batch_id,
+        "status": r.status,
+        "recipients": [{"creator": x["creator"], "amount": x["amount"]} for x in r.recipients],
+    } for r in runs[:8]]
 
     return {
-        "variance": variance,
-        "inventory": inventory,
-        "cash": cash,
-        "journal": journal_rows,
-        "awardsmith": awardsmith,
-        "payout_engine": payout_engine,
-        "evaluation": evaluation,
-        "signal": _signal_panel(),
-        "cumulative_deviation": {
-            "helm": helm_sim.cumulative_inv_deviation(),
-            "uncontrolled": round(sum(abs(o.inventory - o.target_inventory)
-                                      for o in base_sim.history), 2),
+        "context": CONTEXT,
+        "gmv": gmv,
+        "cashflow": cashflow,
+        "creator_wait": creator_wait,
+        "frontier": frontier,
+        "payout_runs": payout_runs,
+        "payout_engine": _payout_engine_panel(),
+        "headline": {
+            "creators_paid_total": round(sum(r.payout_total for r in runs), 2),
+            "helm_avg_wait": helm_metrics.avg_wait,
+            "shortfall_helm": helm_metrics.reserve_shortfall,
+            "shortfall_pay_all": pay_all.reserve_shortfall,
+            "floor_breaches_helm": helm_metrics.cash_floor_breaches,
         },
     }
 
 
 @functools.lru_cache(maxsize=1)
 def dashboard_data_cached() -> dict:
-    """The dashboard payload, computed once and reused.
-
-    A full build runs the controller loop plus a 120-scenario evaluation (about
-    five seconds). The inputs are fixed seeds, so the result is identical every
-    time; recomputing it on each page load would make every visitor wait. The
-    server warms this once at startup and serves the cached payload thereafter.
-    """
+    """The dashboard payload, computed once and reused (a full system run). The
+    inputs are fixed, so the result is identical every time; the server warms
+    this at startup and serves the cached payload thereafter."""
     return build_dashboard_data()
