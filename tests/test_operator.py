@@ -67,10 +67,11 @@ def test_risky_creator_is_held_and_safe_ones_are_paid():
 
 def test_guardrail_clamps_an_overspend_and_drops_unknown_creators():
     operator, tools = _build()
+    tools.led.accrue("Ava", 5000.0, period=0)   # a large real balance to overspend from
     tools.observe()
     cap = tools.size_safe_release(1.0)["safe_release_total"]
-    # ask to pay far more than the cap, to a real and an unknown creator
-    res = tools.pay_creators([{"creator": "Ava", "amount": cap * 10},
+    # ask to pay far more than the safe cap, to a real and an unknown creator
+    res = tools.pay_creators([{"creator": "Ava", "amount": 5000.0},
                               {"creator": "Ghost", "amount": 500}])
-    assert res["paid_total"] <= cap + 1e-6
+    assert res["paid_total"] <= cap + 1e-6                 # safe-release clamp holds
     assert any("Ghost" in o for o in res["guardrail_overrides"])

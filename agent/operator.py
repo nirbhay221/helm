@@ -27,8 +27,12 @@ SYSTEM_PROMPT = (
     "(4) pay_creators, releasing to creators you judge low-risk (long-tenured, "
     "steady, clean history) and HOLDING creators you judge risky (brand new, just "
     "went viral, flagged for fraud or disputes), with total within the safe "
-    "release. Call pay_creators exactly once to close the cycle. You never compute "
-    "the safe amount yourself; the tools enforce every limit. Be decisive."
+    "release. Each creator shows owed (all unpaid), settled_owed (past its "
+    "chargeback window, safe to pay) and recoup_due (debt from a reversed sale). "
+    "Paying settled_owed is safest; paying above it is an early release you should "
+    "do only for a creator you judge low-risk. Call pay_creators exactly once to "
+    "close the cycle. You never compute the safe amount yourself; the tools "
+    "enforce every limit. Be decisive."
 )
 
 _RISKY_WORDS = ("fraud", "new", "viral", "dispute", "chargeback", "suspicious", "spike")
@@ -121,14 +125,19 @@ class MoneyOutOperator:
         cap = self.tools._safe_release
         if cap is None:
             cap = self.tools.size_safe_release(1.0)["safe_release_total"]
-        # release to low-risk creators first (skip those whose context looks risky)
-        creators = sorted(self.tools.creators.values(), key=lambda c: c.owed, reverse=True)
+        # release only SETTLED balances (past the chargeback window) to low-risk
+        # creators, skipping any whose context looks risky. Holding until settled is
+        # the safe default; the model may release earlier when it judges it safe.
+        now = self.tools.sim.t
+        payable = {c.name: self.tools.led.settled_unpaid(c.name, now) for c in self.tools.creators.values()}
+        creators = sorted(self.tools.creators.values(), key=lambda c: payable[c.name], reverse=True)
         alloc, remaining = [], cap
         for c in creators:
             risky = any(w in (c.context or "").lower() for w in _RISKY_WORDS)
-            if risky or remaining <= 1e-6 or c.owed <= 1e-6:
+            avail = payable[c.name]
+            if risky or remaining <= 1e-6 or avail <= 1e-6:
                 continue
-            pay = min(c.owed, remaining)
+            pay = min(avail, remaining)
             alloc.append({"creator": c.name, "amount": round(pay, 2)})
             remaining -= pay
         result = self.tools.pay_creators(alloc)

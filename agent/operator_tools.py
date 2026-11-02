@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from marketplace import CashPayoutController, CreatorMarketplace
+from marketplace.creator_ledger import CreatorLedger
 from paypal import Ledger, PayPalClient
 from paypal.mcp_payouts_tool import ALLOWED_PAYOUT_PURPOSES, create_payout
 
@@ -92,18 +93,26 @@ class OperatorTools:
         self.current_signal = ""
         self._safe_release: float | None = None
         self._total_weight = sum(c.weight for c in creators) or 1.0
+        # per-creator balances with hold-until-window and recoupment
+        self.led = CreatorLedger(sim.p.chargeback_window)
 
     # --- read ---------------------------------------------------------------
     def observe(self) -> dict:
-        s = self.sim
+        s, now = self.sim, self.sim.t
         return {
-            "period": s.t,
+            "period": now,
             "cash": round(s.cash, 2),
             "cash_floor": s.p.cash_floor,
             "reserve_required": round(s.reserve_required(), 2),
-            "total_owed": round(sum(c.owed for c in self.creators.values()), 2),
+            "total_owed": round(sum(self.led.total_unpaid(n) for n in self.creators), 2),
             "signal": self.current_signal or "(none)",
-            "creators": [{"creator": c.name, "owed": round(c.owed, 2), "context": c.context}
+            # owed = all unpaid; settled_owed = past its chargeback window (safe to pay);
+            # releasing more than settled_owed is an early release you judge low-risk.
+            # recoup_due = debt this creator owes from a reversed sale.
+            "creators": [{"creator": c.name, "context": c.context,
+                          "owed": self.led.total_unpaid(c.name),
+                          "settled_owed": self.led.settled_unpaid(c.name, now),
+                          "recoup_due": self.led.recoup_due(c.name)}
                          for c in self.creators.values()],
         }
 
@@ -126,7 +135,8 @@ class OperatorTools:
         H = c.p.horizon
         steady = s.p.reserve_rate * mult * s.p.chargeback_window * s.p.baseline_gmv
         reserve_floor = [s.p.reserve_rate * mult * s.exposure()] + [steady for _ in range(H)]
-        dec = c.plan(owed0=sum(cr.owed for cr in self.creators.values()), cash0=s.cash,
+        owed0 = sum(self.led.total_unpaid(n) for n in self.creators)
+        dec = c.plan(owed0=owed0, cash0=s.cash,
                      forecast_gmv=s.forecast_gmv(H), reserve_floor=reserve_floor,
                      cash_floor=s.p.cash_floor)
         self._safe_release = max(0.0, float(dec.payout))
@@ -164,14 +174,18 @@ class OperatorTools:
             status, batch_id, demo = res.status, res.batch_id, res.demo
             if status == "completed":
                 for n, a in alloc.items():
-                    if n in self.creators:
-                        self.creators[n].owed = max(0.0, self.creators[n].owed - a)
+                    self.led.pay(n, a, self.sim.t)
 
         paid = total if status == "completed" else 0.0
         obs = self.sim.step(paid)                      # advance time; accrue inflows
-        # accrue this period's new earnings to creators by weight
+        # attribute this period's new earnings and chargebacks to creators by weight,
+        # through the ledger: earnings held until their window closes, chargebacks
+        # eating unpaid first and clawing back the rest.
         for c in self.creators.values():
-            c.owed += obs.creator_earnings * (c.weight / self._total_weight)
+            share = c.weight / self._total_weight
+            self.led.accrue(c.name, obs.creator_earnings * share, obs.period)
+            if obs.chargebacks > 1e-9:
+                self.led.chargeback(c.name, obs.chargebacks * share, obs.period)
         self._safe_release = None                       # must re-size next cycle
 
         return {
@@ -203,7 +217,7 @@ class OperatorTools:
             if name not in self.creators:
                 overrides.append(f"unknown creator '{name}'; dropped")
                 continue
-            owed = self.creators[name].owed
+            owed = self.led.total_unpaid(name)
             if amt > owed + 1e-6:
                 overrides.append(f"{name}: requested {round(amt,2)} > owed {round(owed,2)}; capped")
                 amt = owed
