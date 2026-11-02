@@ -24,6 +24,7 @@ from typing import Any
 
 from marketplace import CashPayoutController, CreatorMarketplace
 from marketplace.creator_ledger import CreatorLedger
+from marketplace.forecast import ETSForecaster
 from paypal import Ledger, PayPalClient
 from paypal.mcp_payouts_tool import ALLOWED_PAYOUT_PURPOSES, create_payout
 
@@ -129,19 +130,31 @@ class OperatorTools:
             "suggests_caution": bool(implies_risk),
         }
 
-    def size_safe_release(self, risk_multiplier: float = 1.0) -> dict:
+    def size_safe_release(self, risk_multiplier: float = 1.0, service_z: float = 1.65) -> dict:
         s, c = self.sim, self.controller
         mult = max(1.0, float(risk_multiplier))
         H = c.p.horizon
-        steady = s.p.reserve_rate * mult * s.p.chargeback_window * s.p.baseline_gmv
-        reserve_floor = [s.p.reserve_rate * mult * s.exposure()] + [steady for _ in range(H)]
+        # time-series forecast of GMV (ETS) instead of a flat line, with an
+        # uncertainty band that sizes a safety buffer on the reserve: hold more
+        # when the forecast is less certain (the chance-constrained upgrade).
+        hist = list(s._gmv_history[-12:]) or [s.p.baseline_gmv]
+        means, sigmas = ETSForecaster().fit(hist).forecast(H)
+        recent = list(s._gmv_history[-s.p.chargeback_window:])
+        reserve_floor = [s.p.reserve_rate * mult * s.exposure()]
+        for i in range(H):
+            window = (recent + means[: i + 1])[-s.p.chargeback_window:]
+            base_reserve = s.p.reserve_rate * mult * sum(window)
+            buffer = service_z * sigmas[i] * s.p.reserve_rate
+            reserve_floor.append(base_reserve + buffer)
         owed0 = sum(self.led.total_unpaid(n) for n in self.creators)
         dec = c.plan(owed0=owed0, cash0=s.cash,
-                     forecast_gmv=s.forecast_gmv(H), reserve_floor=reserve_floor,
+                     forecast_gmv=means, reserve_floor=reserve_floor,
                      cash_floor=s.p.cash_floor)
         self._safe_release = max(0.0, float(dec.payout))
         return {"safe_release_total": round(self._safe_release, 2),
                 "risk_multiplier": mult,
+                "forecast_gmv_next": round(means[0], 2),
+                "forecast_sigma_next": round(sigmas[0], 2),
                 "reserve_required_effective": round(reserve_floor[0], 2),
                 "cash": round(s.cash, 2), "cash_floor": s.p.cash_floor}
 

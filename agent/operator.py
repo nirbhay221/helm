@@ -168,6 +168,8 @@ class MoneyOutOperator:
         elif name == "size_safe_release":
             rec.facts["safe_release_total"] = result.get("safe_release_total")
             rec.facts["risk_multiplier"] = result.get("risk_multiplier")
+            rec.facts["forecast_gmv_next"] = result.get("forecast_gmv_next")
+            rec.facts["forecast_sigma_next"] = result.get("forecast_sigma_next")
         elif name == "interpret_signal":
             rec.facts["signal_assessment"] = result.get("assessment")
             rec.facts["suggests_caution"] = result.get("suggests_caution")

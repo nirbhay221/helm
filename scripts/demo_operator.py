@@ -59,7 +59,8 @@ def main() -> None:
         print(f"--- cycle {r.period}  ({r.driver})" + (f'  SIGNAL: {sig}' if sig else ''))
         f = r.facts
         if "safe_release_total" in f:
-            print(f"    risk_multiplier={f.get('risk_multiplier')}  safe_release=${f.get('safe_release_total')}")
+            print(f"    forecast_gmv={f.get('forecast_gmv_next')} (+/-{f.get('forecast_sigma_next')})  "
+                  f"risk_multiplier={f.get('risk_multiplier')}  safe_release=${f.get('safe_release_total')}")
         paid = ", ".join(f"{p['creator']} ${p['amount']:.0f}" for p in (f.get('paid') or [])) or "nobody"
         print(f"    paid: [{paid}]  status={f.get('status')}  batch={f.get('batch_id')}  "
               f"cash_after=${f.get('cash_after')}  reserve_ok={f.get('reserve_ok_after')}")
