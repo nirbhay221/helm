@@ -18,7 +18,10 @@ import time
 
 class Ledger:
     def __init__(self, path: str = ":memory:") -> None:
-        self.conn = sqlite3.connect(path)
+        # check_same_thread=False so a host that dispatches tool calls on worker
+        # threads (an MCP server, a threaded web server) can use one ledger. Calls
+        # are serialized by those hosts, so there is no concurrent-writer race.
+        self.conn = sqlite3.connect(path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self._init()
 

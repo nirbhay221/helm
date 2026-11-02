@@ -61,6 +61,32 @@ ADJUST_FORECAST_TOOL = {
     },
 }
 
+def _median(values: list[float]) -> float:
+    xs = sorted(values)
+    n = len(xs)
+    if n == 0:
+        return 0.0
+    mid = n // 2
+    return xs[mid] if n % 2 else 0.5 * (xs[mid - 1] + xs[mid])
+
+
+def _disagreement(totals: list[float]) -> float:
+    """How much the models' total adjustments diverge, in [0, 1].
+
+    0 means they agree (identical totals, including all-zero). 1 means the spread
+    is as large as the typical magnitude or larger (one model sees a big change,
+    others see none, or they point opposite ways)."""
+    if not totals:
+        return 0.0
+    typical = sum(abs(t) for t in totals) / len(totals)
+    if typical < 1e-9:
+        return 0.0
+    mean = sum(totals) / len(totals)
+    var = sum((t - mean) ** 2 for t in totals) / len(totals)
+    sd = var ** 0.5
+    return max(0.0, min(1.0, sd / (typical + 1e-9)))
+
+
 _SYSTEM = (
     "You are the signal desk of an inventory controller. You read one operational "
     "signal and decide how planned demand should change, then call adjust_forecast. "
@@ -77,7 +103,13 @@ class ForecastAdjustment:
     period_deltas: dict[int, float] = field(default_factory=dict)
     rationale: str = ""
     cited_signal: str = ""
-    source: str = "model"          # "model" | "fallback"
+    source: str = "model"          # "model" | "fallback" | "panel"
+    # Set when a panel of models produced this: each model's raw vote, how much
+    # they disagreed (0 = unanimous, 1 = incoherent), and the resulting confidence
+    # the consensus is scaled by.
+    model_votes: dict = field(default_factory=dict)
+    disagreement: float = 0.0
+    confidence: float = 1.0
 
     def is_empty(self) -> bool:
         return not any(abs(d) > 1e-9 for d in self.period_deltas.values())
@@ -87,8 +119,13 @@ class ForecastAdjustment:
 
 
 class SignalDesk:
-    def __init__(self, llm: LLMClient | None = None) -> None:
+    def __init__(self, llm: LLMClient | None = None, models: list[str] | None = None,
+                 max_disagreement: float = 0.6) -> None:
         self.llm = llm or LLMClient()
+        # An optional panel of model ids. With more than one, each reads the
+        # signal and we act on their CONSENSUS, scaled by how much they agree.
+        self.models = [m for m in (models or []) if m]
+        self.max_disagreement = max_disagreement
 
     @property
     def available(self) -> bool:
@@ -98,20 +135,76 @@ class SignalDesk:
                   horizon: int = 12) -> ForecastAdjustment:
         """Turn one free-text signal into a proposed forecast adjustment.
 
-        Uses the model when a key is present; otherwise a small scripted parser so
-        the pipeline still runs keyless. Either way the result is only a PROPOSAL;
-        the verifier bounds it before the controller ever sees it.
+        With a model panel configured, several models vote and we return their
+        consensus scaled by agreement. With one model, that model decides. With
+        no key, a scripted parser keeps the pipeline running. Either way the
+        result is only a PROPOSAL; the verifier bounds it before the controller
+        ever sees it.
         """
+        if self.available and len(self.models) > 1:
+            try:
+                return self.interpret_panel(signal_text, current_period, baseline_demand, horizon)
+            except Exception:
+                pass
         if self.available:
             try:
-                return self._interpret_llm(signal_text, current_period, baseline_demand, horizon)
+                model = self.models[0] if self.models else None
+                return self._interpret_llm(signal_text, current_period, baseline_demand,
+                                           horizon, model=model)
             except Exception:
                 pass  # fall through to the scripted parser
         return self._interpret_fallback(signal_text, current_period, baseline_demand, horizon)
 
+    # --- panel path ---------------------------------------------------------
+    def interpret_panel(self, signal_text: str, current_period: int,
+                        baseline_demand: float, horizon: int = 12) -> ForecastAdjustment:
+        """Each model in the panel reads the signal; we act on the consensus.
+
+        A model that skips a period is voting zero there. We take the per-period
+        median as the consensus shape, measure disagreement as the spread of the
+        models' total adjustments, and scale the consensus by confidence
+        (1 - disagreement). A unanimous panel acts in full; a panel that cannot
+        agree (a vague or misleading signal) shrinks its bet toward nothing. This
+        is the point of the panel: it refuses to bet the inventory on one model's
+        reading of noise."""
+        votes: dict[str, ForecastAdjustment] = {}
+        for m in self.models:
+            try:
+                votes[m] = self._interpret_llm(signal_text, current_period,
+                                               baseline_demand, horizon, model=m)
+            except Exception:
+                continue
+        if not votes:
+            raise RuntimeError("no panel model responded")
+
+        periods = sorted({p for v in votes.values() for p in v.period_deltas})
+        median_deltas: dict[int, float] = {}
+        for p in periods:
+            col = sorted(v.delta_for(p) for v in votes.values())  # missing -> 0
+            median_deltas[p] = _median(col)
+
+        totals = [sum(v.period_deltas.values()) for v in votes.values()]
+        disagreement = _disagreement(totals)
+        confidence = round(max(0.0, 1.0 - disagreement), 3)
+
+        scaled = {p: round(d * confidence, 2) for p, d in median_deltas.items()
+                  if abs(d * confidence) > 1e-9}
+        cited = next((v.cited_signal for v in votes.values() if v.cited_signal.strip()), "")
+        return ForecastAdjustment(
+            period_deltas=scaled,
+            rationale=(f"panel of {len(votes)} models; disagreement={disagreement:.2f}, "
+                       f"confidence={confidence:.2f}"),
+            cited_signal=cited,
+            source="panel",
+            model_votes={m: {"deltas": {int(k): round(x, 2) for k, x in v.period_deltas.items()},
+                             "cited": v.cited_signal} for m, v in votes.items()},
+            disagreement=round(disagreement, 3),
+            confidence=confidence,
+        )
+
     # --- model path ---------------------------------------------------------
-    def _interpret_llm(self, signal_text: str, current_period: int,
-                       baseline_demand: float, horizon: int) -> ForecastAdjustment:
+    def _interpret_llm(self, signal_text: str, current_period: int, baseline_demand: float,
+                       horizon: int, model: str | None = None) -> ForecastAdjustment:
         user = (
             f"Current period: {current_period}. Planned demand is about "
             f"{baseline_demand:.0f} units per period. Planning horizon reaches period "
@@ -123,6 +216,7 @@ class SignalDesk:
             tools=[ADJUST_FORECAST_TOOL],
             tool_choice={"type": "function", "function": {"name": "adjust_forecast"}},
             temperature=0.0,
+            model=model,
         )
         calls = (msg or {}).get("tool_calls") or []
         if not calls:

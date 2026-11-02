@@ -38,15 +38,19 @@ class LLMClient:
         tool_choice: str = "auto",
         temperature: float = 0.0,
         max_tokens: int = 700,
+        model: str | None = None,
     ) -> dict:
         """One chat-completions turn. Returns the assistant message dict:
-        {"role": "assistant", "content": str|None, "tool_calls": [...]|None}."""
+        {"role": "assistant", "content": str|None, "tool_calls": [...]|None}.
+
+        `model` overrides the default for this call, so one client can drive a
+        panel of different models under the same key/endpoint."""
         if not self.available:
             raise RuntimeError("LLMClient has no API key; use the agent's fallback.")
         import requests
 
         payload: dict = {
-            "model": self.model,
+            "model": model or self.model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
