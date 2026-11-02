@@ -10,10 +10,12 @@ from .sim import CreatorMarketplace, MarketplaceParams, MarketObservation
 from .controller import CashPayoutController, CashPayoutParams
 from .policies import (pay_all_now_policy, pay_monthly_policy, helm_payout_policy,
                        run_marketplace, MarketplaceMetrics)
+from .execution import Creator, PayoutRun, run_marketplace_live
 
 __all__ = [
     "CreatorMarketplace", "MarketplaceParams", "MarketObservation",
     "CashPayoutController", "CashPayoutParams",
     "pay_all_now_policy", "pay_monthly_policy", "helm_payout_policy",
     "run_marketplace", "MarketplaceMetrics",
+    "Creator", "PayoutRun", "run_marketplace_live",
 ]

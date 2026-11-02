@@ -183,6 +183,30 @@ def create_payout(
     )
 
 
+def get_payout_batch(client: PayPalClient, batch_id: str) -> dict:
+    """Fetch a payout batch's status and per-item transaction status.
+
+    Live: GET /v1/payments/payouts/{batch_id}. Returns the batch_status (PENDING
+    / PROCESSING / SUCCESS / DENIED / CANCELED) and each item's transaction_status
+    (SUCCESS / UNCLAIMED / FAILED / ...). In demo mode returns a labeled stub."""
+    resp = client.get(f"/v1/payments/payouts/{batch_id}")
+    header = resp.get("batch_header", {})
+    items = []
+    for it in resp.get("items", []) or []:
+        items.append({
+            "payout_item_id": it.get("payout_item_id"),
+            "receiver": it.get("payout_item", {}).get("receiver"),
+            "amount": it.get("payout_item", {}).get("amount", {}).get("value"),
+            "transaction_status": it.get("transaction_status"),
+        })
+    return {
+        "batch_id": header.get("payout_batch_id", batch_id),
+        "batch_status": header.get("batch_status", "DEMO_OK" if resp.get("_demo") else "UNKNOWN"),
+        "demo": bool(resp.get("_demo", client.demo)),
+        "items": items,
+    }
+
+
 def run_payouts_tool(arguments: dict, client: PayPalClient, ledger: Ledger) -> dict:
     """MCP-style entry point: parse tool arguments and return a plain dict."""
     res = create_payout(
