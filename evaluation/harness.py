@@ -136,6 +136,29 @@ def helm_verified_policy(controller: RecedingHorizonController) -> Policy:
     return decide
 
 
+def helm_signal_policy(controller: RecedingHorizonController, adjustment) -> Policy:
+    """Helm, but the controller plans against a forecast adjusted by a verified
+    signal. Identical to helm_policy except the demand fed to the optimizer
+    carries the signal's per-period deltas, so the controller can pre-position
+    stock for a disruption that has been announced but not yet realized, which a
+    flat forecast cannot. `adjustment` is any object with `delta_for(period)`
+    (a verifier-sanitized ForecastAdjustment)."""
+    def decide(sim: BusinessSim) -> float:
+        H = controller.p.horizon
+        base = sim.forecast(H)
+        t = sim.t
+        fc = [max(0.0, float(base[i]) + adjustment.delta_for(t + i)) for i in range(H)]
+        dec = controller.plan(
+            inv0=sim.inventory,
+            cash0=sim.cash,
+            forecast=fc,
+            target=sim.target_trajectory(H + 1),
+            pending_arrivals=sim.pipeline_arrivals(H),
+        )
+        return dec.order_qty
+    return decide
+
+
 def run_policy(sim: BusinessSim, decide: Policy) -> RunMetrics:
     while not sim.done():
         sim.step(decide(sim))

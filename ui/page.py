@@ -78,6 +78,15 @@ _TEMPLATE = """<!doctype html>
   </div>
 
   <div class="panel">
+    <h2>The AI earns its place: a signal only a language model can read</h2>
+    <p>A promotion is announced two weeks before it lands. That announcement is free text the controller cannot use. The signal desk turns it into a bounded, verified demand bump; the controller pre-positions stock. Scored on stockouts and lost sales, not the controller's own objective, so the win is not circular.</p>
+    <div class="grid">
+      <div><canvas id="signalChart"></canvas></div>
+      <div id="signalNote" style="font-size:13px; color:var(--muted); display:flex; flex-direction:column; justify-content:center; gap:8px"></div>
+    </div>
+  </div>
+
+  <div class="panel">
     <h2>Control journal</h2>
     <p>Per cycle: what the controller targeted, what Awardsmith bought and from whom, the cost, and the resulting state.</p>
     <div style="overflow-x:auto"><table id="journal"></table></div>
@@ -143,6 +152,19 @@ _TEMPLATE = """<!doctype html>
       {label:'Helm', data:[ev.deviation.helm, ev.avg_inventory.helm], backgroundColor:C('--good'), borderRadius:6},
       {label:'base-stock', data:[ev.deviation.base_stock, ev.avg_inventory.base_stock], backgroundColor:C('--muted'), borderRadius:6}]},
     options:{responsive:true, scales:{x:{grid:{display:false}}}}});
+
+  // signal desk: lost sales for three policies on the same real demand path
+  const sg = data.signal;
+  const P = sg.policies;
+  bar('signalChart', ['base-stock','Helm (no signal)','Helm + signal'],
+    [P.base_stock.lost_units, P.helm.lost_units, P.helm_signal.lost_units],
+    [C('--muted'), C('--warn'), C('--good')]);
+  const dEntries = Object.entries(sg.proposed_delta).map(([k,v]) => `+${v} at week ${k}`).join(', ');
+  document.getElementById('signalNote').innerHTML =
+    `<div>Signal (seen at week ${sg.promo_week-2}): <span style="color:var(--ink)">"${sg.signal_text}"</span></div>`+
+    `<div>Signal desk proposes <span style="color:var(--accent)">${dEntries||'no change'}</span> (plan is ${sg.plan}/wk); verifier admits it: <span style="color:var(--good)">${sg.verified}</span>.</div>`+
+    `<div>Real demand at week ${sg.promo_week} = <span style="color:var(--ink)">${sg.promo_demand}</span>. Stockouts: base-stock ${P.base_stock.stockouts}, Helm no-signal ${P.helm.stockouts}, Helm + signal <span style="color:var(--good)">${P.helm_signal.stockouts}</span>.</div>`+
+    `<div>Without the language model the promo note is unread text and the controller walks into stockouts; with it, lost sales go to zero.</div>`;
 
   // journal table
   const head = ['Cycle','Target','Bought','From','Cost','Inv after','Cash after','Deviation'];

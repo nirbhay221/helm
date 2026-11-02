@@ -11,10 +11,13 @@ from __future__ import annotations
 
 import functools
 
+from agent.signals import SignalDesk
+from agent.verifier import ActionVerifier
 from arms.awardsmith import AwardsmithSolver, DiscountTier, SupplierQuote, naive_single_supplier_cost
 from arms.payout_engine import Contribution, Party, run_payout_engine
 from council.loop import HelmLoop
-from evaluation import constant_policy, evaluate, run_policy
+from evaluation import (base_stock_policy, constant_policy, evaluate, helm_policy,
+                        helm_signal_policy, run_policy)
 from helm_core import ControllerParams, RecedingHorizonController
 from paypal import Ledger, PayPalClient
 from simulator import BusinessParams, BusinessSim
@@ -40,6 +43,56 @@ def _scenario_params() -> BusinessParams:
         cash_floor=0.0, baseline_demand=PLANNED_DEMAND,
         demand_series=list(P263_WEEKLY),
     )
+
+
+def _signal_panel() -> dict:
+    """The LLM's real job: read an announced promotion (free text) that the
+    controller cannot see, turn it into a bounded, verified forecast bump, and
+    let the controller pre-position stock. Scored on stockouts and lost sales
+    (NOT the controller's own deviation objective), so a win here is not
+    circular. Built with the deterministic fallback parser so the page needs no
+    network at startup; the live model path is in scripts/demo_signal.py."""
+    promo_week = 24
+    signal_text = (
+        "Marketing booked a major promotion for week 24; in past promos this "
+        "product sold roughly triple its normal weekly volume that week."
+    )
+    p = BusinessParams(
+        price=20.0, unit_cost=8.0, lead_time=2,
+        init_inventory=40.0, init_cash=4000.0, target_inventory=40.0,
+        cash_floor=0.0, baseline_demand=PLANNED_DEMAND, demand_series=list(P263_WEEKLY),
+    )
+    cparams = ControllerParams(horizon=8, unit_cost=p.unit_cost, price=p.price,
+                               cash_floor=p.cash_floor, lead_time=p.lead_time)
+    controller = RecedingHorizonController(cparams)
+
+    proposed = SignalDesk(llm=None).interpret(
+        signal_text, current_period=22, baseline_demand=PLANNED_DEMAND, horizon=8)
+    verifier = ActionVerifier(BusinessSim(p, seed=7, n_periods=len(P263_WEEKLY)),
+                              controller, _suppliers())
+    verdict, adj = verifier.verify_forecast_adjustment(
+        proposed, current_period=22, baseline_demand=PLANNED_DEMAND, horizon=8)
+
+    def _run(policy):
+        return run_policy(BusinessSim(p, seed=7, n_periods=len(P263_WEEKLY)), policy)
+
+    def _pol(m):
+        return {"stockouts": m.stockout_periods, "fill": m.fill_rate,
+                "lost_units": round((1 - m.fill_rate) * sum(P263_WEEKLY))}
+
+    return {
+        "signal_text": signal_text,
+        "promo_week": promo_week,
+        "promo_demand": P263_WEEKLY[promo_week],
+        "plan": PLANNED_DEMAND,
+        "proposed_delta": {int(k): round(v, 1) for k, v in adj.period_deltas.items()},
+        "verified": bool(verdict.ok),
+        "policies": {
+            "base_stock": _pol(_run(base_stock_policy())),
+            "helm": _pol(_run(helm_policy(controller))),
+            "helm_signal": _pol(_run(helm_signal_policy(controller, adj))),
+        },
+    }
 
 
 def build_dashboard_data() -> dict:
@@ -153,6 +206,7 @@ def build_dashboard_data() -> dict:
         "awardsmith": awardsmith,
         "payout_engine": payout_engine,
         "evaluation": evaluation,
+        "signal": _signal_panel(),
         "cumulative_deviation": {
             "helm": helm_sim.cumulative_inv_deviation(),
             "uncontrolled": round(sum(abs(o.inventory - o.target_inventory)

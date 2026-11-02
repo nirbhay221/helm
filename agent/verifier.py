@@ -29,6 +29,8 @@ from helm_core import RecedingHorizonController
 from paypal.mcp_payouts_tool import ALLOWED_PAYOUT_PURPOSES
 from simulator import BusinessSim
 
+from .signals import ForecastAdjustment
+
 
 @dataclass
 class Verdict:
@@ -115,6 +117,55 @@ class ActionVerifier:
 
         v.executed_value = round(qty, 2)
         return v
+
+    # --- forecast adjustment from a signal ----------------------------------
+    def verify_forecast_adjustment(
+        self,
+        adj: ForecastAdjustment,
+        current_period: int,
+        baseline_demand: float,
+        horizon: int = 12,
+        max_factor: float = 3.0,
+    ) -> tuple["Verdict", ForecastAdjustment]:
+        """Admit a signal-driven forecast change only within sound bounds.
+
+        The model may inform the plan, not rewrite it. An adjustment is DISCARDED
+        if it cites no signal (the known failure mode: inventing demand in noise).
+        Surviving deltas are clipped to the planning window and bounded in
+        magnitude to +/- max_factor x baseline, and demand is never pushed below
+        zero. Returns the verdict and the sanitized adjustment the controller may
+        actually use."""
+        v = Verdict(ok=True, executed_value=0.0)
+        if adj is None or not str(adj.cited_signal).strip():
+            v.ok = False
+            v.note("forecast adjustment cites no signal; discarded", repaired=False)
+            return v, ForecastAdjustment(rationale="rejected: no cited signal",
+                                         source=getattr(adj, "source", "model"))
+
+        cap = max_factor * max(1.0, float(baseline_demand))
+        lo, hi = current_period, current_period + horizon
+        clean: dict[int, float] = {}
+        for p, d in (adj.period_deltas or {}).items():
+            if p < lo or p > hi:
+                v.note(f"delta at period {p} is outside the planning window "
+                       f"[{lo},{hi}]; dropped")
+                continue
+            dd = float(d)
+            if abs(dd) > cap:
+                v.note(f"delta {round(dd, 1)} at period {p} exceeds bound "
+                       f"+/-{round(cap, 1)}; clamped")
+                dd = cap if dd > 0 else -cap
+            if dd < -baseline_demand:
+                dd = -baseline_demand
+            if abs(dd) > 1e-9:
+                clean[p] = round(dd, 2)
+
+        v.executed_value = round(sum(abs(x) for x in clean.values()), 2)
+        sanitized = ForecastAdjustment(
+            period_deltas=clean, rationale=adj.rationale,
+            cited_signal=adj.cited_signal, source=adj.source,
+        )
+        return v, sanitized
 
     # --- money movement -----------------------------------------------------
     def verify_payout(self, recipients: list[dict], purpose: str) -> Verdict:
