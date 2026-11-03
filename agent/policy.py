@@ -23,6 +23,20 @@ from marketplace.allocator import TREATY_WITHHOLDING, Constraints, Weights, vali
 from .llm import LLMClient
 
 _KNOWN_COUNTRIES = set(TREATY_WITHHOLDING.keys())
+_COUNTRY_NAMES = {
+    "nigeria": "NG", "china": "CN", "india": "IN", "brazil": "BR", "philippines": "PH",
+    "mexico": "MX", "germany": "DE", "canada": "CA", "united states": "US", "usa": "US",
+    "u.s.": "US", "america": "US", "united kingdom": "GB", "u.k.": "GB", "uk": "GB", "britain": "GB",
+}
+_EXCLUDE_WORDS = ("freeze", "stop", "halt", "suspend", "exclude", "no payout", "no payouts",
+                  "do not pay", "don't pay", "pending review", "block", "pause")
+
+
+def _to_code(token: str) -> str | None:
+    t = str(token).strip().upper()
+    if t in _KNOWN_COUNTRIES:
+        return t
+    return _COUNTRY_NAMES.get(str(token).strip().lower())
 
 COMPILE_POLICY_TOOL = {
     "type": "function",
@@ -99,7 +113,7 @@ class PolicyDesk:
             return self._compile_fallback(policy_text)
         args = calls[0].get("function", {}).get("arguments", "{}")
         data = args if isinstance(args, dict) else json.loads(args)
-        return self._assemble(data, source="model")
+        return self._assemble(data, source="model", policy_text=policy_text + " " + str(data.get("reading", "")))
 
     def _compile_fallback(self, policy_text: str) -> PolicyDecision:
         t = (policy_text or "").lower()
@@ -113,9 +127,9 @@ class PolicyDesk:
         if m and ("no more than" in t or "cap" in t or "max" in t or "diversif" in t):
             data["max_fraction_per_creator"] = max(0.0, min(1.0, float(m.group(1)) / 100.0))
         data["reading"] = "fallback keyword parse of the policy"
-        return self._assemble(data, source="fallback")
+        return self._assemble(data, source="fallback", policy_text=policy_text)
 
-    def _assemble(self, data: dict, source: str) -> PolicyDecision:
+    def _assemble(self, data: dict, source: str, policy_text: str = "") -> PolicyDecision:
         w, wv = validate_weights(data)
         violations = list(wv)
 
@@ -132,8 +146,16 @@ class PolicyDesk:
         raw_ex = data.get("exclude_countries") or []
         if isinstance(raw_ex, str):
             raw_ex = [raw_ex]
-        exclude = tuple(c.upper() for c in raw_ex if str(c).upper() in _KNOWN_COUNTRIES)
-        dropped = [c for c in raw_ex if str(c).upper() not in _KNOWN_COUNTRIES and str(c).strip().isalpha()]
+        codes = {c for c in (_to_code(x) for x in raw_ex) if c}   # accept codes OR names
+        # deterministic net: if the policy says freeze/stop and names a country, honor it
+        # even when the model left the field empty (a known reliability gap).
+        text = (policy_text or "").lower()
+        if any(k in text for k in _EXCLUDE_WORDS):
+            for nm, code in _COUNTRY_NAMES.items():
+                if nm in text:
+                    codes.add(code)
+        exclude = tuple(sorted(codes))
+        dropped = [c for c in raw_ex if not _to_code(c) and str(c).strip().isalpha()]
         if dropped:
             violations.append(f"unknown countries ignored: {dropped}")
 

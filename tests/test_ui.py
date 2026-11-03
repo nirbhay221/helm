@@ -13,10 +13,14 @@ from ui.page import render_page  # noqa: E402
 
 def test_dashboard_data_is_complete_and_serializable():
     d = build_dashboard_data()
-    for key in ("context", "population", "scenarios", "reinvest", "payout_engine", "headline"):
+    for key in ("context", "population", "scenarios", "reinvest", "directory", "payout_engine", "headline"):
         assert key in d
     ri = d["reinvest"]
     assert ri["holdings"] and ri["nav"]["values"] and len(ri["nav"]["dates"]) == len(ri["nav"]["values"])
+    dr = d["directory"]
+    assert dr["total"] >= 5000 and dr["sample"]        # scale plus browsable individuals
+    assert all(c.get("display") and c.get("country") for c in dr["sample"])
+    assert d["headline"]["creators"] == dr["total"]
     assert d["headline"]["creators"] >= 1000           # real-world scale
     s = d["scenarios"]
     assert len(s) >= 2

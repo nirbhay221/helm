@@ -71,6 +71,13 @@ _TEMPLATE = """<!doctype html>
   <div class="cards" id="cards"></div>
 
   <div class="panel">
+    <h2>The creators <span id="dirCount" class="sub"></span></h2>
+    <p>Thousands of individual creators across the world, the population the agent pays. Search the sample by name or country.</p>
+    <input id="dirSearch" placeholder="search name or country..." style="width:100%;max-width:340px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:8px 10px;margin-bottom:10px;font-size:13px">
+    <div style="overflow:auto;max-height:320px"><table id="directory"></table></div>
+  </div>
+
+  <div class="panel">
     <h2>Write a policy, the agent runs it</h2>
     <p>Each tab is a treasury policy stated in English. The agent compiled it with the live model; the allocation below obeys it.</p>
     <div class="tabs" id="tabs"></div>
@@ -116,6 +123,25 @@ _TEMPLATE = """<!doctype html>
     ['countries', String(h.countries), ''],
     ['policies the agent ran', String(S.length), 'good'],
   ].map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v ${c[2]||''}">${c[1]}</div></div>`).join('');
+
+  // creator directory: scale + individuals
+  const dir=data.directory;
+  if (dir){
+    document.getElementById('dirCount').textContent =
+      `(${Number(dir.total).toLocaleString()} total, ${Number(dir.reinvesting_count).toLocaleString()} reinvesting; showing ${dir.sample_size})`;
+    const riskTag = r => r>=0.6?'<span style="color:var(--bad)">high</span>'
+      : (r>=0.3?'<span style="color:var(--warn)">med</span>':'<span style="color:var(--good)">low</span>');
+    const draw = q => {
+      q=(q||'').toLowerCase();
+      const rows = dir.sample.filter(c=>!q||c.display.toLowerCase().includes(q)||c.country.toLowerCase().includes(q))
+        .map(c=>`<tr><td>${c.display}</td><td>${c.country}</td><td>${money(c.owed)}</td><td>${riskTag(c.risk)}</td>`+
+          `<td>${c.paid>0?money(c.paid):'&mdash;'}</td><td>${c.reinvesting?money(c.stake):'&mdash;'}</td></tr>`).join('');
+      document.getElementById('directory').innerHTML =
+        '<thead><tr><th>Creator</th><th>Country</th><th>Owed</th><th>Risk</th><th>Paid this cycle</th><th>Reinvest stake</th></tr></thead><tbody>'+rows+'</tbody>';
+    };
+    draw('');
+    document.getElementById('dirSearch').addEventListener('input', e=>draw(e.target.value));
+  }
 
   // world map (guarded)
   let map=null;

@@ -36,14 +36,15 @@ def main() -> None:
 
     # the creators who chose to reinvest their payout at the start of the window
     pool = ReinvestmentPool(dates=dates, nav=nav)
-    creators = make_global_creators(2000, seed=3)
+    creators = make_global_creators(5000, seed=3)
     reinvesting = [c for i, c in enumerate(creators) if i % 4 == 0]   # ~25% opt in
     for c in reinvesting:
         pool.contribute(c.name, c.owed, at=0)
 
     nav_return = (nav[-1] / nav[0] - 1.0) * 100.0
-    examples = sorted(({"creator": c.name, "contributed": pool.contributed(c.name),
-                        "stake_value": pool.stake_value(c.name)} for c in reinvesting[:50]),
+    examples = sorted(({"creator": c.display or c.name, "country": c.country,
+                        "contributed": pool.contributed(c.name),
+                        "stake_value": pool.stake_value(c.name)} for c in reinvesting[:200]),
                       key=lambda e: e["contributed"], reverse=True)[:8]
 
     data = {

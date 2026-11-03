@@ -26,7 +26,7 @@ from collections import defaultdict
 from agent import LLMClient, PolicyDesk
 from marketplace.allocator import allocate, make_global_creators
 
-N_CREATORS, SEED = 2000, 3
+N_CREATORS, SEED = 5000, 3
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ui", "scenarios_data.json")
 
 POLICIES = [

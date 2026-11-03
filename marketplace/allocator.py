@@ -39,13 +39,31 @@ FX_COST = {"USD": 0.0, "INR": 0.012, "BRL": 0.02, "CNY": 0.015, "GBP": 0.008,
            "EUR": 0.008, "CAD": 0.01, "MXN": 0.02, "NGN": 0.03, "PHP": 0.02}
 
 
+# Small per-country first-name pools so the creator population reads as real
+# people across the world rather than opaque ids.
+_FIRST = {
+    "US": ["James", "Olivia", "Noah", "Emma", "Liam", "Ava", "Mason", "Sophia"],
+    "IN": ["Aarav", "Diya", "Vihaan", "Ananya", "Arjun", "Isha", "Kabir", "Priya"],
+    "BR": ["Miguel", "Helena", "Davi", "Alice", "Arthur", "Laura", "Pedro", "Manuela"],
+    "PH": ["Angel", "Nathaniel", "Chloe", "Gabriel", "Sofia", "Joshua", "Andrea", "Francis"],
+    "NG": ["Chidi", "Amara", "Emeka", "Ngozi", "Tunde", "Zainab", "Yusuf", "Funmi"],
+    "MX": ["Santiago", "Valentina", "Mateo", "Regina", "Diego", "Camila", "Jose", "Ximena"],
+    "CN": ["Wei", "Li", "Hao", "Mei", "Jun", "Yan", "Lei", "Fang"],
+    "GB": ["Oliver", "Amelia", "Harry", "Isla", "George", "Poppy", "Jack", "Freya"],
+    "DE": ["Ben", "Mia", "Paul", "Emilia", "Leon", "Hannah", "Finn", "Lina"],
+    "CA": ["Liam", "Emma", "Lucas", "Charlotte", "Oliver", "Sophia", "Jack", "Ava"],
+}
+_LAST = list("ABCDEFGHKLMNPRSTVW")
+
+
 @dataclass
 class AllocCreator:
-    name: str
+    name: str                   # unique id (used as the solver key)
     country: str
     owed: float                 # payable amount available this cycle
     risk: float                 # 0..1 chargeback/fraud risk
     priority: float             # 0..1 urgency (higher = pay sooner)
+    display: str = ""           # human name for the directory ("Aarav K.")
 
     @property
     def currency(self) -> str:
@@ -152,8 +170,9 @@ def allocate(creators: list[AllocCreator], budget: float, weights: Weights,
         amt = x[c.name].solution_value()
         if amt <= 1e-6:
             continue
-        lines.append({"name": c.name, "country": c.country, "currency": c.currency,
-                      "amount": round(amt, 2), "net": round(amt * (1 - c.withholding), 2)})
+        lines.append({"name": c.name, "display": c.display or c.name, "country": c.country,
+                      "currency": c.currency, "amount": round(amt, 2),
+                      "net": round(amt * (1 - c.withholding), 2)})
         total += amt
         net_d += amt * (1 - c.withholding)
         tax += amt * c.withholding
@@ -203,7 +222,9 @@ def make_global_creators(n: int, seed: int = 0) -> list[AllocCreator]:
         risk = float(np.clip(risk, 0.0, 1.0))
         days_waiting = float(rng.exponential(9))            # most paid recently, some waiting
         priority = float(np.clip(1.0 - np.exp(-days_waiting / 12.0), 0.0, 1.0))
+        first = str(rng.choice(_FIRST.get(country, _FIRST["US"])))
+        display = f"{first} {str(rng.choice(_LAST))}."
         out.append(AllocCreator(name=f"c{i:05d}_{country}", country=country,
                                 owed=round(owed, 2), risk=round(risk, 3),
-                                priority=round(priority, 3)))
+                                priority=round(priority, 3), display=display))
     return out

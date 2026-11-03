@@ -1,0 +1,3663 @@
+{
+  "total": 5000,
+  "sample_size": 400,
+  "paid_count": 1440,
+  "total_owed": 821393.92,
+  "total_paid": 246418.18,
+  "reinvesting_count": 1250,
+  "by_country": {
+    "IN": {
+      "count": 1134,
+      "owed": 182445.58,
+      "paid": 45017.9
+    },
+    "US": {
+      "count": 1006,
+      "owed": 163168.72,
+      "paid": 73005.52
+    },
+    "NG": {
+      "count": 429,
+      "owed": 69572.45,
+      "paid": 4894.39
+    },
+    "MX": {
+      "count": 317,
+      "owed": 51991.66,
+      "paid": 13421.45
+    },
+    "CN": {
+      "count": 371,
+      "owed": 51423.61,
+      "paid": 13582.29
+    },
+    "BR": {
+      "count": 554,
+      "owed": 98289.68,
+      "paid": 27191.88
+    },
+    "PH": {
+      "count": 446,
+      "owed": 72198.89,
+      "paid": 13745.38
+    },
+    "DE": {
+      "count": 261,
+      "owed": 46445.52,
+      "paid": 18523.41
+    },
+    "CA": {
+      "count": 178,
+      "owed": 31312.56,
+      "paid": 14739.94
+    },
+    "GB": {
+      "count": 304,
+      "owed": 54545.25,
+      "paid": 22296.02
+    }
+  },
+  "sample": [
+    {
+      "display": "Aarav C.",
+      "country": "IN",
+      "owed": 5.41,
+      "risk": 0.198,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 5.45
+    },
+    {
+      "display": "Diego N.",
+      "country": "MX",
+      "owed": 30.67,
+      "risk": 0.225,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 30.92
+    },
+    {
+      "display": "Emeka V.",
+      "country": "NG",
+      "owed": 48.29,
+      "risk": 0.066,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 48.69
+    },
+    {
+      "display": "Priya S.",
+      "country": "IN",
+      "owed": 487.74,
+      "risk": 0.05,
+      "paid": 487.74,
+      "reinvesting": true,
+      "stake": 491.74
+    },
+    {
+      "display": "Olivia W.",
+      "country": "US",
+      "owed": 223.64,
+      "risk": 0.236,
+      "paid": 223.64,
+      "reinvesting": true,
+      "stake": 225.47
+    },
+    {
+      "display": "Gabriel T.",
+      "country": "PH",
+      "owed": 12.9,
+      "risk": 0.1,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 13.01
+    },
+    {
+      "display": "Fang T.",
+      "country": "CN",
+      "owed": 50.96,
+      "risk": 0.356,
+      "paid": 50.96,
+      "reinvesting": true,
+      "stake": 51.38
+    },
+    {
+      "display": "Arjun B.",
+      "country": "IN",
+      "owed": 49.87,
+      "risk": 0.083,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 50.28
+    },
+    {
+      "display": "Mei D.",
+      "country": "CN",
+      "owed": 54.02,
+      "risk": 0.077,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 54.46
+    },
+    {
+      "display": "Camila W.",
+      "country": "MX",
+      "owed": 102.42,
+      "risk": 0.025,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 103.26
+    },
+    {
+      "display": "James R.",
+      "country": "US",
+      "owed": 274.33,
+      "risk": 0.173,
+      "paid": 274.33,
+      "reinvesting": true,
+      "stake": 276.58
+    },
+    {
+      "display": "Helena W.",
+      "country": "BR",
+      "owed": 72.18,
+      "risk": 0.127,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 72.77
+    },
+    {
+      "display": "James M.",
+      "country": "US",
+      "owed": 62.07,
+      "risk": 0.172,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 62.58
+    },
+    {
+      "display": "Miguel D.",
+      "country": "BR",
+      "owed": 356.89,
+      "risk": 0.089,
+      "paid": 356.89,
+      "reinvesting": true,
+      "stake": 359.82
+    },
+    {
+      "display": "Andrea A.",
+      "country": "PH",
+      "owed": 72.35,
+      "risk": 0.496,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 72.94
+    },
+    {
+      "display": "James A.",
+      "country": "US",
+      "owed": 247.54,
+      "risk": 0.456,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 249.57
+    },
+    {
+      "display": "Davi N.",
+      "country": "BR",
+      "owed": 206.95,
+      "risk": 0.148,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 208.65
+    },
+    {
+      "display": "Isha D.",
+      "country": "IN",
+      "owed": 374.84,
+      "risk": 0.501,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 377.91
+    },
+    {
+      "display": "Isha B.",
+      "country": "IN",
+      "owed": 136.07,
+      "risk": 0.385,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 137.19
+    },
+    {
+      "display": "Diya E.",
+      "country": "IN",
+      "owed": 376.11,
+      "risk": 0.13,
+      "paid": 376.11,
+      "reinvesting": true,
+      "stake": 379.19
+    },
+    {
+      "display": "Laura T.",
+      "country": "BR",
+      "owed": 254.57,
+      "risk": 0.215,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 256.66
+    },
+    {
+      "display": "Pedro E.",
+      "country": "BR",
+      "owed": 41.87,
+      "risk": 0.464,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 42.21
+    },
+    {
+      "display": "Isha P.",
+      "country": "IN",
+      "owed": 62.67,
+      "risk": 0.267,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 63.18
+    },
+    {
+      "display": "Kabir A.",
+      "country": "IN",
+      "owed": 49.71,
+      "risk": 0.309,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 50.12
+    },
+    {
+      "display": "Andrea F.",
+      "country": "PH",
+      "owed": 206.43,
+      "risk": 0.044,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 208.12
+    },
+    {
+      "display": "Helena F.",
+      "country": "BR",
+      "owed": 670.97,
+      "risk": 0.581,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 676.47
+    },
+    {
+      "display": "Aarav N.",
+      "country": "IN",
+      "owed": 230.97,
+      "risk": 0.186,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 232.86
+    },
+    {
+      "display": "Alice L.",
+      "country": "BR",
+      "owed": 236.47,
+      "risk": 0.408,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 238.41
+    },
+    {
+      "display": "Mei D.",
+      "country": "CN",
+      "owed": 38.29,
+      "risk": 0.079,
+      "paid": 38.29,
+      "reinvesting": true,
+      "stake": 38.6
+    },
+    {
+      "display": "Arthur C.",
+      "country": "BR",
+      "owed": 118.34,
+      "risk": 0.181,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 119.31
+    },
+    {
+      "display": "Fang T.",
+      "country": "CN",
+      "owed": 14.22,
+      "risk": 0.282,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 14.34
+    },
+    {
+      "display": "George W.",
+      "country": "GB",
+      "owed": 201.91,
+      "risk": 0.304,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 203.57
+    },
+    {
+      "display": "Mateo S.",
+      "country": "MX",
+      "owed": 17.73,
+      "risk": 0.291,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 17.88
+    },
+    {
+      "display": "Leon V.",
+      "country": "DE",
+      "owed": 151.2,
+      "risk": 0.634,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 152.44
+    },
+    {
+      "display": "Yusuf S.",
+      "country": "NG",
+      "owed": 80.29,
+      "risk": 0.207,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 80.95
+    },
+    {
+      "display": "Andrea F.",
+      "country": "PH",
+      "owed": 43.49,
+      "risk": 0.058,
+      "paid": 43.49,
+      "reinvesting": true,
+      "stake": 43.85
+    },
+    {
+      "display": "Isha F.",
+      "country": "IN",
+      "owed": 16.14,
+      "risk": 0.442,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 16.27
+    },
+    {
+      "display": "Mason A.",
+      "country": "US",
+      "owed": 173.76,
+      "risk": 0.025,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 175.18
+    },
+    {
+      "display": "James W.",
+      "country": "US",
+      "owed": 19.95,
+      "risk": 0.128,
+      "paid": 19.95,
+      "reinvesting": true,
+      "stake": 20.11
+    },
+    {
+      "display": "Chidi L.",
+      "country": "NG",
+      "owed": 27.64,
+      "risk": 0.351,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 27.87
+    },
+    {
+      "display": "Liam P.",
+      "country": "US",
+      "owed": 244.77,
+      "risk": 0.437,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 246.78
+    },
+    {
+      "display": "Arthur F.",
+      "country": "BR",
+      "owed": 183.07,
+      "risk": 0.17,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 184.57
+    },
+    {
+      "display": "Manuela C.",
+      "country": "BR",
+      "owed": 103.82,
+      "risk": 0.015,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 104.67
+    },
+    {
+      "display": "Olivia F.",
+      "country": "US",
+      "owed": 441.08,
+      "risk": 0.258,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 444.7
+    },
+    {
+      "display": "Funmi D.",
+      "country": "NG",
+      "owed": 184.36,
+      "risk": 0.143,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 185.87
+    },
+    {
+      "display": "Jack B.",
+      "country": "CA",
+      "owed": 277.01,
+      "risk": 0.152,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 279.28
+    },
+    {
+      "display": "Jose K.",
+      "country": "MX",
+      "owed": 33.53,
+      "risk": 0.293,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 33.8
+    },
+    {
+      "display": "Andrea F.",
+      "country": "PH",
+      "owed": 105.62,
+      "risk": 0.187,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 106.49
+    },
+    {
+      "display": "Manuela L.",
+      "country": "BR",
+      "owed": 154.08,
+      "risk": 0.076,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 155.34
+    },
+    {
+      "display": "Kabir D.",
+      "country": "IN",
+      "owed": 166.53,
+      "risk": 0.036,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 167.9
+    },
+    {
+      "display": "Wei G.",
+      "country": "CN",
+      "owed": 574.62,
+      "risk": 0.213,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 579.33
+    },
+    {
+      "display": "Isha V.",
+      "country": "IN",
+      "owed": 17.81,
+      "risk": 0.569,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 17.96
+    },
+    {
+      "display": "Olivia M.",
+      "country": "US",
+      "owed": 207.9,
+      "risk": 0.312,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 209.6
+    },
+    {
+      "display": "Chidi B.",
+      "country": "NG",
+      "owed": 76.76,
+      "risk": 0.418,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 77.39
+    },
+    {
+      "display": "Olivia T.",
+      "country": "US",
+      "owed": 41.1,
+      "risk": 0.197,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 41.44
+    },
+    {
+      "display": "Fang S.",
+      "country": "CN",
+      "owed": 43.78,
+      "risk": 0.063,
+      "paid": 43.78,
+      "reinvesting": true,
+      "stake": 44.14
+    },
+    {
+      "display": "Zainab A.",
+      "country": "NG",
+      "owed": 117.01,
+      "risk": 0.171,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 117.97
+    },
+    {
+      "display": "Oliver H.",
+      "country": "GB",
+      "owed": 33.25,
+      "risk": 0.042,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 33.52
+    },
+    {
+      "display": "Olivia D.",
+      "country": "US",
+      "owed": 410.19,
+      "risk": 0.23,
+      "paid": 410.19,
+      "reinvesting": true,
+      "stake": 413.55
+    },
+    {
+      "display": "Hao N.",
+      "country": "CN",
+      "owed": 328.06,
+      "risk": 0.106,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 330.75
+    },
+    {
+      "display": "Isha T.",
+      "country": "IN",
+      "owed": 303.99,
+      "risk": 0.495,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 306.48
+    },
+    {
+      "display": "Mateo P.",
+      "country": "MX",
+      "owed": 86.63,
+      "risk": 0.12,
+      "paid": 86.63,
+      "reinvesting": true,
+      "stake": 87.34
+    },
+    {
+      "display": "George N.",
+      "country": "GB",
+      "owed": 68.69,
+      "risk": 0.476,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 69.25
+    },
+    {
+      "display": "Noah T.",
+      "country": "US",
+      "owed": 340.27,
+      "risk": 0.172,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 343.06
+    },
+    {
+      "display": "Vihaan D.",
+      "country": "IN",
+      "owed": 83.21,
+      "risk": 0.382,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 83.89
+    },
+    {
+      "display": "Lucas N.",
+      "country": "CA",
+      "owed": 59.58,
+      "risk": 0.581,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 60.07
+    },
+    {
+      "display": "Ngozi D.",
+      "country": "NG",
+      "owed": 234.91,
+      "risk": 0.06,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 236.84
+    },
+    {
+      "display": "Ngozi B.",
+      "country": "NG",
+      "owed": 155.05,
+      "risk": 0.133,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 156.32
+    },
+    {
+      "display": "Chidi P.",
+      "country": "NG",
+      "owed": 399.62,
+      "risk": 0.165,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 402.9
+    },
+    {
+      "display": "Francis A.",
+      "country": "PH",
+      "owed": 43.36,
+      "risk": 0.282,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 43.72
+    },
+    {
+      "display": "Ben T.",
+      "country": "DE",
+      "owed": 397.31,
+      "risk": 0.187,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 400.57
+    },
+    {
+      "display": "Priya S.",
+      "country": "IN",
+      "owed": 980.4,
+      "risk": 0.157,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 988.44
+    },
+    {
+      "display": "Noah N.",
+      "country": "US",
+      "owed": 75.7,
+      "risk": 0.24,
+      "paid": 75.7,
+      "reinvesting": true,
+      "stake": 76.32
+    },
+    {
+      "display": "James C.",
+      "country": "US",
+      "owed": 472.8,
+      "risk": 0.127,
+      "paid": 472.8,
+      "reinvesting": true,
+      "stake": 476.68
+    },
+    {
+      "display": "Andrea S.",
+      "country": "PH",
+      "owed": 329.51,
+      "risk": 0.315,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 332.21
+    },
+    {
+      "display": "Priya A.",
+      "country": "IN",
+      "owed": 180.53,
+      "risk": 0.395,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 182.01
+    },
+    {
+      "display": "Manuela H.",
+      "country": "BR",
+      "owed": 53.43,
+      "risk": 0.149,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 53.87
+    },
+    {
+      "display": "Noah W.",
+      "country": "US",
+      "owed": 19.12,
+      "risk": 0.099,
+      "paid": 19.12,
+      "reinvesting": true,
+      "stake": 19.28
+    },
+    {
+      "display": "Miguel H.",
+      "country": "BR",
+      "owed": 86.83,
+      "risk": 0.082,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 87.54
+    },
+    {
+      "display": "Ananya S.",
+      "country": "IN",
+      "owed": 22.51,
+      "risk": 0.16,
+      "paid": 22.51,
+      "reinvesting": true,
+      "stake": 22.69
+    },
+    {
+      "display": "Emma B.",
+      "country": "US",
+      "owed": 56.03,
+      "risk": 0.052,
+      "paid": 56.03,
+      "reinvesting": true,
+      "stake": 56.49
+    },
+    {
+      "display": "Isha V.",
+      "country": "IN",
+      "owed": 93.96,
+      "risk": 0.075,
+      "paid": 93.96,
+      "reinvesting": true,
+      "stake": 94.73
+    },
+    {
+      "display": "Ximena M.",
+      "country": "MX",
+      "owed": 71.19,
+      "risk": 0.191,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 71.77
+    },
+    {
+      "display": "Sophia T.",
+      "country": "US",
+      "owed": 94.36,
+      "risk": 0.487,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 95.13
+    },
+    {
+      "display": "Ananya T.",
+      "country": "IN",
+      "owed": 40.32,
+      "risk": 0.465,
+      "paid": 40.32,
+      "reinvesting": true,
+      "stake": 40.65
+    },
+    {
+      "display": "Ximena C.",
+      "country": "MX",
+      "owed": 96.19,
+      "risk": 0.051,
+      "paid": 96.19,
+      "reinvesting": true,
+      "stake": 96.98
+    },
+    {
+      "display": "Isha P.",
+      "country": "IN",
+      "owed": 41.62,
+      "risk": 0.552,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 41.96
+    },
+    {
+      "display": "Olivia W.",
+      "country": "US",
+      "owed": 197.88,
+      "risk": 0.309,
+      "paid": 197.88,
+      "reinvesting": true,
+      "stake": 199.5
+    },
+    {
+      "display": "Kabir V.",
+      "country": "IN",
+      "owed": 266.1,
+      "risk": 0.156,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 268.28
+    },
+    {
+      "display": "Amara N.",
+      "country": "NG",
+      "owed": 306.34,
+      "risk": 0.254,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 308.85
+    },
+    {
+      "display": "Ananya P.",
+      "country": "IN",
+      "owed": 46.66,
+      "risk": 0.164,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 47.04
+    },
+    {
+      "display": "Jose K.",
+      "country": "MX",
+      "owed": 75.64,
+      "risk": 0.182,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 76.26
+    },
+    {
+      "display": "Olivia N.",
+      "country": "US",
+      "owed": 497.48,
+      "risk": 0.12,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 501.56
+    },
+    {
+      "display": "Lei R.",
+      "country": "CN",
+      "owed": 31.33,
+      "risk": 0.081,
+      "paid": 31.33,
+      "reinvesting": true,
+      "stake": 31.59
+    },
+    {
+      "display": "Manuela N.",
+      "country": "BR",
+      "owed": 247.4,
+      "risk": 0.681,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 249.43
+    },
+    {
+      "display": "Isha G.",
+      "country": "IN",
+      "owed": 74.01,
+      "risk": 0.242,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 74.62
+    },
+    {
+      "display": "Priya E.",
+      "country": "IN",
+      "owed": 345.66,
+      "risk": 0.271,
+      "paid": 345.66,
+      "reinvesting": true,
+      "stake": 348.49
+    },
+    {
+      "display": "Manuela L.",
+      "country": "BR",
+      "owed": 175.45,
+      "risk": 0.162,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 176.89
+    },
+    {
+      "display": "Vihaan T.",
+      "country": "IN",
+      "owed": 44.9,
+      "risk": 0.053,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 45.27
+    },
+    {
+      "display": "Ananya T.",
+      "country": "IN",
+      "owed": 135.06,
+      "risk": 0.129,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 136.17
+    },
+    {
+      "display": "Poppy C.",
+      "country": "GB",
+      "owed": 30.04,
+      "risk": 0.33,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 30.29
+    },
+    {
+      "display": "Diya S.",
+      "country": "IN",
+      "owed": 192.51,
+      "risk": 0.125,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 194.09
+    },
+    {
+      "display": "Lucas M.",
+      "country": "CA",
+      "owed": 141.35,
+      "risk": 0.097,
+      "paid": 141.35,
+      "reinvesting": true,
+      "stake": 142.51
+    },
+    {
+      "display": "Vihaan C.",
+      "country": "IN",
+      "owed": 639.61,
+      "risk": 0.137,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 644.85
+    },
+    {
+      "display": "Mason S.",
+      "country": "US",
+      "owed": 290.92,
+      "risk": 0.101,
+      "paid": 290.92,
+      "reinvesting": true,
+      "stake": 293.31
+    },
+    {
+      "display": "Arjun D.",
+      "country": "IN",
+      "owed": 163.49,
+      "risk": 0.488,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 164.83
+    },
+    {
+      "display": "Emma G.",
+      "country": "US",
+      "owed": 22.2,
+      "risk": 0.257,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 22.38
+    },
+    {
+      "display": "Ananya N.",
+      "country": "IN",
+      "owed": 23.73,
+      "risk": 0.183,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 23.92
+    },
+    {
+      "display": "Jack N.",
+      "country": "GB",
+      "owed": 95.98,
+      "risk": 0.202,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 96.77
+    },
+    {
+      "display": "Kabir E.",
+      "country": "IN",
+      "owed": 31.61,
+      "risk": 0.121,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 31.87
+    },
+    {
+      "display": "Chloe V.",
+      "country": "PH",
+      "owed": 343.73,
+      "risk": 0.185,
+      "paid": 343.73,
+      "reinvesting": true,
+      "stake": 346.55
+    },
+    {
+      "display": "Charlotte H.",
+      "country": "CA",
+      "owed": 528.63,
+      "risk": 0.076,
+      "paid": 528.63,
+      "reinvesting": true,
+      "stake": 532.96
+    },
+    {
+      "display": "Mason G.",
+      "country": "US",
+      "owed": 276.6,
+      "risk": 0.194,
+      "paid": 276.6,
+      "reinvesting": true,
+      "stake": 278.87
+    },
+    {
+      "display": "Priya C.",
+      "country": "IN",
+      "owed": 219.86,
+      "risk": 0.378,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 221.66
+    },
+    {
+      "display": "Yusuf P.",
+      "country": "NG",
+      "owed": 265.28,
+      "risk": 0.177,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 267.46
+    },
+    {
+      "display": "Liam H.",
+      "country": "US",
+      "owed": 60.08,
+      "risk": 0.046,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 60.57
+    },
+    {
+      "display": "Nathaniel D.",
+      "country": "PH",
+      "owed": 39.23,
+      "risk": 0.183,
+      "paid": 39.23,
+      "reinvesting": true,
+      "stake": 39.55
+    },
+    {
+      "display": "Kabir T.",
+      "country": "IN",
+      "owed": 130.81,
+      "risk": 0.351,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 131.88
+    },
+    {
+      "display": "Arjun S.",
+      "country": "IN",
+      "owed": 257.72,
+      "risk": 0.189,
+      "paid": 257.72,
+      "reinvesting": true,
+      "stake": 259.83
+    },
+    {
+      "display": "Angel B.",
+      "country": "PH",
+      "owed": 297.53,
+      "risk": 0.305,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 299.97
+    },
+    {
+      "display": "Angel A.",
+      "country": "PH",
+      "owed": 6.64,
+      "risk": 0.262,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 6.69
+    },
+    {
+      "display": "James A.",
+      "country": "US",
+      "owed": 55.5,
+      "risk": 0.129,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 55.96
+    },
+    {
+      "display": "Arthur R.",
+      "country": "BR",
+      "owed": 31.31,
+      "risk": 0.207,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 31.57
+    },
+    {
+      "display": "Davi R.",
+      "country": "BR",
+      "owed": 930.49,
+      "risk": 0.19,
+      "paid": 930.49,
+      "reinvesting": true,
+      "stake": 938.12
+    },
+    {
+      "display": "Li P.",
+      "country": "CN",
+      "owed": 166.58,
+      "risk": 0.118,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 167.95
+    },
+    {
+      "display": "Diego P.",
+      "country": "MX",
+      "owed": 28.46,
+      "risk": 0.207,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 28.69
+    },
+    {
+      "display": "Noah L.",
+      "country": "US",
+      "owed": 170.47,
+      "risk": 0.19,
+      "paid": 170.47,
+      "reinvesting": true,
+      "stake": 171.87
+    },
+    {
+      "display": "Alice A.",
+      "country": "BR",
+      "owed": 90.69,
+      "risk": 0.114,
+      "paid": 90.69,
+      "reinvesting": true,
+      "stake": 91.43
+    },
+    {
+      "display": "Isha P.",
+      "country": "IN",
+      "owed": 96.34,
+      "risk": 0.082,
+      "paid": 96.34,
+      "reinvesting": true,
+      "stake": 97.13
+    },
+    {
+      "display": "Isha T.",
+      "country": "IN",
+      "owed": 70.01,
+      "risk": 0.301,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 70.58
+    },
+    {
+      "display": "Mason L.",
+      "country": "US",
+      "owed": 18.29,
+      "risk": 0.104,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 18.44
+    },
+    {
+      "display": "Diya R.",
+      "country": "IN",
+      "owed": 132.11,
+      "risk": 0.312,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 133.19
+    },
+    {
+      "display": "Valentina B.",
+      "country": "MX",
+      "owed": 47.75,
+      "risk": 0.273,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 48.14
+    },
+    {
+      "display": "Kabir K.",
+      "country": "IN",
+      "owed": 101.6,
+      "risk": 0.072,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 102.43
+    },
+    {
+      "display": "Jack C.",
+      "country": "CA",
+      "owed": 220.22,
+      "risk": 0.128,
+      "paid": 220.22,
+      "reinvesting": true,
+      "stake": 222.03
+    },
+    {
+      "display": "Harry D.",
+      "country": "GB",
+      "owed": 121.9,
+      "risk": 0.23,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 122.9
+    },
+    {
+      "display": "Miguel E.",
+      "country": "BR",
+      "owed": 85.69,
+      "risk": 0.302,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 86.39
+    },
+    {
+      "display": "Ava L.",
+      "country": "US",
+      "owed": 160.57,
+      "risk": 0.408,
+      "paid": 160.57,
+      "reinvesting": true,
+      "stake": 161.89
+    },
+    {
+      "display": "Olivia R.",
+      "country": "US",
+      "owed": 95.23,
+      "risk": 0.113,
+      "paid": 95.23,
+      "reinvesting": true,
+      "stake": 96.01
+    },
+    {
+      "display": "Mason S.",
+      "country": "US",
+      "owed": 52.17,
+      "risk": 0.14,
+      "paid": 52.17,
+      "reinvesting": true,
+      "stake": 52.6
+    },
+    {
+      "display": "Arjun N.",
+      "country": "IN",
+      "owed": 85.59,
+      "risk": 0.208,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 86.29
+    },
+    {
+      "display": "Francis M.",
+      "country": "PH",
+      "owed": 50.81,
+      "risk": 0.066,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 51.23
+    },
+    {
+      "display": "Lucas A.",
+      "country": "CA",
+      "owed": 200.56,
+      "risk": 0.084,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 202.2
+    },
+    {
+      "display": "Ximena S.",
+      "country": "MX",
+      "owed": 105.06,
+      "risk": 0.267,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 105.92
+    },
+    {
+      "display": "Santiago A.",
+      "country": "MX",
+      "owed": 60.44,
+      "risk": 0.116,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 60.94
+    },
+    {
+      "display": "Francis P.",
+      "country": "PH",
+      "owed": 36.33,
+      "risk": 0.529,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 36.63
+    },
+    {
+      "display": "Sophia V.",
+      "country": "US",
+      "owed": 291.79,
+      "risk": 0.077,
+      "paid": 291.79,
+      "reinvesting": true,
+      "stake": 294.18
+    },
+    {
+      "display": "Charlotte D.",
+      "country": "CA",
+      "owed": 644.87,
+      "risk": 0.102,
+      "paid": 644.87,
+      "reinvesting": true,
+      "stake": 650.16
+    },
+    {
+      "display": "Francis H.",
+      "country": "PH",
+      "owed": 15.59,
+      "risk": 0.072,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 15.72
+    },
+    {
+      "display": "Chloe N.",
+      "country": "PH",
+      "owed": 227.73,
+      "risk": 0.387,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 229.6
+    },
+    {
+      "display": "Ananya N.",
+      "country": "IN",
+      "owed": 24.51,
+      "risk": 0.074,
+      "paid": 24.51,
+      "reinvesting": true,
+      "stake": 24.71
+    },
+    {
+      "display": "Santiago H.",
+      "country": "MX",
+      "owed": 290.17,
+      "risk": 0.336,
+      "paid": 290.17,
+      "reinvesting": true,
+      "stake": 292.55
+    },
+    {
+      "display": "Jack G.",
+      "country": "GB",
+      "owed": 79.39,
+      "risk": 0.065,
+      "paid": 79.39,
+      "reinvesting": true,
+      "stake": 80.04
+    },
+    {
+      "display": "Aarav R.",
+      "country": "IN",
+      "owed": 61.12,
+      "risk": 0.098,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 61.62
+    },
+    {
+      "display": "Ximena K.",
+      "country": "MX",
+      "owed": 62.1,
+      "risk": 0.276,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 62.61
+    },
+    {
+      "display": "Aarav W.",
+      "country": "IN",
+      "owed": 275.37,
+      "risk": 0.163,
+      "paid": 275.37,
+      "reinvesting": true,
+      "stake": 277.63
+    },
+    {
+      "display": "Aarav S.",
+      "country": "IN",
+      "owed": 33.69,
+      "risk": 0.095,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 33.97
+    },
+    {
+      "display": "Arjun K.",
+      "country": "IN",
+      "owed": 550.51,
+      "risk": 0.221,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 555.02
+    },
+    {
+      "display": "Angel D.",
+      "country": "PH",
+      "owed": 12.44,
+      "risk": 0.296,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 12.54
+    },
+    {
+      "display": "Ava F.",
+      "country": "US",
+      "owed": 28.56,
+      "risk": 0.393,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 28.79
+    },
+    {
+      "display": "Joshua B.",
+      "country": "PH",
+      "owed": 68.89,
+      "risk": 0.16,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 69.45
+    },
+    {
+      "display": "Ngozi S.",
+      "country": "NG",
+      "owed": 89.4,
+      "risk": 0.18,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 90.13
+    },
+    {
+      "display": "Chidi H.",
+      "country": "NG",
+      "owed": 262.6,
+      "risk": 0.18,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 264.75
+    },
+    {
+      "display": "Ava E.",
+      "country": "US",
+      "owed": 5.0,
+      "risk": 0.291,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 5.04
+    },
+    {
+      "display": "Sophia G.",
+      "country": "CA",
+      "owed": 46.39,
+      "risk": 0.203,
+      "paid": 46.39,
+      "reinvesting": true,
+      "stake": 46.77
+    },
+    {
+      "display": "Priya C.",
+      "country": "IN",
+      "owed": 290.76,
+      "risk": 0.098,
+      "paid": 290.76,
+      "reinvesting": true,
+      "stake": 293.14
+    },
+    {
+      "display": "Lei N.",
+      "country": "CN",
+      "owed": 38.95,
+      "risk": 0.077,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 39.27
+    },
+    {
+      "display": "Noah T.",
+      "country": "US",
+      "owed": 61.65,
+      "risk": 0.274,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 62.16
+    },
+    {
+      "display": "Hao A.",
+      "country": "CN",
+      "owed": 29.31,
+      "risk": 0.226,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 29.55
+    },
+    {
+      "display": "Aarav B.",
+      "country": "IN",
+      "owed": 339.97,
+      "risk": 0.204,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 342.76
+    },
+    {
+      "display": "George P.",
+      "country": "GB",
+      "owed": 64.65,
+      "risk": 0.354,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 65.18
+    },
+    {
+      "display": "Kabir H.",
+      "country": "IN",
+      "owed": 5.01,
+      "risk": 0.2,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 5.05
+    },
+    {
+      "display": "Vihaan W.",
+      "country": "IN",
+      "owed": 1006.3,
+      "risk": 0.049,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 1014.55
+    },
+    {
+      "display": "Olivia H.",
+      "country": "US",
+      "owed": 53.18,
+      "risk": 0.206,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 53.62
+    },
+    {
+      "display": "Priya P.",
+      "country": "IN",
+      "owed": 43.13,
+      "risk": 0.214,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 43.48
+    },
+    {
+      "display": "Vihaan B.",
+      "country": "IN",
+      "owed": 82.91,
+      "risk": 0.258,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 83.59
+    },
+    {
+      "display": "James T.",
+      "country": "US",
+      "owed": 378.19,
+      "risk": 0.172,
+      "paid": 378.19,
+      "reinvesting": true,
+      "stake": 381.29
+    },
+    {
+      "display": "Regina B.",
+      "country": "MX",
+      "owed": 23.67,
+      "risk": 0.767,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 23.86
+    },
+    {
+      "display": "Nathaniel A.",
+      "country": "PH",
+      "owed": 211.6,
+      "risk": 0.181,
+      "paid": 211.6,
+      "reinvesting": true,
+      "stake": 213.34
+    },
+    {
+      "display": "Kabir A.",
+      "country": "IN",
+      "owed": 51.76,
+      "risk": 0.132,
+      "paid": 51.76,
+      "reinvesting": true,
+      "stake": 52.18
+    },
+    {
+      "display": "Olivia R.",
+      "country": "US",
+      "owed": 39.75,
+      "risk": 0.19,
+      "paid": 39.75,
+      "reinvesting": true,
+      "stake": 40.08
+    },
+    {
+      "display": "Mason H.",
+      "country": "US",
+      "owed": 177.1,
+      "risk": 0.384,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 178.55
+    },
+    {
+      "display": "Noah B.",
+      "country": "US",
+      "owed": 141.24,
+      "risk": 0.085,
+      "paid": 141.24,
+      "reinvesting": true,
+      "stake": 142.4
+    },
+    {
+      "display": "Vihaan P.",
+      "country": "IN",
+      "owed": 10.34,
+      "risk": 0.045,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 10.42
+    },
+    {
+      "display": "Lina E.",
+      "country": "DE",
+      "owed": 120.62,
+      "risk": 0.076,
+      "paid": 120.62,
+      "reinvesting": true,
+      "stake": 121.61
+    },
+    {
+      "display": "Santiago A.",
+      "country": "MX",
+      "owed": 32.43,
+      "risk": 0.333,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 32.7
+    },
+    {
+      "display": "Joshua R.",
+      "country": "PH",
+      "owed": 113.53,
+      "risk": 0.033,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 114.46
+    },
+    {
+      "display": "Emma K.",
+      "country": "US",
+      "owed": 226.79,
+      "risk": 0.172,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 228.65
+    },
+    {
+      "display": "Liam R.",
+      "country": "US",
+      "owed": 32.6,
+      "risk": 0.08,
+      "paid": 32.6,
+      "reinvesting": true,
+      "stake": 32.87
+    },
+    {
+      "display": "Vihaan T.",
+      "country": "IN",
+      "owed": 43.34,
+      "risk": 0.193,
+      "paid": 43.34,
+      "reinvesting": true,
+      "stake": 43.7
+    },
+    {
+      "display": "Vihaan H.",
+      "country": "IN",
+      "owed": 108.9,
+      "risk": 0.245,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 109.79
+    },
+    {
+      "display": "James K.",
+      "country": "US",
+      "owed": 13.38,
+      "risk": 0.271,
+      "paid": 13.38,
+      "reinvesting": true,
+      "stake": 13.49
+    },
+    {
+      "display": "Pedro R.",
+      "country": "BR",
+      "owed": 176.01,
+      "risk": 0.374,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 177.45
+    },
+    {
+      "display": "Vihaan K.",
+      "country": "IN",
+      "owed": 79.23,
+      "risk": 0.206,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 79.88
+    },
+    {
+      "display": "Wei A.",
+      "country": "CN",
+      "owed": 87.95,
+      "risk": 0.234,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 88.67
+    },
+    {
+      "display": "James R.",
+      "country": "US",
+      "owed": 30.45,
+      "risk": 0.186,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 30.7
+    },
+    {
+      "display": "Pedro W.",
+      "country": "BR",
+      "owed": 48.21,
+      "risk": 0.095,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 48.61
+    },
+    {
+      "display": "Aarav D.",
+      "country": "IN",
+      "owed": 24.63,
+      "risk": 0.167,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 24.83
+    },
+    {
+      "display": "Helena D.",
+      "country": "BR",
+      "owed": 54.89,
+      "risk": 0.208,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 55.34
+    },
+    {
+      "display": "Andrea P.",
+      "country": "PH",
+      "owed": 83.3,
+      "risk": 0.127,
+      "paid": 83.3,
+      "reinvesting": true,
+      "stake": 83.98
+    },
+    {
+      "display": "Pedro F.",
+      "country": "BR",
+      "owed": 606.97,
+      "risk": 0.017,
+      "paid": 606.97,
+      "reinvesting": true,
+      "stake": 611.95
+    },
+    {
+      "display": "Mei K.",
+      "country": "CN",
+      "owed": 146.26,
+      "risk": 0.331,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 147.46
+    },
+    {
+      "display": "Diya N.",
+      "country": "IN",
+      "owed": 36.54,
+      "risk": 0.168,
+      "paid": 36.54,
+      "reinvesting": true,
+      "stake": 36.84
+    },
+    {
+      "display": "Oliver M.",
+      "country": "GB",
+      "owed": 164.19,
+      "risk": 0.094,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 165.54
+    },
+    {
+      "display": "James D.",
+      "country": "US",
+      "owed": 68.09,
+      "risk": 0.13,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 68.65
+    },
+    {
+      "display": "Ava B.",
+      "country": "US",
+      "owed": 5.95,
+      "risk": 0.501,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 6.0
+    },
+    {
+      "display": "Arjun G.",
+      "country": "IN",
+      "owed": 39.3,
+      "risk": 0.139,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 39.62
+    },
+    {
+      "display": "Ananya G.",
+      "country": "IN",
+      "owed": 11.13,
+      "risk": 0.067,
+      "paid": 11.13,
+      "reinvesting": true,
+      "stake": 11.22
+    },
+    {
+      "display": "Aarav B.",
+      "country": "IN",
+      "owed": 105.11,
+      "risk": 0.264,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 105.97
+    },
+    {
+      "display": "Liam C.",
+      "country": "US",
+      "owed": 102.53,
+      "risk": 0.149,
+      "paid": 102.53,
+      "reinvesting": true,
+      "stake": 103.37
+    },
+    {
+      "display": "Ananya T.",
+      "country": "IN",
+      "owed": 60.66,
+      "risk": 0.244,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 61.16
+    },
+    {
+      "display": "Regina S.",
+      "country": "MX",
+      "owed": 265.79,
+      "risk": 0.135,
+      "paid": 265.79,
+      "reinvesting": true,
+      "stake": 267.97
+    },
+    {
+      "display": "Jun L.",
+      "country": "CN",
+      "owed": 122.83,
+      "risk": 0.609,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 123.84
+    },
+    {
+      "display": "Amara F.",
+      "country": "NG",
+      "owed": 249.55,
+      "risk": 0.481,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 251.6
+    },
+    {
+      "display": "Finn G.",
+      "country": "DE",
+      "owed": 41.12,
+      "risk": 0.168,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 41.46
+    },
+    {
+      "display": "Chloe L.",
+      "country": "PH",
+      "owed": 260.15,
+      "risk": 0.096,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 262.28
+    },
+    {
+      "display": "Valentina M.",
+      "country": "MX",
+      "owed": 22.38,
+      "risk": 0.14,
+      "paid": 22.38,
+      "reinvesting": true,
+      "stake": 22.56
+    },
+    {
+      "display": "Ben V.",
+      "country": "DE",
+      "owed": 438.28,
+      "risk": 0.491,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 441.87
+    },
+    {
+      "display": "Valentina B.",
+      "country": "MX",
+      "owed": 216.96,
+      "risk": 0.245,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 218.74
+    },
+    {
+      "display": "Aarav H.",
+      "country": "IN",
+      "owed": 125.0,
+      "risk": 0.106,
+      "paid": 125.0,
+      "reinvesting": true,
+      "stake": 126.02
+    },
+    {
+      "display": "Kabir K.",
+      "country": "IN",
+      "owed": 188.31,
+      "risk": 0.181,
+      "paid": 188.31,
+      "reinvesting": true,
+      "stake": 189.85
+    },
+    {
+      "display": "George N.",
+      "country": "GB",
+      "owed": 27.83,
+      "risk": 0.35,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 28.06
+    },
+    {
+      "display": "Aarav P.",
+      "country": "IN",
+      "owed": 100.36,
+      "risk": 0.202,
+      "paid": 100.36,
+      "reinvesting": true,
+      "stake": 101.18
+    },
+    {
+      "display": "Ben N.",
+      "country": "DE",
+      "owed": 118.16,
+      "risk": 0.243,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 119.13
+    },
+    {
+      "display": "Priya E.",
+      "country": "IN",
+      "owed": 26.91,
+      "risk": 0.164,
+      "paid": 26.91,
+      "reinvesting": true,
+      "stake": 27.13
+    },
+    {
+      "display": "Lei L.",
+      "country": "CN",
+      "owed": 33.47,
+      "risk": 0.089,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 33.74
+    },
+    {
+      "display": "Zainab C.",
+      "country": "NG",
+      "owed": 18.68,
+      "risk": 0.202,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 18.83
+    },
+    {
+      "display": "Vihaan F.",
+      "country": "IN",
+      "owed": 84.71,
+      "risk": 0.306,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 85.4
+    },
+    {
+      "display": "Manuela L.",
+      "country": "BR",
+      "owed": 272.45,
+      "risk": 0.281,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 274.68
+    },
+    {
+      "display": "Olivia T.",
+      "country": "US",
+      "owed": 10.47,
+      "risk": 0.366,
+      "paid": 10.47,
+      "reinvesting": true,
+      "stake": 10.56
+    },
+    {
+      "display": "Fang H.",
+      "country": "CN",
+      "owed": 132.32,
+      "risk": 0.228,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 133.41
+    },
+    {
+      "display": "Ananya R.",
+      "country": "IN",
+      "owed": 88.24,
+      "risk": 0.175,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 88.96
+    },
+    {
+      "display": "Diya E.",
+      "country": "IN",
+      "owed": 9.71,
+      "risk": 0.344,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 9.79
+    },
+    {
+      "display": "Sofia L.",
+      "country": "PH",
+      "owed": 22.8,
+      "risk": 0.273,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 22.99
+    },
+    {
+      "display": "Diego T.",
+      "country": "MX",
+      "owed": 135.38,
+      "risk": 0.027,
+      "paid": 135.38,
+      "reinvesting": true,
+      "stake": 136.49
+    },
+    {
+      "display": "Nathaniel H.",
+      "country": "PH",
+      "owed": 275.95,
+      "risk": 0.333,
+      "paid": 275.95,
+      "reinvesting": true,
+      "stake": 278.21
+    },
+    {
+      "display": "Funmi C.",
+      "country": "NG",
+      "owed": 193.33,
+      "risk": 0.253,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 194.92
+    },
+    {
+      "display": "Camila G.",
+      "country": "MX",
+      "owed": 36.8,
+      "risk": 0.492,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 37.1
+    },
+    {
+      "display": "Ximena H.",
+      "country": "MX",
+      "owed": 45.66,
+      "risk": 0.574,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 46.03
+    },
+    {
+      "display": "Freya L.",
+      "country": "GB",
+      "owed": 87.77,
+      "risk": 0.659,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 88.49
+    },
+    {
+      "display": "Miguel C.",
+      "country": "BR",
+      "owed": 35.98,
+      "risk": 0.047,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 36.28
+    },
+    {
+      "display": "Hannah G.",
+      "country": "DE",
+      "owed": 92.75,
+      "risk": 0.092,
+      "paid": 92.75,
+      "reinvesting": true,
+      "stake": 93.51
+    },
+    {
+      "display": "Aarav W.",
+      "country": "IN",
+      "owed": 220.17,
+      "risk": 0.309,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 221.98
+    },
+    {
+      "display": "Ananya N.",
+      "country": "IN",
+      "owed": 23.69,
+      "risk": 0.604,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 23.88
+    },
+    {
+      "display": "Helena P.",
+      "country": "BR",
+      "owed": 109.3,
+      "risk": 0.468,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 110.2
+    },
+    {
+      "display": "Amelia D.",
+      "country": "GB",
+      "owed": 265.24,
+      "risk": 0.19,
+      "paid": 265.24,
+      "reinvesting": true,
+      "stake": 267.41
+    },
+    {
+      "display": "Ava P.",
+      "country": "US",
+      "owed": 98.36,
+      "risk": 0.128,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 99.17
+    },
+    {
+      "display": "Davi V.",
+      "country": "BR",
+      "owed": 59.91,
+      "risk": 0.239,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 60.4
+    },
+    {
+      "display": "Arjun H.",
+      "country": "IN",
+      "owed": 85.76,
+      "risk": 0.193,
+      "paid": 85.76,
+      "reinvesting": true,
+      "stake": 86.46
+    },
+    {
+      "display": "Jun N.",
+      "country": "CN",
+      "owed": 64.42,
+      "risk": 0.073,
+      "paid": 64.42,
+      "reinvesting": true,
+      "stake": 64.95
+    },
+    {
+      "display": "Ananya V.",
+      "country": "IN",
+      "owed": 47.29,
+      "risk": 0.151,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 47.68
+    },
+    {
+      "display": "Olivia F.",
+      "country": "US",
+      "owed": 214.55,
+      "risk": 0.284,
+      "paid": 214.55,
+      "reinvesting": true,
+      "stake": 216.31
+    },
+    {
+      "display": "Yusuf K.",
+      "country": "NG",
+      "owed": 87.85,
+      "risk": 0.19,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 88.57
+    },
+    {
+      "display": "Kabir R.",
+      "country": "IN",
+      "owed": 297.29,
+      "risk": 0.237,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 299.73
+    },
+    {
+      "display": "Sophia H.",
+      "country": "US",
+      "owed": 347.2,
+      "risk": 0.897,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 350.05
+    },
+    {
+      "display": "Ananya F.",
+      "country": "IN",
+      "owed": 156.07,
+      "risk": 0.187,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 157.35
+    },
+    {
+      "display": "Jose S.",
+      "country": "MX",
+      "owed": 61.82,
+      "risk": 0.319,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 62.33
+    },
+    {
+      "display": "Emma M.",
+      "country": "US",
+      "owed": 172.83,
+      "risk": 0.218,
+      "paid": 172.83,
+      "reinvesting": true,
+      "stake": 174.25
+    },
+    {
+      "display": "Arthur M.",
+      "country": "BR",
+      "owed": 29.81,
+      "risk": 0.428,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 30.05
+    },
+    {
+      "display": "Davi E.",
+      "country": "BR",
+      "owed": 232.51,
+      "risk": 0.162,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 234.42
+    },
+    {
+      "display": "Alice P.",
+      "country": "BR",
+      "owed": 106.93,
+      "risk": 0.172,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 107.81
+    },
+    {
+      "display": "Lei F.",
+      "country": "CN",
+      "owed": 29.27,
+      "risk": 0.185,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 29.51
+    },
+    {
+      "display": "Sofia W.",
+      "country": "PH",
+      "owed": 8.97,
+      "risk": 0.151,
+      "paid": 8.97,
+      "reinvesting": true,
+      "stake": 9.04
+    },
+    {
+      "display": "Lina E.",
+      "country": "DE",
+      "owed": 55.93,
+      "risk": 0.066,
+      "paid": 55.93,
+      "reinvesting": true,
+      "stake": 56.39
+    },
+    {
+      "display": "Diya H.",
+      "country": "IN",
+      "owed": 137.0,
+      "risk": 0.054,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 138.12
+    },
+    {
+      "display": "Alice H.",
+      "country": "BR",
+      "owed": 192.18,
+      "risk": 0.138,
+      "paid": 192.18,
+      "reinvesting": true,
+      "stake": 193.76
+    },
+    {
+      "display": "Hao N.",
+      "country": "CN",
+      "owed": 39.53,
+      "risk": 0.534,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 39.85
+    },
+    {
+      "display": "Isla C.",
+      "country": "GB",
+      "owed": 55.09,
+      "risk": 0.356,
+      "paid": 55.09,
+      "reinvesting": true,
+      "stake": 55.54
+    },
+    {
+      "display": "Mei B.",
+      "country": "CN",
+      "owed": 131.03,
+      "risk": 0.302,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 132.1
+    },
+    {
+      "display": "Regina F.",
+      "country": "MX",
+      "owed": 143.36,
+      "risk": 0.546,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 144.54
+    },
+    {
+      "display": "Freya L.",
+      "country": "GB",
+      "owed": 37.38,
+      "risk": 0.065,
+      "paid": 37.38,
+      "reinvesting": true,
+      "stake": 37.69
+    },
+    {
+      "display": "Liam G.",
+      "country": "CA",
+      "owed": 64.12,
+      "risk": 0.426,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 64.65
+    },
+    {
+      "display": "Joshua K.",
+      "country": "PH",
+      "owed": 155.54,
+      "risk": 0.152,
+      "paid": 155.54,
+      "reinvesting": true,
+      "stake": 156.82
+    },
+    {
+      "display": "Liam C.",
+      "country": "US",
+      "owed": 155.56,
+      "risk": 0.198,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 156.84
+    },
+    {
+      "display": "Francis W.",
+      "country": "PH",
+      "owed": 332.16,
+      "risk": 0.032,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 334.88
+    },
+    {
+      "display": "Fang N.",
+      "country": "CN",
+      "owed": 169.37,
+      "risk": 0.231,
+      "paid": 169.37,
+      "reinvesting": true,
+      "stake": 170.76
+    },
+    {
+      "display": "Emeka E.",
+      "country": "NG",
+      "owed": 94.66,
+      "risk": 0.222,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 95.44
+    },
+    {
+      "display": "Jack S.",
+      "country": "CA",
+      "owed": 91.1,
+      "risk": 0.084,
+      "paid": 91.1,
+      "reinvesting": true,
+      "stake": 91.85
+    },
+    {
+      "display": "James F.",
+      "country": "US",
+      "owed": 115.74,
+      "risk": 0.051,
+      "paid": 115.74,
+      "reinvesting": true,
+      "stake": 116.69
+    },
+    {
+      "display": "Isha H.",
+      "country": "IN",
+      "owed": 93.39,
+      "risk": 0.053,
+      "paid": 93.39,
+      "reinvesting": true,
+      "stake": 94.16
+    },
+    {
+      "display": "Mason S.",
+      "country": "US",
+      "owed": 319.72,
+      "risk": 0.354,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 322.34
+    },
+    {
+      "display": "Emeka M.",
+      "country": "NG",
+      "owed": 84.52,
+      "risk": 0.168,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 85.21
+    },
+    {
+      "display": "Aarav S.",
+      "country": "IN",
+      "owed": 42.47,
+      "risk": 0.124,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 42.82
+    },
+    {
+      "display": "Vihaan L.",
+      "country": "IN",
+      "owed": 20.28,
+      "risk": 0.257,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 20.45
+    },
+    {
+      "display": "Ananya V.",
+      "country": "IN",
+      "owed": 130.51,
+      "risk": 0.186,
+      "paid": 130.51,
+      "reinvesting": true,
+      "stake": 131.58
+    },
+    {
+      "display": "Alice S.",
+      "country": "BR",
+      "owed": 218.42,
+      "risk": 0.555,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 220.21
+    },
+    {
+      "display": "Ananya F.",
+      "country": "IN",
+      "owed": 174.51,
+      "risk": 0.001,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 175.94
+    },
+    {
+      "display": "Priya L.",
+      "country": "IN",
+      "owed": 193.71,
+      "risk": 0.16,
+      "paid": 193.71,
+      "reinvesting": true,
+      "stake": 195.3
+    },
+    {
+      "display": "James D.",
+      "country": "US",
+      "owed": 176.32,
+      "risk": 0.283,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 177.77
+    },
+    {
+      "display": "Mateo H.",
+      "country": "MX",
+      "owed": 291.04,
+      "risk": 0.222,
+      "paid": 291.04,
+      "reinvesting": true,
+      "stake": 293.43
+    },
+    {
+      "display": "Priya H.",
+      "country": "IN",
+      "owed": 120.67,
+      "risk": 0.062,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 121.66
+    },
+    {
+      "display": "Emma L.",
+      "country": "US",
+      "owed": 84.81,
+      "risk": 0.361,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 85.51
+    },
+    {
+      "display": "Laura E.",
+      "country": "BR",
+      "owed": 211.45,
+      "risk": 0.093,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 213.18
+    },
+    {
+      "display": "Ava D.",
+      "country": "US",
+      "owed": 176.0,
+      "risk": 0.45,
+      "paid": 176.0,
+      "reinvesting": true,
+      "stake": 177.44
+    },
+    {
+      "display": "Harry H.",
+      "country": "GB",
+      "owed": 181.46,
+      "risk": 0.281,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 182.95
+    },
+    {
+      "display": "Sophia F.",
+      "country": "US",
+      "owed": 227.94,
+      "risk": 0.044,
+      "paid": 227.94,
+      "reinvesting": true,
+      "stake": 229.81
+    },
+    {
+      "display": "Nathaniel H.",
+      "country": "PH",
+      "owed": 95.51,
+      "risk": 0.094,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 96.29
+    },
+    {
+      "display": "Sophia K.",
+      "country": "US",
+      "owed": 15.19,
+      "risk": 0.094,
+      "paid": 15.19,
+      "reinvesting": true,
+      "stake": 15.31
+    },
+    {
+      "display": "Leon D.",
+      "country": "DE",
+      "owed": 65.44,
+      "risk": 0.111,
+      "paid": 65.44,
+      "reinvesting": true,
+      "stake": 65.98
+    },
+    {
+      "display": "Liam P.",
+      "country": "US",
+      "owed": 57.53,
+      "risk": 0.067,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 58.0
+    },
+    {
+      "display": "Finn A.",
+      "country": "DE",
+      "owed": 42.67,
+      "risk": 0.381,
+      "paid": 42.67,
+      "reinvesting": true,
+      "stake": 43.02
+    },
+    {
+      "display": "Noah D.",
+      "country": "US",
+      "owed": 79.66,
+      "risk": 0.3,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 80.31
+    },
+    {
+      "display": "Freya F.",
+      "country": "GB",
+      "owed": 138.47,
+      "risk": 0.231,
+      "paid": 138.47,
+      "reinvesting": true,
+      "stake": 139.61
+    },
+    {
+      "display": "Angel W.",
+      "country": "PH",
+      "owed": 540.2,
+      "risk": 0.184,
+      "paid": 540.2,
+      "reinvesting": true,
+      "stake": 544.63
+    },
+    {
+      "display": "Yan D.",
+      "country": "CN",
+      "owed": 110.18,
+      "risk": 0.486,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 111.08
+    },
+    {
+      "display": "Diya M.",
+      "country": "IN",
+      "owed": 26.03,
+      "risk": 0.033,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 26.24
+    },
+    {
+      "display": "Ava M.",
+      "country": "US",
+      "owed": 61.21,
+      "risk": 0.243,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 61.71
+    },
+    {
+      "display": "Ava T.",
+      "country": "CA",
+      "owed": 11.76,
+      "risk": 0.078,
+      "paid": 11.76,
+      "reinvesting": true,
+      "stake": 11.86
+    },
+    {
+      "display": "Alice L.",
+      "country": "BR",
+      "owed": 45.35,
+      "risk": 0.21,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 45.72
+    },
+    {
+      "display": "Lina H.",
+      "country": "DE",
+      "owed": 80.93,
+      "risk": 0.098,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 81.59
+    },
+    {
+      "display": "Ananya W.",
+      "country": "IN",
+      "owed": 110.57,
+      "risk": 0.129,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 111.48
+    },
+    {
+      "display": "Olivia H.",
+      "country": "US",
+      "owed": 37.51,
+      "risk": 0.108,
+      "paid": 37.51,
+      "reinvesting": true,
+      "stake": 37.82
+    },
+    {
+      "display": "Regina W.",
+      "country": "MX",
+      "owed": 208.62,
+      "risk": 0.088,
+      "paid": 208.62,
+      "reinvesting": true,
+      "stake": 210.33
+    },
+    {
+      "display": "Noah G.",
+      "country": "US",
+      "owed": 240.78,
+      "risk": 0.313,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 242.75
+    },
+    {
+      "display": "Zainab R.",
+      "country": "NG",
+      "owed": 74.09,
+      "risk": 0.261,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 74.7
+    },
+    {
+      "display": "Paul N.",
+      "country": "DE",
+      "owed": 361.07,
+      "risk": 0.271,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 364.03
+    },
+    {
+      "display": "Ngozi M.",
+      "country": "NG",
+      "owed": 423.85,
+      "risk": 0.193,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 427.33
+    },
+    {
+      "display": "Emeka A.",
+      "country": "NG",
+      "owed": 158.19,
+      "risk": 0.418,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 159.49
+    },
+    {
+      "display": "Ava P.",
+      "country": "US",
+      "owed": 60.9,
+      "risk": 0.197,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 61.4
+    },
+    {
+      "display": "Ananya L.",
+      "country": "IN",
+      "owed": 24.05,
+      "risk": 0.356,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 24.25
+    },
+    {
+      "display": "Vihaan D.",
+      "country": "IN",
+      "owed": 10.99,
+      "risk": 0.04,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 11.08
+    },
+    {
+      "display": "James B.",
+      "country": "US",
+      "owed": 69.52,
+      "risk": 0.745,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 70.09
+    },
+    {
+      "display": "Kabir G.",
+      "country": "IN",
+      "owed": 37.73,
+      "risk": 0.192,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 38.04
+    },
+    {
+      "display": "Andrea K.",
+      "country": "PH",
+      "owed": 154.76,
+      "risk": 0.387,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 156.03
+    },
+    {
+      "display": "Priya A.",
+      "country": "IN",
+      "owed": 61.49,
+      "risk": 0.188,
+      "paid": 61.49,
+      "reinvesting": true,
+      "stake": 61.99
+    },
+    {
+      "display": "Olivia T.",
+      "country": "US",
+      "owed": 10.1,
+      "risk": 0.188,
+      "paid": 10.1,
+      "reinvesting": true,
+      "stake": 10.18
+    },
+    {
+      "display": "Olivia S.",
+      "country": "US",
+      "owed": 119.47,
+      "risk": 0.318,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 120.45
+    },
+    {
+      "display": "Pedro V.",
+      "country": "BR",
+      "owed": 12.73,
+      "risk": 0.25,
+      "paid": 12.73,
+      "reinvesting": true,
+      "stake": 12.83
+    },
+    {
+      "display": "Isha G.",
+      "country": "IN",
+      "owed": 114.82,
+      "risk": 0.253,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 115.76
+    },
+    {
+      "display": "Liam N.",
+      "country": "US",
+      "owed": 561.39,
+      "risk": 0.247,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 565.99
+    },
+    {
+      "display": "Aarav B.",
+      "country": "IN",
+      "owed": 185.34,
+      "risk": 0.127,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 186.86
+    },
+    {
+      "display": "Camila R.",
+      "country": "MX",
+      "owed": 71.01,
+      "risk": 0.5,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 71.59
+    },
+    {
+      "display": "Liam C.",
+      "country": "US",
+      "owed": 50.74,
+      "risk": 0.725,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 51.16
+    },
+    {
+      "display": "Isla M.",
+      "country": "GB",
+      "owed": 1053.16,
+      "risk": 0.138,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 1061.8
+    },
+    {
+      "display": "Olivia W.",
+      "country": "US",
+      "owed": 45.71,
+      "risk": 0.118,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 46.08
+    },
+    {
+      "display": "Miguel C.",
+      "country": "BR",
+      "owed": 143.65,
+      "risk": 0.175,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 144.83
+    },
+    {
+      "display": "Mateo E.",
+      "country": "MX",
+      "owed": 30.34,
+      "risk": 0.279,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 30.59
+    },
+    {
+      "display": "Hao M.",
+      "country": "CN",
+      "owed": 68.58,
+      "risk": 0.222,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 69.14
+    },
+    {
+      "display": "Freya E.",
+      "country": "GB",
+      "owed": 32.05,
+      "risk": 0.178,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 32.31
+    },
+    {
+      "display": "Joshua B.",
+      "country": "PH",
+      "owed": 277.93,
+      "risk": 0.166,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 280.21
+    },
+    {
+      "display": "Hao N.",
+      "country": "CN",
+      "owed": 54.68,
+      "risk": 0.349,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 55.13
+    },
+    {
+      "display": "Sofia G.",
+      "country": "PH",
+      "owed": 57.34,
+      "risk": 0.247,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 57.81
+    },
+    {
+      "display": "Noah R.",
+      "country": "US",
+      "owed": 727.78,
+      "risk": 0.061,
+      "paid": 727.78,
+      "reinvesting": true,
+      "stake": 733.75
+    },
+    {
+      "display": "Emeka V.",
+      "country": "NG",
+      "owed": 27.63,
+      "risk": 0.146,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 27.86
+    },
+    {
+      "display": "Wei S.",
+      "country": "CN",
+      "owed": 499.93,
+      "risk": 0.095,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 504.03
+    },
+    {
+      "display": "Manuela T.",
+      "country": "BR",
+      "owed": 89.15,
+      "risk": 0.143,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 89.88
+    },
+    {
+      "display": "Hao B.",
+      "country": "CN",
+      "owed": 59.67,
+      "risk": 0.104,
+      "paid": 59.67,
+      "reinvesting": true,
+      "stake": 60.16
+    },
+    {
+      "display": "Olivia F.",
+      "country": "US",
+      "owed": 58.69,
+      "risk": 0.236,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 59.17
+    },
+    {
+      "display": "Lina M.",
+      "country": "DE",
+      "owed": 81.51,
+      "risk": 0.209,
+      "paid": 81.51,
+      "reinvesting": true,
+      "stake": 82.18
+    },
+    {
+      "display": "Oliver B.",
+      "country": "GB",
+      "owed": 50.68,
+      "risk": 0.219,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 51.1
+    },
+    {
+      "display": "Amara R.",
+      "country": "NG",
+      "owed": 56.94,
+      "risk": 0.121,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 57.41
+    },
+    {
+      "display": "Olivia V.",
+      "country": "US",
+      "owed": 23.79,
+      "risk": 0.299,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 23.99
+    },
+    {
+      "display": "Emeka S.",
+      "country": "NG",
+      "owed": 33.14,
+      "risk": 0.639,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 33.41
+    },
+    {
+      "display": "Noah P.",
+      "country": "US",
+      "owed": 164.22,
+      "risk": 0.42,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 165.57
+    },
+    {
+      "display": "Noah V.",
+      "country": "US",
+      "owed": 244.18,
+      "risk": 0.436,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 246.18
+    },
+    {
+      "display": "Ananya W.",
+      "country": "IN",
+      "owed": 74.32,
+      "risk": 0.299,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 74.93
+    },
+    {
+      "display": "Kabir F.",
+      "country": "IN",
+      "owed": 228.04,
+      "risk": 0.203,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 229.91
+    },
+    {
+      "display": "Miguel B.",
+      "country": "BR",
+      "owed": 196.3,
+      "risk": 0.155,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 197.91
+    },
+    {
+      "display": "James E.",
+      "country": "US",
+      "owed": 330.56,
+      "risk": 0.312,
+      "paid": 330.56,
+      "reinvesting": true,
+      "stake": 333.27
+    },
+    {
+      "display": "Vihaan G.",
+      "country": "IN",
+      "owed": 114.92,
+      "risk": 0.3,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 115.86
+    },
+    {
+      "display": "Chloe M.",
+      "country": "PH",
+      "owed": 239.11,
+      "risk": 0.119,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 241.07
+    },
+    {
+      "display": "Liam S.",
+      "country": "CA",
+      "owed": 50.53,
+      "risk": 0.292,
+      "paid": 50.53,
+      "reinvesting": true,
+      "stake": 50.94
+    },
+    {
+      "display": "Kabir S.",
+      "country": "IN",
+      "owed": 355.08,
+      "risk": 0.227,
+      "paid": 355.08,
+      "reinvesting": true,
+      "stake": 357.99
+    },
+    {
+      "display": "Kabir B.",
+      "country": "IN",
+      "owed": 83.38,
+      "risk": 0.185,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 84.06
+    },
+    {
+      "display": "Oliver M.",
+      "country": "GB",
+      "owed": 31.51,
+      "risk": 0.171,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 31.77
+    },
+    {
+      "display": "Noah S.",
+      "country": "US",
+      "owed": 19.79,
+      "risk": 0.141,
+      "paid": 19.79,
+      "reinvesting": true,
+      "stake": 19.95
+    },
+    {
+      "display": "Ava A.",
+      "country": "US",
+      "owed": 80.39,
+      "risk": 0.504,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 81.05
+    },
+    {
+      "display": "Diya H.",
+      "country": "IN",
+      "owed": 85.57,
+      "risk": 0.104,
+      "paid": 85.57,
+      "reinvesting": true,
+      "stake": 86.27
+    },
+    {
+      "display": "Isha A.",
+      "country": "IN",
+      "owed": 187.3,
+      "risk": 0.063,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 188.84
+    },
+    {
+      "display": "Sophia G.",
+      "country": "CA",
+      "owed": 36.69,
+      "risk": 0.026,
+      "paid": 36.69,
+      "reinvesting": true,
+      "stake": 36.99
+    },
+    {
+      "display": "George R.",
+      "country": "GB",
+      "owed": 184.59,
+      "risk": 0.081,
+      "paid": 184.59,
+      "reinvesting": true,
+      "stake": 186.1
+    },
+    {
+      "display": "Regina A.",
+      "country": "MX",
+      "owed": 16.28,
+      "risk": 0.144,
+      "paid": 16.28,
+      "reinvesting": true,
+      "stake": 16.41
+    },
+    {
+      "display": "Ananya R.",
+      "country": "IN",
+      "owed": 64.29,
+      "risk": 0.059,
+      "paid": 64.29,
+      "reinvesting": true,
+      "stake": 64.82
+    },
+    {
+      "display": "Alice G.",
+      "country": "BR",
+      "owed": 751.35,
+      "risk": 0.077,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 757.51
+    },
+    {
+      "display": "Vihaan K.",
+      "country": "IN",
+      "owed": 358.41,
+      "risk": 0.199,
+      "paid": 358.41,
+      "reinvesting": true,
+      "stake": 361.35
+    },
+    {
+      "display": "Mason E.",
+      "country": "US",
+      "owed": 125.57,
+      "risk": 0.073,
+      "paid": 125.57,
+      "reinvesting": true,
+      "stake": 126.6
+    },
+    {
+      "display": "Liam D.",
+      "country": "US",
+      "owed": 158.58,
+      "risk": 0.163,
+      "paid": 158.58,
+      "reinvesting": true,
+      "stake": 159.88
+    },
+    {
+      "display": "Angel H.",
+      "country": "PH",
+      "owed": 49.82,
+      "risk": 0.229,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 50.23
+    },
+    {
+      "display": "Jose K.",
+      "country": "MX",
+      "owed": 35.31,
+      "risk": 0.321,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 35.6
+    },
+    {
+      "display": "Alice C.",
+      "country": "BR",
+      "owed": 74.11,
+      "risk": 0.185,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 74.72
+    },
+    {
+      "display": "Arjun V.",
+      "country": "IN",
+      "owed": 183.43,
+      "risk": 0.137,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 184.93
+    },
+    {
+      "display": "Kabir E.",
+      "country": "IN",
+      "owed": 178.59,
+      "risk": 0.415,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 180.05
+    },
+    {
+      "display": "Ananya B.",
+      "country": "IN",
+      "owed": 15.27,
+      "risk": 0.552,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 15.4
+    },
+    {
+      "display": "Priya E.",
+      "country": "IN",
+      "owed": 273.6,
+      "risk": 0.235,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 275.84
+    },
+    {
+      "display": "Sophia L.",
+      "country": "US",
+      "owed": 18.11,
+      "risk": 0.361,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 18.26
+    },
+    {
+      "display": "Kabir E.",
+      "country": "IN",
+      "owed": 60.57,
+      "risk": 0.18,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 61.07
+    },
+    {
+      "display": "Hannah K.",
+      "country": "DE",
+      "owed": 83.88,
+      "risk": 0.096,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 84.57
+    },
+    {
+      "display": "Gabriel F.",
+      "country": "PH",
+      "owed": 58.89,
+      "risk": 0.103,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 59.37
+    },
+    {
+      "display": "Olivia G.",
+      "country": "US",
+      "owed": 30.09,
+      "risk": 0.147,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 30.34
+    },
+    {
+      "display": "Kabir C.",
+      "country": "IN",
+      "owed": 351.19,
+      "risk": 0.231,
+      "paid": 351.19,
+      "reinvesting": true,
+      "stake": 354.07
+    },
+    {
+      "display": "Ava K.",
+      "country": "US",
+      "owed": 233.15,
+      "risk": 0.39,
+      "paid": 233.15,
+      "reinvesting": true,
+      "stake": 235.06
+    },
+    {
+      "display": "Diya R.",
+      "country": "IN",
+      "owed": 236.53,
+      "risk": 0.142,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 238.47
+    },
+    {
+      "display": "Sophia T.",
+      "country": "CA",
+      "owed": 108.09,
+      "risk": 0.063,
+      "paid": 108.09,
+      "reinvesting": true,
+      "stake": 108.98
+    },
+    {
+      "display": "Jun S.",
+      "country": "CN",
+      "owed": 38.07,
+      "risk": 0.266,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 38.38
+    },
+    {
+      "display": "Manuela A.",
+      "country": "BR",
+      "owed": 265.95,
+      "risk": 0.163,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 268.13
+    },
+    {
+      "display": "Davi G.",
+      "country": "BR",
+      "owed": 131.94,
+      "risk": 0.185,
+      "paid": 131.94,
+      "reinvesting": true,
+      "stake": 133.02
+    },
+    {
+      "display": "Arjun H.",
+      "country": "IN",
+      "owed": 136.73,
+      "risk": 0.221,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 137.85
+    },
+    {
+      "display": "Sophia A.",
+      "country": "US",
+      "owed": 83.09,
+      "risk": 0.186,
+      "paid": 83.09,
+      "reinvesting": true,
+      "stake": 83.77
+    },
+    {
+      "display": "Freya M.",
+      "country": "GB",
+      "owed": 242.23,
+      "risk": 0.176,
+      "paid": 242.23,
+      "reinvesting": true,
+      "stake": 244.22
+    },
+    {
+      "display": "Mason D.",
+      "country": "US",
+      "owed": 53.07,
+      "risk": 0.575,
+      "paid": 0.0,
+      "reinvesting": true,
+      "stake": 53.51
+    }
+  ],
+  "note": "Synthetic creator population (realistic shape); not real users."
+}

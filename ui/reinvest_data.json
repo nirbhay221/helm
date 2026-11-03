@@ -1,29 +1,29 @@
 {
-  "as_of": "2026-11-02",
+  "as_of": "2026-11-03",
   "holdings": [
     {
       "ticker": "SPY",
       "label": "US stocks (S&P 500 ETF)",
       "weight": 0.5,
       "start_price": 718.01,
-      "end_price": 752.1,
-      "return_pct": 4.75
+      "end_price": 754.68,
+      "return_pct": 5.11
     },
     {
       "ticker": "VNQ",
       "label": "real estate / homes (REIT ETF)",
       "weight": 0.3,
       "start_price": 95.46,
-      "end_price": 95.06,
-      "return_pct": -0.42
+      "end_price": 94.8,
+      "return_pct": -0.69
     },
     {
       "ticker": "MCD",
       "label": "restaurant chains (McDonald's)",
       "weight": 0.2,
       "start_price": 284.1,
-      "end_price": 265.64,
-      "return_pct": -6.5
+      "end_price": 262.44,
+      "return_pct": -7.62
     }
   ],
   "nav": {
@@ -154,7 +154,8 @@
       "2026-10-28",
       "2026-10-29",
       "2026-10-30",
-      "2026-11-02"
+      "2026-11-02",
+      "2026-11-03"
     ],
     "values": [
       100.0,
@@ -283,56 +284,65 @@
       100.2626,
       101.1951,
       100.3194,
-      100.9487
+      100.9487,
+      100.8214
     ]
   },
-  "nav_return_pct": 0.95,
+  "nav_return_pct": 0.82,
   "pool": {
-    "reinvesting_creators": 500,
-    "total_contributed": 82123.92,
-    "current_value": 82903.03,
-    "return_pct": 0.95
+    "reinvesting_creators": 1250,
+    "total_contributed": 203818.06,
+    "current_value": 205492.22,
+    "return_pct": 0.82
   },
   "examples": [
     {
-      "creator": "c00012_US",
-      "contributed": 1487.49,
-      "stake_value": 1501.6
+      "creator": "Vihaan P.",
+      "country": "IN",
+      "contributed": 1278.58,
+      "stake_value": 1289.08
     },
     {
-      "creator": "c00180_US",
-      "contributed": 1146.05,
-      "stake_value": 1156.92
+      "creator": "James F.",
+      "country": "US",
+      "contributed": 1151.58,
+      "stake_value": 1161.04
     },
     {
-      "creator": "c00176_IN",
-      "contributed": 940.01,
-      "stake_value": 948.93
+      "creator": "Valentina S.",
+      "country": "MX",
+      "contributed": 1046.43,
+      "stake_value": 1055.03
     },
     {
-      "creator": "c00172_BR",
-      "contributed": 356.89,
-      "stake_value": 360.28
+      "creator": "Mateo V.",
+      "country": "MX",
+      "contributed": 952.87,
+      "stake_value": 960.7
     },
     {
-      "creator": "c00196_MX",
-      "contributed": 349.47,
-      "stake_value": 352.79
+      "creator": "Zainab K.",
+      "country": "NG",
+      "contributed": 943.6,
+      "stake_value": 951.35
     },
     {
-      "creator": "c00116_IN",
-      "contributed": 304.08,
-      "stake_value": 306.96
+      "creator": "Manuela A.",
+      "country": "BR",
+      "contributed": 706.51,
+      "stake_value": 712.31
     },
     {
-      "creator": "c00064_US",
-      "contributed": 298.59,
-      "stake_value": 301.42
+      "creator": "Helena F.",
+      "country": "BR",
+      "contributed": 670.97,
+      "stake_value": 676.48
     },
     {
-      "creator": "c00052_IN",
-      "contributed": 230.96,
-      "stake_value": 233.15
+      "creator": "Gabriel W.",
+      "country": "PH",
+      "contributed": 649.57,
+      "stake_value": 654.91
     }
   ],
   "note": "Sandbox concept: NAV is priced on real market data, but no securities are bought. A live version is a regulated securities offering."
