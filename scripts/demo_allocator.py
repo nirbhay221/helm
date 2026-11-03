@@ -32,8 +32,8 @@ SITUATIONS = [
 
 def main() -> None:
     desk = WeightDesk(LLMClient())
-    creators = make_global_creators(60, seed=3)
-    budget = 12000.0
+    creators = make_global_creators(2000, seed=3)
+    budget = round(sum(c.owed for c in creators) * 0.30, 2)   # cycle budget ~30% of owed
     countries = sorted({c.country for c in creators})
     print(f"driver: {'MODEL ' + desk.llm.model if desk.available else 'scripted fallback'}")
     print(f"creators: {len(creators)} across {len(countries)} countries {countries}, budget ${budget:,.0f}\n")

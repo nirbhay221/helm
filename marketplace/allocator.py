@@ -166,19 +166,44 @@ def allocate(creators: list[AllocCreator], budget: float, weights: Weights,
                        paid_count=len(lines))
 
 
+# Rough share of creators by country, reflecting where creator populations
+# actually concentrate (India, US and Brazil large; a long international tail).
+_COUNTRY_WEIGHTS = {"IN": 22, "US": 20, "BR": 11, "PH": 9, "NG": 8, "MX": 7,
+                    "CN": 8, "GB": 6, "DE": 5, "CA": 4}
+
+
 def make_global_creators(n: int, seed: int = 0) -> list[AllocCreator]:
-    """A spread of creators across countries, with risk and priority, for scale."""
+    """A realistic creator population at scale.
+
+    Earnings owed follow a heavy long tail (a few creators owed a lot, most owed
+    little), the creator economy's actual shape. Country mix follows real creator
+    populations. Risk is mostly low but higher for brand-new creators and those
+    with recent disputes; priority rises the longer a creator has been waiting.
+    Not real people, but the right shape, so the allocation behaves like the real
+    problem rather than uniform noise.
+    """
     import numpy as np
     rng = np.random.default_rng(seed)
-    countries = list(TREATY_WITHHOLDING.keys())
+    countries = list(_COUNTRY_WEIGHTS.keys())
+    probs = np.array([_COUNTRY_WEIGHTS[c] for c in countries], dtype=float)
+    probs /= probs.sum()
+
     out: list[AllocCreator] = []
     for i in range(n):
-        country = str(rng.choice(countries))
-        out.append(AllocCreator(
-            name=f"c{i:03d}_{country}",
-            country=country,
-            owed=round(float(rng.uniform(50, 1500)), 2),
-            risk=round(float(rng.beta(2, 6)), 3),        # mostly low, some high
-            priority=round(float(rng.uniform(0, 1)), 3),
-        ))
+        country = str(rng.choice(countries, p=probs))
+        # long-tail earnings owed (log-normal): median ~$90, tail into the thousands
+        owed = float(np.clip(rng.lognormal(mean=np.log(90), sigma=1.1), 5, 20000))
+        tenure_days = float(rng.lognormal(mean=np.log(150), sigma=1.0))   # many new, some veteran
+        is_new = tenure_days < 30
+        disputes = int(rng.poisson(0.3))
+        risk = float(rng.beta(2, 10))                       # baseline low
+        if is_new:
+            risk += 0.35
+        risk += min(0.4, 0.12 * disputes)
+        risk = float(np.clip(risk, 0.0, 1.0))
+        days_waiting = float(rng.exponential(9))            # most paid recently, some waiting
+        priority = float(np.clip(1.0 - np.exp(-days_waiting / 12.0), 0.0, 1.0))
+        out.append(AllocCreator(name=f"c{i:05d}_{country}", country=country,
+                                owed=round(owed, 2), risk=round(risk, 3),
+                                priority=round(priority, 3)))
     return out

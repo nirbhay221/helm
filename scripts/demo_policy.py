@@ -33,8 +33,8 @@ POLICIES = [
 
 def main() -> None:
     desk = PolicyDesk(LLMClient())
-    creators = make_global_creators(60, seed=3)
-    budget = 12000.0
+    creators = make_global_creators(2000, seed=3)
+    budget = round(sum(c.owed for c in creators) * 0.30, 2)   # cycle budget ~30% of owed
     print(f"driver: {'MODEL ' + desk.llm.model if desk.available else 'scripted fallback'}")
     print(f"{len(creators)} creators across 10 countries, budget ${budget:,.0f}\n")
 
