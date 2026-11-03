@@ -136,6 +136,21 @@ def build_server() -> MCPServer:
             "model_votes": adj.model_votes,
         }
 
+    @server.tool(
+        name="market_price",
+        description=(
+            "Get the latest real market price for a ticker (e.g. SPY, VNQ, MCD), used to "
+            "value the reinvestment pool. Real data from a public market endpoint; returns an "
+            "error field if the ticker is unknown or the source is unreachable."
+        ),
+    )
+    def market_price(ticker: str) -> dict:
+        from marketplace.market_data import latest_price
+        try:
+            return {"ticker": ticker.upper(), "price": latest_price(ticker), "currency": "USD"}
+        except Exception as exc:
+            return {"ticker": ticker.upper(), "error": str(exc)[:120]}
+
     return server
 
 

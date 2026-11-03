@@ -17,6 +17,7 @@ from paypal import Ledger, PayPalClient
 
 CONTEXT = {"market_size_b": 314, "creators_m": 207, "late_pct": 87}
 _SCENARIOS_FILE = os.path.join(os.path.dirname(__file__), "scenarios_data.json")
+_REINVEST_FILE = os.path.join(os.path.dirname(__file__), "reinvest_data.json")
 
 
 def _payout_engine_panel() -> dict:
@@ -48,6 +49,11 @@ def _load_scenarios() -> dict:
         return json.load(f)
 
 
+def _load_reinvest() -> dict:
+    with open(_REINVEST_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
 def build_dashboard_data() -> dict:
     sc = _load_scenarios()
     pop = sc["population"]
@@ -55,6 +61,7 @@ def build_dashboard_data() -> dict:
         "context": CONTEXT,
         "population": pop,
         "scenarios": sc["scenarios"],
+        "reinvest": _load_reinvest(),
         "payout_engine": _payout_engine_panel(),
         "headline": {
             "creators": pop["n"],

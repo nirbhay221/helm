@@ -83,6 +83,15 @@ _TEMPLATE = """<!doctype html>
     <div class="panel" style="margin:0"><h2>Where the money goes</h2><p>Payout by country for this policy.</p><div style="overflow-x:auto;max-height:300px"><table id="countries"></table></div></div>
   </div>
 
+  <div class="panel">
+    <h2>Creators can reinvest instead of cashing out</h2>
+    <p>Opt-in: a creator keeps a payout in and owns a proportional unit of a pooled fund of real assets, which pulls them back to the platform. Priced on real market data as of <span id="rAsOf"></span>. Sandbox concept, no securities are actually bought.</p>
+    <div class="grid2">
+      <div><canvas id="navChart"></canvas></div>
+      <div><div id="reinvestHead" style="margin-bottom:10px"></div><div style="overflow-x:auto"><table id="holdings"></table></div></div>
+    </div>
+  </div>
+
   <div class="grid3">
     <div class="panel"><h2>Risk exposure by policy</h2><p>Dollars of risk carried. The fraud policy pulls money off risky creators.</p><canvas id="riskChart"></canvas></div>
     <div class="panel"><h2>Payout engine: cheating earns nothing</h2><p>A Sybil creator's take collapses to the honest share under hardening.</p><canvas id="bulwarkChart"></canvas></div>
@@ -161,6 +170,28 @@ _TEMPLATE = """<!doctype html>
   tabsEl.addEventListener('click', e=>{ const t=e.target.closest('.tab'); if(t) show(+t.dataset.i); });
   show(0);
   let i=0; setInterval(()=>{ i=(i+1)%S.length; show(i); }, 3500);   // auto-tour the policies
+
+  // reinvestment pool (real-priced)
+  const ri=data.reinvest;
+  if (ri){
+    const asof=document.getElementById('rAsOf'); if(asof) asof.textContent=ri.as_of;
+    if (window.Chart){ new Chart(document.getElementById('navChart'), { type:'line',
+      data:{ labels:ri.nav.dates, datasets:[{ label:'pool NAV (rebased to 100)', data:ri.nav.values,
+        borderColor:C('--accent'), backgroundColor:'rgba(78,161,255,.08)', fill:true }]},
+      options:{ responsive:true, animation:false, elements:{point:{radius:0}},
+        plugins:{legend:{labels:{boxWidth:12}}}, scales:{x:{grid:{display:false}, ticks:{maxTicksLimit:6}}}}}); }
+    const p=ri.pool;
+    document.getElementById('reinvestHead').innerHTML =
+      `<span class="pill good">reinvested <b>${money(p.total_contributed)}</b></span>`+
+      `<span class="pill">now worth <b>${money(p.current_value)}</b></span>`+
+      `<span class="pill ${p.return_pct>=0?'good':'bad'}">6mo return <b>${p.return_pct>=0?'+':''}${p.return_pct}%</b></span>`+
+      `<span class="pill">${Number(p.reinvesting_creators).toLocaleString()} creators opted in</span>`;
+    document.getElementById('holdings').innerHTML =
+      '<thead><tr><th>Asset</th><th>Weight</th><th>6mo</th><th>Price</th></tr></thead><tbody>'+
+      ri.holdings.map(h=>`<tr><td>${h.ticker} &middot; ${h.label}</td><td>${Math.round(h.weight*100)}%</td>`+
+        `<td style="color:${h.return_pct>=0?'var(--good)':'var(--bad)'}">${h.return_pct>=0?'+':''}${h.return_pct}%</td>`+
+        `<td>$${h.end_price}</td></tr>`).join('')+'</tbody>';
+  }
 
   const pe=data.payout_engine, tg=pe.tollgate, ks=pe.keystone;
   document.getElementById('foot').innerHTML =

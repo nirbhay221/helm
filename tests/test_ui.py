@@ -13,8 +13,10 @@ from ui.page import render_page  # noqa: E402
 
 def test_dashboard_data_is_complete_and_serializable():
     d = build_dashboard_data()
-    for key in ("context", "population", "scenarios", "payout_engine", "headline"):
+    for key in ("context", "population", "scenarios", "reinvest", "payout_engine", "headline"):
         assert key in d
+    ri = d["reinvest"]
+    assert ri["holdings"] and ri["nav"]["values"] and len(ri["nav"]["dates"]) == len(ri["nav"]["values"])
     assert d["headline"]["creators"] >= 1000           # real-world scale
     s = d["scenarios"]
     assert len(s) >= 2
@@ -33,7 +35,8 @@ def test_page_renders_with_embedded_data():
         assert ph not in html                          # all placeholders replaced
     assert "window.HELM_DATA=" in html
     assert 'id="worldmap"' in html                     # the world choropleth
-    assert html.count("<canvas") == 2
+    assert 'id="navChart"' in html                     # the reinvestment NAV chart
+    assert html.count("<canvas") == 3
 
 
 def test_page_renders_for_live_server_without_embedded_data():
