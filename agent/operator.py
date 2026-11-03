@@ -173,3 +173,7 @@ class MoneyOutOperator:
         elif name == "interpret_signal":
             rec.facts["signal_assessment"] = result.get("assessment")
             rec.facts["suggests_caution"] = result.get("suggests_caution")
+        elif name == "observe":
+            rec.facts["creators_snapshot"] = result.get("creators")
+            rec.facts["reserve_required_observed"] = result.get("reserve_required")
+            rec.facts["signal_text"] = result.get("signal")
