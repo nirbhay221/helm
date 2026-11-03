@@ -1,0 +1,542 @@
+{
+  "population": {
+    "n": 2000,
+    "total_owed": 318261.79,
+    "budget": 95478.54,
+    "by_country": {
+      "IN": {
+        "owed": 70684.66,
+        "count": 437
+      },
+      "NG": {
+        "owed": 27474.12,
+        "count": 161
+      },
+      "MX": {
+        "owed": 22989.36,
+        "count": 151
+      },
+      "PH": {
+        "owed": 31868.56,
+        "count": 196
+      },
+      "US": {
+        "owed": 64606.67,
+        "count": 395
+      },
+      "CA": {
+        "owed": 13548.92,
+        "count": 74
+      },
+      "CN": {
+        "owed": 25379.75,
+        "count": 139
+      },
+      "DE": {
+        "owed": 12654.55,
+        "count": 107
+      },
+      "BR": {
+        "owed": 30518.93,
+        "count": 216
+      },
+      "GB": {
+        "owed": 18536.27,
+        "count": 124
+      }
+    }
+  },
+  "scenarios": [
+    {
+      "label": "Normal week",
+      "policy": "Cash is healthy. Pay creators fairly and prioritise the ones who have waited longest to be paid.",
+      "source": "model",
+      "reading": "Pay all creators fairly, prioritising those who have waited longest.",
+      "weights": {
+        "speed": 3.0,
+        "tax": 1.0,
+        "risk": 1.0,
+        "fx": 1.0
+      },
+      "constraints": {
+        "max_fraction_per_creator": 1.0,
+        "exclude_countries": [],
+        "max_risk": 1.0,
+        "min_priority": 0.0
+      },
+      "violations": [],
+      "paid_count": 589,
+      "total_paid": 95478.54,
+      "net_delivered": 86324.19,
+      "tax_withheld": 9154.35,
+      "fx_cost": 1128.89,
+      "risk_exposure": 18334.1,
+      "by_country": {
+        "CA": {
+          "amount": 5883.12,
+          "count": 28
+        },
+        "NG": {
+          "amount": 6981.8,
+          "count": 33
+        },
+        "BR": {
+          "amount": 9145.86,
+          "count": 60
+        },
+        "US": {
+          "amount": 21968.15,
+          "count": 129
+        },
+        "IN": {
+          "amount": 21230.57,
+          "count": 129
+        },
+        "PH": {
+          "amount": 7137.39,
+          "count": 48
+        },
+        "CN": {
+          "amount": 6795.84,
+          "count": 43
+        },
+        "DE": {
+          "amount": 4587.72,
+          "count": 39
+        },
+        "GB": {
+          "amount": 7785.28,
+          "count": 50
+        },
+        "MX": {
+          "amount": 3962.81,
+          "count": 30
+        }
+      },
+      "top": [
+        {
+          "name": "c01627_CA",
+          "country": "CA",
+          "currency": "CAD",
+          "amount": 1793.26,
+          "net": 1793.26
+        },
+        {
+          "name": "c00203_NG",
+          "country": "NG",
+          "currency": "NGN",
+          "amount": 1726.14,
+          "net": 1208.3
+        },
+        {
+          "name": "c00427_BR",
+          "country": "BR",
+          "currency": "BRL",
+          "amount": 1495.74,
+          "net": 1271.38
+        },
+        {
+          "name": "c00012_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1487.49,
+          "net": 1487.49
+        },
+        {
+          "name": "c00523_IN",
+          "country": "IN",
+          "currency": "INR",
+          "amount": 1432.22,
+          "net": 1217.39
+        },
+        {
+          "name": "c01494_PH",
+          "country": "PH",
+          "currency": "PHP",
+          "amount": 1316.41,
+          "net": 1053.13
+        },
+        {
+          "name": "c00180_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1146.05,
+          "net": 1146.05
+        },
+        {
+          "name": "c00106_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 910.04,
+          "net": 910.04
+        }
+      ]
+    },
+    {
+      "label": "Fraud wave",
+      "policy": "A fraud and chargeback wave is hitting brand-new accounts this week. Hold high-risk creators, and no single creator may get more than 10% of the batch.",
+      "source": "model",
+      "reading": "Hold high-risk creators and no single creator may get more than 10% of the batch.",
+      "weights": {
+        "speed": 1.0,
+        "tax": 1.0,
+        "risk": 1.0,
+        "fx": 1.0
+      },
+      "constraints": {
+        "max_fraction_per_creator": 0.1,
+        "exclude_countries": [],
+        "max_risk": 0.7,
+        "min_priority": 0.0
+      },
+      "violations": [],
+      "paid_count": 609,
+      "total_paid": 95478.54,
+      "net_delivered": 87766.51,
+      "tax_withheld": 7712.03,
+      "fx_cost": 1032.36,
+      "risk_exposure": 14712.7,
+      "by_country": {
+        "CA": {
+          "amount": 6261.41,
+          "count": 34
+        },
+        "BR": {
+          "amount": 10268.5,
+          "count": 60
+        },
+        "US": {
+          "amount": 25408.96,
+          "count": 158
+        },
+        "PH": {
+          "amount": 6612.05,
+          "count": 41
+        },
+        "IN": {
+          "amount": 17039.99,
+          "count": 115
+        },
+        "CN": {
+          "amount": 6781.68,
+          "count": 46
+        },
+        "NG": {
+          "amount": 3766.8,
+          "count": 19
+        },
+        "DE": {
+          "amount": 5290.96,
+          "count": 45
+        },
+        "GB": {
+          "amount": 9196.82,
+          "count": 59
+        },
+        "MX": {
+          "amount": 4851.37,
+          "count": 32
+        }
+      },
+      "top": [
+        {
+          "name": "c01627_CA",
+          "country": "CA",
+          "currency": "CAD",
+          "amount": 1793.26,
+          "net": 1793.26
+        },
+        {
+          "name": "c00427_BR",
+          "country": "BR",
+          "currency": "BRL",
+          "amount": 1495.74,
+          "net": 1271.38
+        },
+        {
+          "name": "c00012_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1487.49,
+          "net": 1487.49
+        },
+        {
+          "name": "c01494_PH",
+          "country": "PH",
+          "currency": "PHP",
+          "amount": 1316.41,
+          "net": 1053.13
+        },
+        {
+          "name": "c01499_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1250.24,
+          "net": 1250.24
+        },
+        {
+          "name": "c00180_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1146.05,
+          "net": 1146.05
+        },
+        {
+          "name": "c00106_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 910.04,
+          "net": 910.04
+        },
+        {
+          "name": "c00471_BR",
+          "country": "BR",
+          "currency": "BRL",
+          "amount": 896.63,
+          "net": 762.14
+        }
+      ]
+    },
+    {
+      "label": "Country freeze",
+      "policy": "Freeze all payouts to Nigeria and China this week pending a compliance review, and deliver as much net as possible to everyone else.",
+      "source": "model",
+      "reading": "Freeze all payouts to Nigeria and China this week pending a compliance review, and deliver as much net as possible to everyone else.",
+      "weights": {
+        "speed": 1.0,
+        "tax": 3.0,
+        "risk": 1.0,
+        "fx": 1.0
+      },
+      "constraints": {
+        "max_fraction_per_creator": 1.0,
+        "exclude_countries": [
+          "NG",
+          "CN"
+        ],
+        "max_risk": 1.0,
+        "min_priority": 0.0
+      },
+      "violations": [],
+      "paid_count": 635,
+      "total_paid": 95478.54,
+      "net_delivered": 92085.52,
+      "tax_withheld": 3393.02,
+      "fx_cost": 626.27,
+      "risk_exposure": 16151.4,
+      "by_country": {
+        "CA": {
+          "amount": 8904.67,
+          "count": 52
+        },
+        "US": {
+          "amount": 42717.3,
+          "count": 264
+        },
+        "IN": {
+          "amount": 12492.26,
+          "count": 83
+        },
+        "DE": {
+          "amount": 7996.31,
+          "count": 68
+        },
+        "GB": {
+          "amount": 12001.42,
+          "count": 84
+        },
+        "MX": {
+          "amount": 4851.37,
+          "count": 32
+        },
+        "BR": {
+          "amount": 5379.94,
+          "count": 41
+        },
+        "PH": {
+          "amount": 1135.27,
+          "count": 11
+        }
+      },
+      "top": [
+        {
+          "name": "c01627_CA",
+          "country": "CA",
+          "currency": "CAD",
+          "amount": 1793.26,
+          "net": 1793.26
+        },
+        {
+          "name": "c00012_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1487.49,
+          "net": 1487.49
+        },
+        {
+          "name": "c01499_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1250.24,
+          "net": 1250.24
+        },
+        {
+          "name": "c00180_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1146.05,
+          "net": 1146.05
+        },
+        {
+          "name": "c01612_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1045.81,
+          "net": 1045.81
+        },
+        {
+          "name": "c00106_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 910.04,
+          "net": 910.04
+        },
+        {
+          "name": "c01683_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 872.94,
+          "net": 872.94
+        },
+        {
+          "name": "c01756_IN",
+          "country": "IN",
+          "currency": "INR",
+          "amount": 824.63,
+          "net": 700.94
+        }
+      ]
+    },
+    {
+      "label": "Tight cash",
+      "policy": "Cash is tight this week. Be conservative, favour delivering more net to creators, and cap any one creator at 15% of the batch.",
+      "source": "model",
+      "reading": "Cash is tight this week. Be conservative, favour delivering more net to creators, and cap any one creator at 15% of the batch.",
+      "weights": {
+        "speed": 0.0,
+        "tax": 3.0,
+        "risk": 3.0,
+        "fx": 1.0
+      },
+      "constraints": {
+        "max_fraction_per_creator": 0.15,
+        "exclude_countries": [],
+        "max_risk": 1.0,
+        "min_priority": 0.0
+      },
+      "violations": [],
+      "paid_count": 607,
+      "total_paid": 95478.54,
+      "net_delivered": 91394.58,
+      "tax_withheld": 4083.96,
+      "fx_cost": 725.82,
+      "risk_exposure": 9351.3,
+      "by_country": {
+        "CA": {
+          "amount": 9088.06,
+          "count": 48
+        },
+        "US": {
+          "amount": 37903.63,
+          "count": 230
+        },
+        "IN": {
+          "amount": 11637.52,
+          "count": 64
+        },
+        "CN": {
+          "amount": 9142.75,
+          "count": 46
+        },
+        "BR": {
+          "amount": 4974.38,
+          "count": 32
+        },
+        "DE": {
+          "amount": 6256.86,
+          "count": 54
+        },
+        "MX": {
+          "amount": 6021.05,
+          "count": 47
+        },
+        "GB": {
+          "amount": 10075.32,
+          "count": 80
+        },
+        "PH": {
+          "amount": 378.97,
+          "count": 6
+        }
+      },
+      "top": [
+        {
+          "name": "c01627_CA",
+          "country": "CA",
+          "currency": "CAD",
+          "amount": 1793.26,
+          "net": 1793.26
+        },
+        {
+          "name": "c00012_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1487.49,
+          "net": 1487.49
+        },
+        {
+          "name": "c00684_IN",
+          "country": "IN",
+          "currency": "INR",
+          "amount": 1457.81,
+          "net": 1239.14
+        },
+        {
+          "name": "c01914_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1265.85,
+          "net": 1265.85
+        },
+        {
+          "name": "c01499_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1250.24,
+          "net": 1250.24
+        },
+        {
+          "name": "c00180_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1146.05,
+          "net": 1146.05
+        },
+        {
+          "name": "c01612_US",
+          "country": "US",
+          "currency": "USD",
+          "amount": 1045.81,
+          "net": 1045.81
+        },
+        {
+          "name": "c01475_CN",
+          "country": "CN",
+          "currency": "CNY",
+          "amount": 950.91,
+          "net": 855.82
+        }
+      ]
+    }
+  ]
+}

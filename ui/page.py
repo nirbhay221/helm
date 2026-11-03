@@ -1,100 +1,91 @@
-"""The single dashboard screen: Helm's agent running a creator-marketplace treasury.
+"""The dashboard screen: Helm's agent compiling policies and paying creators worldwide.
 
-One HTML string, no build step. Reads embedded `window.HELM_DATA` (static build)
-or fetches `/api/data` (live server). It PLAYS the agent's run cycle by cycle, so
-you watch it forecast, react to the signal, and decide who to pay and who to hold,
-rather than seeing a static chart. Charts are Chart.js from a CDN.
+One self-contained HTML string, no build step. Reads embedded `window.HELM_DATA`
+(static build) or fetches `/api/data`. A world choropleth, a policy switcher that
+shows the agent compiling each written policy into weights and hard constraints,
+KPI cards, and per-country rollups. Chart.js and jsVectorMap from CDNs, both
+guarded so the page still renders if a CDN is unavailable.
 """
 from __future__ import annotations
 
 import json
 
 CHART_JS = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+VMAP_CSS = "https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css"
+VMAP_JS = "https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/jsvectormap.min.js"
+VMAP_WORLD = "https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"
 
 _TEMPLATE = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Helm Money-Out Operator</title>
+<title>Helm Global Payout Operator</title>
+<link rel="stylesheet" href="__VMAP_CSS__">
 <script src="__CHART_JS__"></script>
+<script src="__VMAP_JS__"></script>
+<script src="__VMAP_WORLD__"></script>
 <style>
   :root {
-    --bg:#0b0f14; --panel:#131a23; --line:#223042; --ink:#e7eef7; --muted:#8aa0b6;
-    --accent:#4ea1ff; --good:#36d399; --warn:#f6c343; --bad:#f06868; --target:#9aa7b5;
+    --bg:#0b0f14; --panel:#131a23; --panel2:#182230; --line:#223042; --ink:#e7eef7;
+    --muted:#8aa0b6; --accent:#4ea1ff; --good:#36d399; --warn:#f6c343; --bad:#f06868; --target:#9aa7b5;
   }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink);
     font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-  header { padding:24px 16px 8px; max-width:1180px; margin:0 auto; }
+  header { padding:24px 16px 4px; max-width:1200px; margin:0 auto; }
   h1 { margin:0 0 4px; font-size:26px; letter-spacing:.2px; }
   .sub { color:var(--muted); font-size:14px; }
-  main { max-width:1180px; margin:0 auto; padding:16px; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:16px; }
+  main { max-width:1200px; margin:0 auto; padding:16px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
   .card .k { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.6px; }
-  .card .v { font-size:24px; font-weight:650; margin-top:4px; }
-  .card .v.good { color:var(--good); } .card .v.accent { color:var(--accent); }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  @media (max-width:820px){ .grid { grid-template-columns:1fr; } }
+  .card .v { font-size:23px; font-weight:650; margin-top:4px; } .card .v.accent{color:var(--accent);} .card .v.good{color:var(--good);}
   .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
-  .panel h2 { margin:0 0 2px; font-size:15px; }
-  .panel p { margin:0 0 12px; color:var(--muted); font-size:13px; }
-  canvas { max-height:250px; }
-  button { background:var(--accent); color:#06121f; border:0; border-radius:9px; padding:9px 16px;
-    font-size:14px; font-weight:650; cursor:pointer; }
-  button:disabled { opacity:.6; cursor:default; }
-  .bar { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-  #commentary { flex:1 1 300px; color:var(--ink); font-size:13.5px; min-height:20px; }
+  .panel h2 { margin:0 0 2px; font-size:15px; } .panel p { margin:0 0 12px; color:var(--muted); font-size:13px; }
+  .grid2 { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; } @media (max-width:900px){ .grid2{grid-template-columns:1fr;} }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:820px){ .grid3{grid-template-columns:1fr;} }
+  .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .tab { background:var(--panel2); color:var(--muted); border:1px solid var(--line); border-radius:999px;
+    padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; }
+  .tab.on { background:var(--accent); color:#06121f; border-color:var(--accent); }
+  .policy { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  .policy .q { color:var(--ink); font-style:italic; } .policy .c { color:var(--muted); font-size:13px; margin-top:6px; }
+  .pill { display:inline-block; background:#0e1a27; border:1px solid var(--line); border-radius:7px; padding:2px 8px; margin:2px 4px 2px 0; font-size:12px; }
+  .pill b { color:var(--accent); } .pill.bad b{ color:var(--bad);} .pill.good b{color:var(--good);}
+  #worldmap { height:340px; } .mapwrap { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px; }
+  canvas { max-height:240px; }
   table { width:100%; border-collapse:collapse; font-size:12.5px; }
   th,td { text-align:right; padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
-  th:first-child,td:first-child { text-align:left; } td.l,th.l { text-align:left; }
+  th:first-child,td:first-child { text-align:left; }
   th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
-  .tag { display:inline-block; padding:1px 7px; border-radius:999px; font-size:11px; }
-  .tag.good { background:rgba(54,211,153,.15); color:var(--good); }
-  .tag.hold { background:rgba(246,195,67,.15); color:var(--warn); }
-  .tag.sig { background:rgba(240,104,104,.15); color:var(--bad); }
-  .foot { color:var(--muted); font-size:12px; padding:8px 16px 32px; max-width:1180px; margin:0 auto; }
+  .foot { color:var(--muted); font-size:12px; padding:8px 16px 32px; max-width:1200px; margin:0 auto; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Helm &mdash; money-out operator</h1>
-  <div class="sub">Watch an AI agent run a creator platform's payouts. Each cycle it forecasts demand, reads the signal, chooses a risk posture, and decides which creators to pay and which to hold, on PayPal. The solver sizes the safe release; guardrails clamp the agent. Every number is produced by the running system.</div>
+  <h1>Helm &mdash; global payout operator</h1>
+  <div class="sub">An AI agent runs payouts for a creator platform with thousands of creators across the world. You write the treasury policy in plain English; the agent compiles it into objective weights and hard constraints; a solver allocates the cycle budget across everyone, net of each country's tax and FX; guardrails clamp it.</div>
 </header>
 <main>
   <div class="cards" id="cards"></div>
 
-  <div class="panel bar">
-    <button id="runBtn">Run the agent</button>
-    <div id="cycleLabel" class="sub"></div>
-    <div id="commentary"></div>
-  </div>
-
   <div class="panel">
-    <h2>The agent forecasts, and stays solvent through the swing</h2>
-    <p>The ETS forecast tracks a viral spike and collapse with an uncertainty band; cash stays above the floor-plus-reserve line throughout.</p>
-    <div class="grid">
-      <div><canvas id="gmvChart"></canvas></div>
-      <div><canvas id="cashChart"></canvas></div>
-    </div>
+    <h2>Write a policy, the agent runs it</h2>
+    <p>Each tab is a treasury policy stated in English. The agent compiled it with the live model; the allocation below obeys it.</p>
+    <div class="tabs" id="tabs"></div>
+    <div class="policy" id="policy"></div>
+    <div id="pills"></div>
   </div>
 
-  <div class="grid">
-    <div class="panel"><h2>The agent's risk posture</h2><p>How conservative the agent chose to be each cycle. It raises the reserve when a fraud signal lands (red bar).</p><canvas id="riskChart"></canvas></div>
-    <div class="panel"><h2>Payout frontier: reserve shortfall</h2><p>Dollars under-reserved against chargebacks. Helm versus the naive extremes.</p><canvas id="frontierChart"></canvas></div>
+  <div class="grid2">
+    <div class="mapwrap"><div id="worldmap" role="img" aria-label="payouts by country"></div></div>
+    <div class="panel" style="margin:0"><h2>Where the money goes</h2><p>Payout by country for this policy.</p><div style="overflow-x:auto;max-height:300px"><table id="countries"></table></div></div>
   </div>
 
-  <div class="panel">
-    <h2>The agent's decision journal</h2>
-    <p>Filling in as the agent runs: the forecast, the risk posture it chose, the safe release the solver sized, who it paid, who it held, and any guardrail that clamped it.</p>
-    <div style="overflow-x:auto"><table id="journal"></table></div>
-  </div>
-
-  <div class="panel">
-    <h2>Payout engine: cheating earns nothing</h2>
-    <p>A Sybil creator inflates the naive split; hardening collapses it to the honest share. Global creators are withheld at treaty rates (Tollgate), batches settle atomically (Keystone).</p>
-    <canvas id="bulwarkChart"></canvas>
+  <div class="grid3">
+    <div class="panel"><h2>Risk exposure by policy</h2><p>Dollars of risk carried. The fraud policy pulls money off risky creators.</p><canvas id="riskChart"></canvas></div>
+    <div class="panel"><h2>Payout engine: cheating earns nothing</h2><p>A Sybil creator's take collapses to the honest share under hardening.</p><canvas id="bulwarkChart"></canvas></div>
   </div>
 </main>
 <div class="foot" id="foot"></div>
@@ -104,111 +95,78 @@ _TEMPLATE = """<!doctype html>
   const data = window.HELM_DATA || await (await fetch('/api/data')).json();
   const css = getComputedStyle(document.documentElement);
   const C = n => css.getPropertyValue(n).trim();
-  Chart.defaults.color = C('--muted'); Chart.defaults.borderColor = C('--line');
-  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
   const money = v => '$' + Number(v).toLocaleString(undefined,{maximumFractionDigits:0});
+  if (window.Chart){ Chart.defaults.color=C('--muted'); Chart.defaults.borderColor=C('--line');
+    Chart.defaults.font.family=getComputedStyle(document.body).fontFamily; }
 
-  const h = data.headline, ctx = data.context;
+  const h=data.headline, S=data.scenarios, ctx=data.context;
   document.getElementById('cards').innerHTML = [
-    ['paid to creators', money(h.creators_paid_total), 'accent'],
-    ['cycles the agent ran', String(h.cycles), ''],
-    ['raised caution on a signal', h.caution_raised + 'x', h.caution_raised? 'good':''],
-    ['recoupment engaged', h.recoupment_used? 'yes':'not needed', ''],
-  ].map(c => `<div class="card"><div class="k">${c[0]}</div><div class="v ${c[2]||''}">${c[1]}</div></div>`).join('');
+    ['creators', Number(h.creators).toLocaleString(), ''],
+    ['owed to creators', money(h.total_owed), 'accent'],
+    ['this cycle budget', money(h.budget), ''],
+    ['countries', String(h.countries), ''],
+    ['policies the agent ran', String(S.length), 'good'],
+  ].map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v ${c[2]||''}">${c[1]}</div></div>`).join('');
 
-  const J = data.journal, g = data.gmv, cf = data.cashflow, rk = data.risk;
+  // world map (guarded)
+  let map=null;
+  if (window.jsVectorMap){ try {
+    map = new jsVectorMap({ selector:'#worldmap', map:'world', zoomButtons:false,
+      backgroundColor:'transparent',
+      regionStyle:{ initial:{ fill:C('--line') }, hover:{ fill:C('--accent') } },
+      series:{ regions:[{ attribute:'fill', scale:['#17304a', C('--accent')],
+        normalizeFunction:'polynomial', values:{} }] } });
+  } catch(e){ map=null; } }
+  const setMap = vals => { if(map&&map.series&&map.series.regions[0]){ try{ map.series.regions[0].setValues(vals);}catch(e){} } };
 
-  const mkLine = (id, sets) => new Chart(document.getElementById(id), {
-    type:'line', data:{labels:[], datasets:sets.map(s=>Object.assign({data:[]}, s))},
-    options:{responsive:true, animation:false, interaction:{mode:'index',intersect:false},
-      plugins:{legend:{labels:{boxWidth:12}}}, elements:{point:{radius:0}},
-      scales:{x:{grid:{display:false}}}}});
-  const gmvCh = mkLine('gmvChart', [
-    {label:'forecast band', borderColor:'transparent', backgroundColor:'rgba(78,161,255,.12)', fill:'+1'},
-    {label:'_lower', borderColor:'transparent', backgroundColor:'transparent', fill:false},
-    {label:'forecast (ETS)', borderColor:C('--accent'), borderDash:[6,4]},
-    {label:'actual GMV', borderColor:C('--warn'), borderWidth:2}]);
-  const cashCh = mkLine('cashChart', [
-    {label:'cash', borderColor:C('--good'), backgroundColor:'rgba(54,211,153,.08)', fill:true},
-    {label:'floor + reserve', borderColor:C('--bad'), borderDash:[4,4]}]);
-  const riskCh = new Chart(document.getElementById('riskChart'), {type:'bar',
-    data:{labels:[], datasets:[{label:'risk multiplier', data:[], backgroundColor:[], borderRadius:5}]},
-    options:{responsive:true, animation:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{suggestedMin:1}}}});
-
-  const bar=(id,labels,values,colors)=> new Chart(document.getElementById(id),{type:'bar',
-    data:{labels,datasets:[{data:values,backgroundColor:colors,borderRadius:6}]},
-    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}}}}});
-  const fr=data.frontier;
-  bar('frontierChart',['pay everyone','monthly','Helm'],
-    [fr.pay_all.reserve_shortfall,fr.monthly.reserve_shortfall,fr.helm.reserve_shortfall],
-    [C('--bad'),C('--target'),C('--good')]);
+  // scenario comparison: risk exposure per policy
+  if (window.Chart){ new Chart(document.getElementById('riskChart'), { type:'bar',
+    data:{ labels:S.map(s=>s.label), datasets:[{ data:S.map(s=>s.risk_exposure),
+      backgroundColor:S.map(s=>s.label.toLowerCase().includes('fraud')?C('--good'):C('--target')), borderRadius:6 }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}}}); }
   const bw=data.payout_engine.bulwark;
-  bar('bulwarkChart',['naive take','hardened take','honest share'],
-    [bw.naive_cheater_take,bw.hardened_cheater_take,bw.honest_share],
-    [C('--bad'),C('--good'),C('--target')]);
+  if (window.Chart){ new Chart(document.getElementById('bulwarkChart'), { type:'bar',
+    data:{ labels:['naive take','hardened','honest share'], datasets:[{ data:[bw.naive_cheater_take,bw.hardened_cheater_take,bw.honest_share],
+      backgroundColor:[C('--bad'),C('--good'),C('--target')], borderRadius:6 }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}}}); }
 
-  const jt=document.getElementById('journal');
-  const head=['Cycle','Forecast','Risk x','Safe release','Paid','Held','PayPal batch','Guardrail'];
-  jt.innerHTML='<thead><tr>'+head.map((x,i)=>`<th class="${i>=4&&i<=5?'l':''}">${x}</th>`).join('')+'</tr></thead><tbody></tbody>';
-  const tbody=jt.querySelector('tbody');
+  // tabs
+  const tabsEl=document.getElementById('tabs');
+  tabsEl.innerHTML = S.map((s,i)=>`<div class="tab${i===0?' on':''}" data-i="${i}">${s.label}</div>`).join('');
 
-  function reveal(i){
-    const j=J[i];
-    gmvCh.data.labels.push(j.period);
-    gmvCh.data.datasets[0].data.push(g.upper[i]); gmvCh.data.datasets[1].data.push(g.lower[i]);
-    gmvCh.data.datasets[2].data.push(g.forecast[i]); gmvCh.data.datasets[3].data.push(g.actual[i]);
-    gmvCh.update('none');
-    cashCh.data.labels.push(j.period);
-    cashCh.data.datasets[0].data.push(cf.cash[i]); cashCh.data.datasets[1].data.push(cf.floor_plus_reserve[i]);
-    cashCh.update('none');
-    riskCh.data.labels.push(j.period);
-    riskCh.data.datasets[0].data.push(rk.risk_multiplier[i]);
-    riskCh.data.datasets[0].backgroundColor.push(j.period===rk.signal_cycle?C('--bad'):C('--target'));
-    riskCh.update('none');
-
-    const paid=j.paid.map(p=>`${p.creator} ${money(p.amount)}`).join(', ')||'&mdash;';
-    const held=(j.held||[]).join(', ')||'&mdash;';
-    const sig=j.signal?' <span class="tag sig">signal</span>':'';
-    const gr=(j.overrides&&j.overrides.length)?`<span class="tag hold">${j.overrides.length}</span>`:'&mdash;';
-    const fc=j.forecast!=null?money(j.forecast)+' &plusmn;'+Math.round(j.sigma||0):'&mdash;';
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>wk${j.period}${sig}</td><td>${fc}</td><td>${j.risk_multiplier}</td><td>${money(j.safe_release)}</td><td class="l">${paid}</td><td class="l">${held}</td><td>${j.batch_id||'&mdash;'}</td><td>${gr}</td>`;
-    tbody.appendChild(tr);
-
-    const paidN=j.paid.map(p=>p.creator).join(' + ')||'nobody';
-    const heldN=(j.held||[]).length?`, and held <b>${j.held.join(' & ')}</b>`:'';
-    document.getElementById('commentary').innerHTML =
-      `<b>Cycle ${j.period}:</b> forecast ${money(j.forecast)} &plusmn;${Math.round(j.sigma||0)}. `+
-      (j.signal?`<span style="color:var(--bad)">fraud signal, raised reserve to ${j.risk_multiplier}x</span>. `
-               :`risk posture ${j.risk_multiplier}x. `)+
-      `Safe release ${money(j.safe_release)}; paid <b>${paidN}</b>${heldN}.`;
-    document.getElementById('cycleLabel').textContent=`cycle ${i+1} / ${J.length}`;
+  function show(i){
+    const s=S[i];
+    [...tabsEl.children].forEach((t,j)=>t.classList.toggle('on', j===i));
+    const w=s.weights, con=s.constraints;
+    document.getElementById('policy').innerHTML =
+      `<div class="q">&ldquo;${s.policy}&rdquo;</div>`+
+      `<div class="c">compiled by the model: ${s.reading||'(weights and constraints)'}</div>`;
+    const exc = con.exclude_countries&&con.exclude_countries.length ? con.exclude_countries.join(', ') : 'none';
+    document.getElementById('pills').innerHTML =
+      `<span class="pill">speed <b>${w.speed}</b></span><span class="pill">tax <b>${w.tax}</b></span>`+
+      `<span class="pill">risk <b>${w.risk}</b></span><span class="pill">fx <b>${w.fx}</b></span>`+
+      `<span class="pill">cap/creator <b>${Math.round(con.max_fraction_per_creator*100)}%</b></span>`+
+      `<span class="pill bad">exclude <b>${exc}</b></span>`+
+      `<span class="pill good">paid <b>${s.paid_count.toLocaleString()}</b></span>`+
+      `<span class="pill">net <b>${money(s.net_delivered)}</b></span>`+
+      `<span class="pill">tax withheld <b>${money(s.tax_withheld)}</b></span>`+
+      `<span class="pill">risk exposure <b>${Math.round(s.risk_exposure).toLocaleString()}</b></span>`;
+    const vals={}; Object.entries(s.by_country).forEach(([k,v])=>vals[k]=v.amount);
+    setMap(vals);
+    const rows=Object.entries(s.by_country).sort((a,b)=>b[1].amount-a[1].amount)
+      .map(([k,v])=>`<tr><td>${k}</td><td>${money(v.amount)}</td><td>${v.count}</td></tr>`).join('');
+    document.getElementById('countries').innerHTML =
+      '<thead><tr><th>Country</th><th>Paid</th><th>Creators</th></tr></thead><tbody>'+rows+'</tbody>';
   }
-
-  let timer=null;
-  function stop(){ if(timer){clearInterval(timer); timer=null;} }
-  function run(){
-    stop();
-    [gmvCh,cashCh,riskCh].forEach(c=>{ c.data.labels=[];
-      c.data.datasets.forEach(d=>{ d.data=[]; if(Array.isArray(d.backgroundColor)) d.backgroundColor=[]; });
-      c.update('none'); });
-    tbody.innerHTML='';
-    const btn=document.getElementById('runBtn'); btn.textContent='Running...'; btn.disabled=true;
-    let i=0;
-    timer=setInterval(()=>{
-      if(i>=J.length){ stop(); btn.textContent='Replay'; btn.disabled=false; return; }
-      reveal(i++);
-    }, 650);
-  }
-  document.getElementById('runBtn').addEventListener('click', run);
-  run();
+  tabsEl.addEventListener('click', e=>{ const t=e.target.closest('.tab'); if(t) show(+t.dataset.i); });
+  show(0);
+  let i=0; setInterval(()=>{ i=(i+1)%S.length; show(i); }, 3500);   // auto-tour the policies
 
   const pe=data.payout_engine, tg=pe.tollgate, ks=pe.keystone;
   document.getElementById('foot').innerHTML =
     `Context: a ~$${ctx.market_size_b}B creator economy, ~${ctx.creators_m}M creators, up to ${ctx.late_pct}% paid late. `+
-    `Bulwark hardening: ${bw.hardening_applied.join(', ')||'none needed'} (cheat defeated: ${bw.defeated}). `+
-    `Clearwright legal: ${pe.clearwright_ok}. Tollgate withheld ${money(tg.withheld)} of ${money(tg.gross)}. `+
-    `Keystone ${ks.status}, conserved ${ks.conserved}.`;
+    `Bulwark cheat defeated: ${bw.defeated}. Clearwright legal: ${pe.clearwright_ok}. `+
+    `Tollgate withheld ${money(tg.withheld)} of ${money(tg.gross)} for global creators. Keystone ${ks.status}, conserved ${ks.conserved}.`;
 })();
 </script>
 </body>
@@ -217,7 +175,8 @@ _TEMPLATE = """<!doctype html>
 
 
 def render_page(embedded_data: dict | None = None) -> str:
-    html = _TEMPLATE.replace("__CHART_JS__", CHART_JS)
+    html = (_TEMPLATE.replace("__CHART_JS__", CHART_JS).replace("__VMAP_CSS__", VMAP_CSS)
+            .replace("__VMAP_JS__", VMAP_JS).replace("__VMAP_WORLD__", VMAP_WORLD))
     if embedded_data is not None:
         inject = f"<script>window.HELM_DATA={json.dumps(embedded_data)};</script>"
         html = html.replace("</head>", inject + "\n</head>")
