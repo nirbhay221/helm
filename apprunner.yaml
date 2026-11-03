@@ -1,0 +1,16 @@
+# AWS App Runner config for the Helm dashboard (Docker-based service).
+# App Runner builds the Dockerfile in this repo and runs it. The service listens
+# on 8080; it runs in demo mode by default, so no secrets are required to deploy.
+version: 1.0
+runtime: docker
+build:
+  commands:
+    build:
+      - echo "built from Dockerfile"
+run:
+  command: sh -c "uvicorn ui.app:app --host 0.0.0.0 --port ${PORT:-8080}"
+  network:
+    port: 8080
+  env:
+    - name: DEMO_MODE
+      value: "1"
