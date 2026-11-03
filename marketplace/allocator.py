@@ -69,6 +69,21 @@ class Weights:
 
 
 @dataclass
+class Constraints:
+    """Hard rules the solver must obey, compiled from a plain-English policy.
+    These bound the optimizer; the weights only tilt it."""
+    max_fraction_per_creator: float = 1.0    # no creator gets more than this x budget
+    exclude_countries: tuple = ()            # pay no one from these countries this cycle
+    max_risk: float = 1.0                    # never pay a creator riskier than this
+    min_priority: float = 0.0                # only pay creators at least this urgent
+
+    def allows(self, c: "AllocCreator") -> bool:
+        return (c.country not in self.exclude_countries
+                and c.risk <= self.max_risk + 1e-9
+                and c.priority >= self.min_priority - 1e-9)
+
+
+@dataclass
 class AllocResult:
     status: str
     total_paid: float
@@ -103,13 +118,19 @@ def validate_weights(raw: dict, lo: float = 0.0, hi: float = 3.0) -> tuple[Weigh
     return w, violations
 
 
-def allocate(creators: list[AllocCreator], budget: float, weights: Weights) -> AllocResult:
+def allocate(creators: list[AllocCreator], budget: float, weights: Weights,
+             constraints: "Constraints | None" = None) -> AllocResult:
     budget = max(0.0, float(budget))
+    con = constraints or Constraints()
     solver = pywraplp.Solver.CreateSolver("GLOP")
     if solver is None:  # pragma: no cover
         raise RuntimeError("OR-Tools GLOP solver unavailable")
 
-    x = {c.name: solver.NumVar(0.0, max(0.0, c.owed), f"x_{c.name}") for c in creators}
+    cap = con.max_fraction_per_creator * budget
+    x = {}
+    for c in creators:
+        ub = min(max(0.0, c.owed), cap) if con.allows(c) else 0.0   # held if policy forbids
+        x[c.name] = solver.NumVar(0.0, ub, f"x_{c.name}")
     solver.Add(solver.Sum(list(x.values())) <= budget)
 
     obj = []
