@@ -13,9 +13,32 @@ import json
 import os
 
 from arms.payout_engine import Contribution, Party, run_payout_engine
+from market.abuse import AbuseEngine
+from market.marketplace import generate_marketplace
 from paypal import Ledger, PayPalClient
 
 CONTEXT = {"market_size_b": 314, "creators_m": 207, "late_pct": 87}
+
+# Real, sourced facts the dashboard cites so nothing reads as invented. Each is
+# a public 2026 figure about how creators actually get paid; the agent exists to
+# attack exactly these. Sources rendered in the page footer.
+FACTS = [
+    {"stat": "up to 120 days",
+     "claim": "creators routinely wait up to 120 days to be paid; late payment is the single most common operational complaint",
+     "source": "Gigapay 2026 Creator Pay Report"},
+    {"stat": "15 to 20%",
+     "claim": "a typical sponsorship is invoiced then waits 30 to 60 days, with agencies taking a 15 to 20% cut",
+     "source": "Gigapay 2026"},
+    {"stat": "62% to the top 10%",
+     "claim": "the top 10% of creators took 62% of all payment volume in 2025; 67% earned under $10k for the year",
+     "source": "CreatorIQ via Yahoo Finance, 2026"},
+    {"stat": "frozen on review",
+     "claim": "payout holds and frozen balances hit creators on processor review, cross-border flows, or moderation flags",
+     "source": "Spondula Insights, 2026"},
+    {"stat": "written off",
+     "claim": "instant-payout fraud and clawbacks are written off when a creator goes inactive before recovery",
+     "source": "Payouts.com, 2026"},
+]
 _SCENARIOS_FILE = os.path.join(os.path.dirname(__file__), "scenarios_data.json")
 _REINVEST_FILE = os.path.join(os.path.dirname(__file__), "reinvest_data.json")
 _DIRECTORY_FILE = os.path.join(os.path.dirname(__file__), "directory_data.json")
@@ -45,6 +68,24 @@ def _payout_engine_panel() -> dict:
                      "conserved": pe.keystone.conserved}}
 
 
+def _abuse_panel() -> dict:
+    """A live both-sides abuse scan: who is at fault, and the action, with reasons."""
+    m = generate_marketplace(n_accounts=120, seed=7)
+    total = len(m.orders)
+    bad = sum(1 for o in m.orders if o.status in ("returned", "charged_back"))
+    verdicts = AbuseEngine(min_bad=10).scan(m)
+    flagged = [{"name": v.name, "role": v.role, "bad": v.bad_count,
+                "distinct": v.distinct_counterparties, "rate": round(v.rate, 3),
+                "action": v.action, "reason": v.reason} for v in verdicts]
+    return {
+        "accounts": len(m.accounts), "orders": total, "bad_orders": bad,
+        "flagged": flagged,
+        "buyers_flagged": sum(1 for v in verdicts if v.role == "buyer"),
+        "sellers_flagged": sum(1 for v in verdicts if v.role == "seller"),
+        "suspended": sum(1 for v in verdicts if v.action == "suspend"),
+    }
+
+
 def _load_scenarios() -> dict:
     with open(_SCENARIOS_FILE, encoding="utf-8") as f:
         return json.load(f)
@@ -66,6 +107,8 @@ def build_dashboard_data() -> dict:
         "reinvest": _load_json(_REINVEST_FILE),
         "directory": directory,
         "payout_engine": _payout_engine_panel(),
+        "abuse": _abuse_panel(),
+        "facts": FACTS,
         "headline": {
             "creators": directory["total"],
             "total_owed": pop["total_owed"],

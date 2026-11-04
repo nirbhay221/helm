@@ -51,7 +51,7 @@ class AbuseEngine:
             return None
         action = "suspend" if rate >= self.suspend_rate else "hold"
         who = "sellers" if role == "buyer" else "buyers"
-        kind = "serial returner" if role == "buyer" else "ships bad goods"
+        kind = "serial returner" if role == "buyer" else "seller who ships bad goods"
         reason = (f"{acc.name} ({role}) has {bad} returns/chargebacks across {distinct} "
                   f"different {who} (rate {int(rate*100)}%), the pattern of a {kind}. "
                   f"Action: {action}; the counterparties are protected.")

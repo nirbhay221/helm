@@ -1,0 +1,545 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Helm</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a dark control-room ledger. Slim sticky masthead, single narrow column
+     of scenes, hairline-ruled panels, one steel-blue signal, money in warm gold,
+     semantic good/warn/bad kept separate from the accent. */
+  :root {
+    --bg: #0b0f17;
+    --panel: #121824;
+    --panel-2: #0f1420;
+    --line: #222c3d;
+    --line-soft: #1a2230;
+    --fg: #e7ecf4;
+    --muted: #9aa7bd;
+    --faint: #66748c;
+    --accent: #5b9dff;
+    --accent-soft: #1b2b47;
+    --gold: #e7b96b;
+    --good: #46d08a;
+    --warn: #efc05a;
+    --bad: #ff6b81;
+    --radius: 14px;
+    --maxw: 1080px;
+    color-scheme: dark;
+    --shadow: 0 1px 0 rgba(255,255,255,.02), 0 18px 40px -24px rgba(0,0,0,.8);
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f6fa;
+    --panel: #ffffff;
+    --panel-2: #f7f9fc;
+    --line: #dde3ec;
+    --line-soft: #e8edf4;
+    --fg: #17202e;
+    --muted: #51607a;
+    --faint: #8392a8;
+    --accent: #2f6fe0;
+    --accent-soft: #e3edff;
+    --gold: #b5812a;
+    --good: #1a9e62;
+    --warn: #b7811a;
+    --bad: #d33a52;
+    color-scheme: light;
+    --shadow: 0 1px 0 rgba(0,0,0,.02), 0 18px 40px -28px rgba(31,52,92,.35);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f4f6fa; --panel: #ffffff; --panel-2: #f7f9fc; --line: #dde3ec;
+      --line-soft: #e8edf4; --fg: #17202e; --muted: #51607a; --faint: #8392a8;
+      --accent: #2f6fe0; --accent-soft: #e3edff; --gold: #b5812a; --good: #1a9e62;
+      --warn: #b7811a; --bad: #d33a52; color-scheme: light;
+      --shadow: 0 1px 0 rgba(0,0,0,.02), 0 18px 40px -28px rgba(31,52,92,.35);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg); font-family: var(--sans);
+    line-height: 1.55; -webkit-font-smoothing: antialiased; margin: 0;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+    z-index: 60; background: var(--bg);
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* masthead */
+  header.bar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-soft);
+  }
+  .bar .wrap { display: flex; align-items: center; gap: 14px; padding-block: 12px; }
+  .mark { font-family: var(--mono); font-weight: 600; letter-spacing: .28em;
+    font-size: 15px; text-transform: uppercase; }
+  .mark b { color: var(--accent); }
+  .bar .tag { font-size: 12.5px; color: var(--muted); border-left: 1px solid var(--line);
+    padding-left: 14px; }
+  .bar .spacer { flex: 1; }
+  .pill { font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em;
+    display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px;
+    border: 1px solid var(--line); border-radius: 999px; color: var(--muted);
+    background: var(--panel-2); white-space: nowrap; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 70%, transparent); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 55%,transparent)}
+    70%{box-shadow:0 0 0 7px transparent} 100%{box-shadow:0 0 0 0 transparent} }
+  @media (prefers-reduced-motion: reduce){ .dot{animation:none} }
+
+  section { padding-block: 46px; border-bottom: 1px solid var(--line-soft); }
+  .eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--faint); margin: 0 0 14px; }
+  h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 5.4vw, 52px);
+    line-height: 1.08; letter-spacing: -.01em; margin: 0 0 18px; text-wrap: balance; max-width: 18ch; }
+  h1 .hl { color: var(--accent); font-style: italic; }
+  h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(23px, 3.4vw, 32px);
+    line-height: 1.14; margin: 0 0 12px; text-wrap: balance; }
+  h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.01em; }
+  p.lede { font-size: clamp(16px, 2.1vw, 18.5px); color: var(--muted); max-width: 62ch; margin: 0 0 8px; }
+  p { max-width: 64ch; }
+  .muted { color: var(--muted); }
+  .faint { color: var(--faint); }
+
+  /* hero kpis */
+  .hero { padding-top: 40px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 30px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 18px 16px; box-shadow: var(--shadow); }
+  .kpi .v { font-family: var(--mono); font-weight: 600; font-size: clamp(22px, 3vw, 28px);
+    letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .kpi .v.money { color: var(--gold); }
+  .kpi .k { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  .kpi .s { font-size: 11px; color: var(--faint); margin-top: 8px; font-family: var(--mono); }
+
+  /* fact cards */
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .fact { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px; display: flex; flex-direction: column; gap: 9px; }
+  .fact .stat { font-family: var(--mono); font-weight: 600; font-size: 17px; color: var(--gold);
+    letter-spacing: -.01em; }
+  .fact .claim { font-size: 13.5px; color: var(--fg); }
+  .fact .src { font-size: 11px; color: var(--faint); font-family: var(--mono); margin-top: auto; }
+
+  /* agent / policy console */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .tab { font-family: var(--mono); font-size: 12.5px; letter-spacing: .02em; cursor: pointer;
+    padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--muted); transition: all .15s; }
+  .tab:hover { border-color: var(--accent); color: var(--fg); }
+  .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent);
+    color: #06111f; font-weight: 600; }
+  :root[data-theme="light"] .tab[aria-selected="true"]{ color:#fff; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow); }
+  .policy-quote { font-family: var(--serif); font-size: 19px; line-height: 1.4; color: var(--fg);
+    border-left: 2px solid var(--accent); padding-left: 16px; margin: 0 0 4px; }
+  .step { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--faint); margin: 20px 0 10px; display: flex; align-items: center; gap: 10px; }
+  .step::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+
+  .meters { display: grid; gap: 10px; }
+  .meter { display: grid; grid-template-columns: 54px 1fr 34px; align-items: center; gap: 12px; }
+  .meter .lbl { font-family: var(--mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .meter .track { height: 8px; background: var(--panel-2); border: 1px solid var(--line-soft);
+    border-radius: 999px; overflow: hidden; }
+  .meter .fill { height: 100%; background: linear-gradient(90deg, var(--accent-soft), var(--accent));
+    border-radius: 999px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+  .meter .num { font-family: var(--mono); font-size: 12.5px; color: var(--fg); text-align: right;
+    font-variant-numeric: tabular-nums; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font-family: var(--mono); font-size: 11.5px; padding: 5px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--muted); }
+  .chip.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+  .chip.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
+
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line-soft);
+    border: 1px solid var(--line-soft); border-radius: 12px; overflow: hidden; margin-top: 4px; }
+  .stats .cell { background: var(--panel); padding: 13px 15px; }
+  .stats .cell .n { font-family: var(--mono); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .stats .cell .l { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .delta { font-family: var(--mono); font-size: 12px; }
+  .delta.down { color: var(--good); } .delta.up { color: var(--bad); }
+
+  .callout { margin-top: 16px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    background: color-mix(in srgb, var(--accent) 9%, var(--panel)); border-radius: 12px;
+    padding: 13px 15px; font-size: 13.5px; color: var(--fg); }
+  .callout b { color: var(--accent); font-family: var(--mono); font-weight: 600; }
+
+  .chart-box { position: relative; height: 300px; }
+  .chart-box.sm { height: 230px; }
+  .cap { font-size: 11.5px; color: var(--faint); margin-top: 10px; font-family: var(--mono); }
+
+  /* bulwark */
+  .verdicts { display: grid; gap: 10px; margin-top: 4px; }
+  .verdict { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; }
+  .role { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 7px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .role.buyer { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+  .role.seller { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .verdict .nm { font-weight: 600; font-size: 14px; }
+  .verdict .rs { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+  .action { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 45%, var(--line)); border-radius: 7px;
+    padding: 5px 10px; white-space: nowrap; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .holds { display: grid; gap: 8px; margin-top: 6px; }
+  .hold { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    border-bottom: 1px solid var(--line-soft); padding: 9px 0; }
+  .hold .t { font-family: var(--mono); font-size: 13px; }
+  .hold .t span { color: var(--muted); font-family: var(--sans); font-size: 12.5px; margin-left: 8px; }
+  .hold .r { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13.5px; }
+  .pos { color: var(--good); } .neg { color: var(--bad); }
+
+  /* pipeline */
+  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 6px; }
+  .node { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+    position: relative; }
+  .node .n { font-family: var(--mono); font-size: 10.5px; color: var(--accent); letter-spacing: .1em; }
+  .node h3 { margin-top: 7px; font-size: 13.5px; }
+  .node p { font-size: 12px; color: var(--muted); margin: 5px 0 0; }
+  .conserve { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 14px; }
+  .conserve .box { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 9px 13px; }
+  .conserve .eq { color: var(--faint); }
+
+  footer { padding-block: 34px 60px; color: var(--muted); font-size: 12.5px; }
+  footer .wrap { display: grid; gap: 7px; }
+  footer b { color: var(--fg); font-weight: 600; }
+  footer .srcs { font-family: var(--mono); font-size: 11.5px; color: var(--faint); line-height: 1.9; }
+
+  @media (max-width: 820px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .facts { grid-template-columns: 1fr; }
+    .grid2, .two { grid-template-columns: 1fr; }
+    .flow { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 440px) {
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .stats { grid-template-columns: 1fr; }
+    .verdict { grid-template-columns: auto 1fr; }
+    .verdict .action { grid-column: 1 / -1; justify-self: start; }
+  }
+</style>
+
+<header class="bar">
+  <div class="wrap">
+    <span class="mark"><b>Helm</b></span>
+    <span class="tag">autonomous treasury operator</span>
+    <span class="spacer"></span>
+    <span class="pill"><span class="dot"></span>PayPal sandbox &middot; live</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Creator economy &middot; money out, run by an agent</p>
+    <h1>It decides <span class="hl">who gets paid</span>, how much, and when, then moves the money.</h1>
+    <p class="lede">Helm runs the payout treasury for a creator marketplace. You give it a policy in plain
+      English. It reads the week, allocates a fixed cash budget across thousands of creators in ten countries
+      under hard constraints, defends every payment against fraud, and settles on PayPal.</p>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Why this exists</p>
+    <h2>Getting creators paid is genuinely broken.</h2>
+    <p class="muted" style="margin-bottom:24px">Every figure below is a public 2026 number, not a prop. Helm is built to attack exactly these.</p>
+    <div class="facts" id="facts"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">The agent at the controls</p>
+    <h2>Write the policy in English. The model compiles it; the solver obeys it.</h2>
+    <p class="muted" style="margin-bottom:22px;max-width:70ch">A language model turns your instruction into validated
+      objective weights and <em>hard</em> constraints. An optimiser (OR-Tools linear program) then allocates the budget
+      across every creator to best fit those weights without ever breaking a constraint. The model proposes; a verifier
+      disposes. Switch the week to watch the same budget land differently.</p>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="grid2">
+      <div class="panel">
+        <p class="policy-quote" id="pq"></p>
+        <div class="step">compiled weights (0 to 3)</div>
+        <div class="meters" id="meters"></div>
+        <div class="step">hard constraints</div>
+        <div class="chips" id="cons"></div>
+        <div class="step">this cycle</div>
+        <div class="stats" id="stats"></div>
+        <div class="callout" id="callout"></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom:2px">Where the money lands</h3>
+        <p class="faint" style="font-size:12px;margin:0 0 10px;font-family:var(--mono)">net delivered by country, this policy</p>
+        <div class="chart-box"><canvas id="byCountryChart"></canvas></div>
+        <p class="cap" id="ccap"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">The bulwark</p>
+    <h2>Nobody games the payout, on either side.</h2>
+    <div class="two" style="margin-top:20px">
+      <div class="panel">
+        <h3>Sybil and collusion defence</h3>
+        <p class="muted" style="font-size:13px">A cheater spins up fake identities to claim a bigger slice of a
+          shared reward pool. A naive even split rewards the fraud. Helm detects the cluster, merges it, and the
+          cheater's take collapses to a single honest share.</p>
+        <div class="chart-box sm" style="margin-top:8px"><canvas id="bulwarkChart"></canvas></div>
+        <div class="callout" id="bulwarkNote"></div>
+      </div>
+      <div class="panel">
+        <h3>Marketplace abuse, buyers and sellers</h3>
+        <p class="muted" style="font-size:13px" id="abuseIntro"></p>
+        <div class="verdicts" id="verdicts"></div>
+        <p class="cap">Fault follows the side the returns spread across: many sellers hit means the buyer is at fault; many buyers hit means the seller is. A pattern, not a single dispute.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Keep it in, not just cash it out</p>
+    <h2>Creators can pool their payout and own a stake.</h2>
+    <p class="muted" style="max-width:68ch;margin-bottom:20px">Instead of taking the money and leaving, a creator can
+      leave it in a shared pool that tracks a basket of real assets: US stocks, real estate, and restaurant chains.
+      Each creator owns units proportional to what they put in. Priced on real market data.</p>
+    <div class="grid2">
+      <div class="panel">
+        <div class="chart-box"><canvas id="navChart"></canvas></div>
+        <p class="cap" id="navcap"></p>
+      </div>
+      <div class="panel">
+        <div class="stats" id="poolStats"></div>
+        <div class="step">basket holdings</div>
+        <div class="holds" id="holds"></div>
+        <div class="callout" id="poolNote" style="font-size:12.5px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">How the money actually moves</p>
+    <h2>Every payment clears a verifier bank, then settles on PayPal.</h2>
+    <p class="muted" style="max-width:70ch;margin-bottom:18px">The agent never pays directly. It proposes a batch;
+      a bank of checks must pass first; then one atomic Payouts call settles it, idempotent on a unique batch id so a
+      retry never double pays. Money in equals money out plus fees, checked with plain arithmetic.</p>
+    <div class="flow" id="flow"></div>
+    <div class="conserve" id="conserve"></div>
+    <p class="cap" id="batchcap"></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><b>Helm</b> &middot; an autonomous payout treasury for the creator economy, settling on PayPal. Built for the PayPal AI Hackathon, 2026. Figures are live output from the system running on a PayPal sandbox; no real money moves.</div>
+    <div class="srcs" id="srcs"></div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const DATA = {"headline": {"creators": 5000, "total_owed": 821393.92, "budget": 246418.18, "countries": 10}, "context": {"market_size_b": 314, "creators_m": 207, "late_pct": 87}, "facts": [{"stat": "up to 120 days", "claim": "creators routinely wait up to 120 days to be paid; late payment is the single most common operational complaint", "source": "Gigapay 2026 Creator Pay Report"}, {"stat": "15 to 20%", "claim": "a typical sponsorship is invoiced then waits 30 to 60 days, with agencies taking a 15 to 20% cut", "source": "Gigapay 2026"}, {"stat": "62% to the top 10%", "claim": "the top 10% of creators took 62% of all payment volume in 2025; 67% earned under $10k for the year", "source": "CreatorIQ via Yahoo Finance, 2026"}, {"stat": "frozen on review", "claim": "payout holds and frozen balances hit creators on processor review, cross-border flows, or moderation flags", "source": "Spondula Insights, 2026"}, {"stat": "written off", "claim": "instant-payout fraud and clawbacks are written off when a creator goes inactive before recovery", "source": "Payouts.com, 2026"}], "scenarios": [{"label": "Normal week", "policy": "Cash is healthy. Pay creators fairly and prioritise the ones who have waited longest to be paid.", "weights": {"speed": 1.0, "tax": 1.0, "risk": 1.0, "fx": 1.0}, "constraints": {"max_fraction_per_creator": 1.0, "exclude_countries": [], "max_risk": 1.0}, "paid_count": 1440, "total_paid": 246418.18, "net_delivered": 228668.95, "tax_withheld": 17749.23, "fx_cost": 2451.91, "risk_exposure": 39428.1, "by_country": {"BR": {"amount": 27191.88, "count": 119}, "US": {"amount": 73005.52, "count": 419}, "GB": {"amount": 22296.02, "count": 129}, "IN": {"amount": 45017.9, "count": 293}, "CA": {"amount": 14739.94, "count": 85}, "CN": {"amount": 13582.29, "count": 103}, "PH": {"amount": 13745.38, "count": 88}, "DE": {"amount": 18523.41, "count": 99}, "NG": {"amount": 4894.39, "count": 27}, "MX": {"amount": 13421.45, "count": 78}}, "top": [{"display": "Manuela B.", "country": "BR", "currency": "BRL", "amount": 4780.78, "net": 4063.66}, {"display": "Noah A.", "country": "US", "currency": "USD", "amount": 4160.09, "net": 4160.09}, {"display": "James G.", "country": "US", "currency": "USD", "amount": 3355.19, "net": 3355.19}, {"display": "Olivia L.", "country": "US", "currency": "USD", "amount": 2498.87, "net": 2498.87}, {"display": "George M.", "country": "GB", "currency": "GBP", "amount": 2453.65, "net": 2453.65}, {"display": "Arjun R.", "country": "IN", "currency": "INR", "amount": 1949.8, "net": 1657.33}]}, {"label": "Fraud wave", "policy": "A fraud and chargeback wave is hitting brand-new accounts this week. Hold high-risk creators, and no single creator may get more than 10% of the batch.", "weights": {"speed": 1.0, "tax": 1.0, "risk": 3.0, "fx": 1.0}, "constraints": {"max_fraction_per_creator": 0.1, "exclude_countries": [], "max_risk": 0.7}, "paid_count": 1417, "total_paid": 246418.18, "net_delivered": 226620.49, "tax_withheld": 19797.69, "fx_cost": 2563.53, "risk_exposure": 27296.4, "by_country": {"BR": {"amount": 24700.25, "count": 117}, "US": {"amount": 72153.4, "count": 395}, "PH": {"amount": 18009.23, "count": 97}, "DE": {"amount": 19871.14, "count": 95}, "IN": {"amount": 49252.3, "count": 300}, "CA": {"amount": 14350.89, "count": 77}, "CN": {"amount": 11473.21, "count": 95}, "GB": {"amount": 14737.9, "count": 107}, "NG": {"amount": 8843.28, "count": 43}, "MX": {"amount": 13026.58, "count": 91}}, "top": [{"display": "Manuela B.", "country": "BR", "currency": "BRL", "amount": 4780.78, "net": 4063.66}, {"display": "Noah A.", "country": "US", "currency": "USD", "amount": 4160.09, "net": 4160.09}, {"display": "James G.", "country": "US", "currency": "USD", "amount": 3355.19, "net": 3355.19}, {"display": "Angel H.", "country": "PH", "currency": "PHP", "amount": 2551.59, "net": 2041.27}, {"display": "Olivia L.", "country": "US", "currency": "USD", "amount": 2498.87, "net": 2498.87}, {"display": "Paul V.", "country": "DE", "currency": "EUR", "amount": 2410.49, "net": 2410.49}]}, {"label": "Country freeze", "policy": "Freeze all payouts to Nigeria and China this week pending a compliance review, and deliver as much net as possible to everyone else.", "weights": {"speed": 1.0, "tax": 3.0, "risk": 1.0, "fx": 1.0}, "constraints": {"max_fraction_per_creator": 1.0, "exclude_countries": ["CN", "NG"], "max_risk": 1.0}, "paid_count": 1393, "total_paid": 246418.18, "net_delivered": 237456.84, "tax_withheld": 8961.34, "fx_cost": 1684.85, "risk_exposure": 40350.9, "by_country": {"BR": {"amount": 17192.43, "count": 67}, "US": {"amount": 106353.17, "count": 615}, "GB": {"amount": 29097.01, "count": 178}, "DE": {"amount": 28541.69, "count": 151}, "CA": {"amount": 19973.12, "count": 114}, "PH": {"amount": 4497.86, "count": 16}, "IN": {"amount": 28132.37, "count": 180}, "MX": {"amount": 12630.53, "count": 72}}, "top": [{"display": "Manuela B.", "country": "BR", "currency": "BRL", "amount": 4780.78, "net": 4063.66}, {"display": "Noah A.", "country": "US", "currency": "USD", "amount": 4160.09, "net": 4160.09}, {"display": "James G.", "country": "US", "currency": "USD", "amount": 3355.19, "net": 3355.19}, {"display": "Olivia L.", "country": "US", "currency": "USD", "amount": 2498.87, "net": 2498.87}, {"display": "George M.", "country": "GB", "currency": "GBP", "amount": 2453.65, "net": 2453.65}, {"display": "Paul V.", "country": "DE", "currency": "EUR", "amount": 2410.49, "net": 2410.49}]}, {"label": "Tight cash", "policy": "Cash is tight this week. Be conservative, favour delivering more net to creators, and cap any one creator at 15% of the batch.", "weights": {"speed": 1.0, "tax": 3.0, "risk": 1.0, "fx": 1.0}, "constraints": {"max_fraction_per_creator": 0.15, "exclude_countries": [], "max_risk": 1.0}, "paid_count": 1417, "total_paid": 246418.18, "net_delivered": 237057.38, "tax_withheld": 9360.8, "fx_cost": 1755.01, "risk_exposure": 39779.3, "by_country": {"BR": {"amount": 16035.66, "count": 63}, "US": {"amount": 102427.13, "count": 586}, "GB": {"amount": 28358.06, "count": 174}, "DE": {"amount": 27972.46, "count": 144}, "CA": {"amount": 19476.3, "count": 112}, "CN": {"amount": 9511.0, "count": 87}, "PH": {"amount": 4497.86, "count": 16}, "IN": {"amount": 25816.21, "count": 165}, "MX": {"amount": 12323.5, "count": 70}}, "top": [{"display": "Manuela B.", "country": "BR", "currency": "BRL", "amount": 4780.78, "net": 4063.66}, {"display": "Noah A.", "country": "US", "currency": "USD", "amount": 4160.09, "net": 4160.09}, {"display": "James G.", "country": "US", "currency": "USD", "amount": 3355.19, "net": 3355.19}, {"display": "Olivia L.", "country": "US", "currency": "USD", "amount": 2498.87, "net": 2498.87}, {"display": "George M.", "country": "GB", "currency": "GBP", "amount": 2453.65, "net": 2453.65}, {"display": "Paul V.", "country": "DE", "currency": "EUR", "amount": 2410.49, "net": 2410.49}]}], "reinvest": {"as_of": "2026-11-03", "nav_dates": ["2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-10", "2026-07-13", "2026-07-14", "2026-07-15", "2026-07-16", "2026-07-17", "2026-07-20", "2026-07-21", "2026-07-22", "2026-07-23", "2026-07-24", "2026-07-27", "2026-07-28", "2026-07-29", "2026-07-30", "2026-07-31", "2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06", "2026-08-07", "2026-08-10", "2026-08-11", "2026-08-12", "2026-08-13", "2026-08-14", "2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28", "2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-08", "2026-09-09", "2026-09-10", "2026-09-11", "2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17", "2026-09-18", "2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24", "2026-09-25", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09", "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16", "2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-11-02", "2026-11-03"], "nav_values": [100.0, 100.5707, 101.6139, 101.2091, 101.1423, 101.2003, 101.1392, 101.236, 101.4135, 100.4436, 101.1811, 100.8058, 101.6724, 102.1066, 102.2069, 102.4812, 102.4947, 102.459, 102.4094, 101.8294, 102.0538, 101.432, 102.1214, 101.4788, 101.0352, 101.8902, 101.1031, 102.0982, 102.6617, 103.4479, 103.3374, 101.6256, 101.6456, 101.2066, 100.9627, 100.8282, 100.3011, 100.7639, 101.2552, 101.3368, 101.3271, 102.4244, 102.5524, 102.8591, 101.9166, 102.3233, 102.4881, 102.1058, 101.951, 101.9688, 102.9776, 102.0397, 101.7815, 101.9625, 101.7208, 100.9202, 101.7766, 102.119, 102.5365, 101.5459, 101.8131, 102.1701, 102.5679, 103.6909, 103.9821, 103.779, 104.1036, 103.6192, 103.2481, 103.7839, 104.3155, 104.3276, 103.291, 102.9172, 103.3728, 103.0381, 103.352, 103.4958, 103.4003, 103.1287, 102.6929, 102.79, 102.2756, 101.6935, 101.7542, 102.4957, 101.8096, 101.4952, 100.7722, 100.166, 100.7929, 100.7569, 100.11, 99.3855, 100.079, 99.7159, 100.7958, 100.9016, 98.9849, 98.7615, 98.9587, 98.2291, 98.1389, 97.5327, 97.5455, 98.0469, 98.3792, 98.8795, 98.249, 98.6511, 99.2652, 99.4852, 99.4211, 98.7631, 99.5532, 99.0921, 98.9659, 99.9093, 99.9234, 100.1013, 99.5425, 100.2362, 100.1941, 100.2626, 101.1951, 100.3194, 100.9487, 100.8214], "nav_return_pct": 0.82, "pool": {"reinvesting_creators": 1250, "total_contributed": 203818.06, "current_value": 205492.22, "return_pct": 0.82}, "holdings": [{"ticker": "SPY", "label": "US stocks (S&P 500 ETF)", "weight": 0.5, "return_pct": 5.11}, {"ticker": "VNQ", "label": "real estate / homes (REIT ETF)", "weight": 0.3, "return_pct": -0.69}, {"ticker": "MCD", "label": "restaurant chains (McDonald's)", "weight": 0.2, "return_pct": -7.62}], "examples": [{"creator": "Vihaan P.", "country": "IN", "contributed": 1278.58, "stake_value": 1289.08}, {"creator": "James F.", "country": "US", "contributed": 1151.58, "stake_value": 1161.04}, {"creator": "Valentina S.", "country": "MX", "contributed": 1046.43, "stake_value": 1055.03}, {"creator": "Mateo V.", "country": "MX", "contributed": 952.87, "stake_value": 960.7}, {"creator": "Zainab K.", "country": "NG", "contributed": 943.6, "stake_value": 951.35}, {"creator": "Manuela A.", "country": "BR", "contributed": 706.51, "stake_value": 712.31}], "note": "Sandbox concept: NAV is priced on real market data, but no securities are bought. A live version is a regulated securities offering."}, "payout_engine": {"bulwark": {"naive_cheater_take": 638.3, "hardened_cheater_take": 320.0, "honest_share": 320.0, "hardening_applied": ["merge_clusters"], "defeated": true}, "clearwright_ok": true, "tollgate": {"gross": 1000.0, "withheld": 54.0, "net": 946.0}, "keystone": {"status": "settled", "batch_id": "DEMO-DD0108B8", "conserved": true}}, "abuse": {"accounts": 120, "orders": 1285, "bad_orders": 161, "flagged": [{"name": "James H.", "role": "buyer", "bad": 28, "distinct": 26, "rate": 0.966, "action": "suspend", "reason": "James H. (buyer) has 28 returns/chargebacks across 26 different sellers (rate 96%), the pattern of a serial returner. Action: suspend; the counterparties are protected."}, {"name": "Davi V.", "role": "buyer", "bad": 23, "distinct": 21, "rate": 0.92, "action": "suspend", "reason": "Davi V. (buyer) has 23 returns/chargebacks across 21 different sellers (rate 92%), the pattern of a serial returner. Action: suspend; the counterparties are protected."}, {"name": "Amelia R.", "role": "buyer", "bad": 19, "distinct": 19, "rate": 0.679, "action": "suspend", "reason": "Amelia R. (buyer) has 19 returns/chargebacks across 19 different sellers (rate 67%), the pattern of a serial returner. Action: suspend; the counterparties are protected."}, {"name": "Noah D.", "role": "seller", "bad": 17, "distinct": 17, "rate": 0.739, "action": "suspend", "reason": "Noah D. (seller) has 17 returns/chargebacks across 17 different buyers (rate 73%), the pattern of a seller who ships bad goods. Action: suspend; the counterparties are protected."}, {"name": "Oliver I.", "role": "seller", "bad": 16, "distinct": 16, "rate": 0.762, "action": "suspend", "reason": "Oliver I. (seller) has 16 returns/chargebacks across 16 different buyers (rate 76%), the pattern of a seller who ships bad goods. Action: suspend; the counterparties are protected."}, {"name": "Oliver M.", "role": "seller", "bad": 14, "distinct": 12, "rate": 0.737, "action": "suspend", "reason": "Oliver M. (seller) has 14 returns/chargebacks across 12 different buyers (rate 73%), the pattern of a seller who ships bad goods. Action: suspend; the counterparties are protected."}], "buyers_flagged": 3, "sellers_flagged": 3, "suspended": 6}, "directory": {"total": 5000, "paid_count": 1440, "total_owed": 821393.92, "total_paid": 246418.18, "reinvesting_count": 1250, "by_country": {"IN": {"count": 1134, "owed": 182445.58, "paid": 45017.9}, "US": {"count": 1006, "owed": 163168.72, "paid": 73005.52}, "NG": {"count": 429, "owed": 69572.45, "paid": 4894.39}, "MX": {"count": 317, "owed": 51991.66, "paid": 13421.45}, "CN": {"count": 371, "owed": 51423.61, "paid": 13582.29}, "BR": {"count": 554, "owed": 98289.68, "paid": 27191.88}, "PH": {"count": 446, "owed": 72198.89, "paid": 13745.38}, "DE": {"count": 261, "owed": 46445.52, "paid": 18523.41}, "CA": {"count": 178, "owed": 31312.56, "paid": 14739.94}, "GB": {"count": 304, "owed": 54545.25, "paid": 22296.02}}}};
+</script>
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const usd0 = n => "$" + Math.round(n).toLocaleString("en-US");
+  const usd = n => "$" + n.toLocaleString("en-US", {maximumFractionDigits:0});
+  const CC = {US:"United States",IN:"India",BR:"Brazil",GB:"United Kingdom",DE:"Germany",
+    CA:"Canada",CN:"China",PH:"Philippines",NG:"Nigeria",MX:"Mexico"};
+
+  // hero kpis
+  const h = DATA.headline;
+  $("#kpis").innerHTML = [
+    ["v", h.creators.toLocaleString(), "creators under management", "across "+h.countries+" countries"],
+    ["v money", usd(h.total_owed), "owed to creators", "cumulative, this marketplace"],
+    ["v money", usd(h.budget), "cash budget this cycle", "allocated by the agent"],
+    ["v", DATA.directory.paid_count.toLocaleString(), "paid this cycle", DATA.reinvest.pool.reinvesting_creators.toLocaleString()+" reinvesting"],
+  ].map(([c,v,k,s])=>`<div class="kpi"><div class="${c}">${v}</div><div class="k">${k}</div><div class="s">${s}</div></div>`).join("");
+
+  // facts
+  $("#facts").innerHTML = DATA.facts.map(f=>
+    `<div class="fact"><div class="stat">${f.stat}</div><div class="claim">${f.claim}</div><div class="src">${f.source}</div></div>`).join("");
+
+  // ---- policy console ----
+  const S = DATA.scenarios, base = S[0];
+  let cur = 0, byChart = null;
+  $("#tabs").innerHTML = S.map((s,i)=>`<button class="tab" role="tab" data-i="${i}" aria-selected="${i===0}">${s.label}</button>`).join("");
+  $("#tabs").addEventListener("click", e=>{
+    const b = e.target.closest(".tab"); if(!b) return;
+    cur = +b.dataset.i;
+    [...document.querySelectorAll(".tab")].forEach(t=>t.setAttribute("aria-selected", t===b));
+    renderPolicy();
+  });
+
+  function renderPolicy(){
+    const s = S[cur];
+    $("#pq").textContent = "“" + s.policy + "”";
+    const W = [["speed",s.weights.speed],["tax",s.weights.tax],["risk",s.weights.risk],["fx",s.weights.fx]];
+    $("#meters").innerHTML = W.map(([k,v])=>
+      `<div class="meter"><span class="lbl">${k}</span><div class="track"><div class="fill" style="width:${(v/3*100).toFixed(0)}%"></div></div><span class="num">${v.toFixed(1)}</span></div>`).join("");
+    const c = s.constraints, chips = [];
+    chips.push(`<span class="chip">cap / creator: ${c.max_fraction_per_creator>=1?"none":Math.round(c.max_fraction_per_creator*100)+"%"}</span>`);
+    chips.push(`<span class="chip ${c.max_risk<1?'warn':''}">max risk: ${c.max_risk>=1?"open":c.max_risk.toFixed(2)}</span>`);
+    if(c.exclude_countries.length) chips.push(`<span class="chip bad">frozen: ${c.exclude_countries.map(x=>CC[x]||x).join(", ")}</span>`);
+    else chips.push(`<span class="chip">no country frozen</span>`);
+    $("#cons").innerHTML = chips.join("");
+    const re = s.risk_exposure, reB = base.risk_exposure;
+    const d = re - reB, dpct = (d/reB*100);
+    $("#stats").innerHTML = [
+      ["n", s.paid_count.toLocaleString(), "creators paid"],
+      ["n", usd(s.net_delivered), "net delivered"],
+      ["n", usd(s.tax_withheld), "tax withheld"],
+      ["n", usd(s.risk_exposure), "risk exposure"],
+    ].map(([_,n,l])=>`<div class="cell"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+    if(cur===0){
+      $("#callout").innerHTML = `Baseline week. Weights balanced, no creator or country restricted. <b>${usd(s.net_delivered)}</b> reaches creators net of tax and currency conversion.`;
+    } else {
+      const dir = d<0?"down":"up", word = d<0?"cuts":"raises";
+      $("#callout").innerHTML = `Versus the normal week, this policy <b>${word} risk exposure</b> from ${usd(reB)} to ${usd(re)} <span class="delta ${dir}">(${d<0?"":"+"}${dpct.toFixed(0)}%)</span>, from the same ${usd(s.total_paid)} budget.`;
+    }
+    drawByCountry(s);
+    const n = Object.keys(s.by_country).length;
+    $("#ccap").textContent = `${n} countries funded this policy. Hover a bar for the creator count.`;
+  }
+
+  function drawByCountry(s){
+    const rows = Object.entries(s.by_country).map(([k,v])=>({k,...v})).sort((a,b)=>b.amount-a.amount);
+    const labels = rows.map(r=>r.k), vals = rows.map(r=>Math.round(r.amount)), counts = rows.map(r=>r.count);
+    const ctx = $("#byCountryChart");
+    if(byChart) byChart.destroy();
+    byChart = new Chart(ctx, {
+      type:"bar",
+      data:{ labels, datasets:[{ data:vals, backgroundColor:cv("--accent"),
+        borderRadius:4, barThickness:14, counts }] },
+      options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false},
+          tooltip:{ callbacks:{ title:i=>CC[i[0].label]||i[0].label,
+            label:i=>usd0(i.raw)+" to "+counts[i.dataIndex].toLocaleString()+" creators" },
+            backgroundColor:cv("--panel"), titleColor:cv("--fg"), bodyColor:cv("--muted"),
+            borderColor:cv("--line"), borderWidth:1, padding:10, displayColors:false } },
+        scales:{
+          x:{ grid:{color:cv("--line-soft")}, border:{display:false},
+            ticks:{ color:cv("--faint"), font:{family:"IBM Plex Mono",size:10},
+              callback:v=>"$"+(v/1000)+"k" } },
+          y:{ grid:{display:false}, border:{display:false},
+            ticks:{ color:cv("--muted"), font:{family:"IBM Plex Mono",size:11} } } } }
+    });
+  }
+
+  // ---- bulwark ----
+  const be = DATA.payout_engine.bulwark;
+  const bctx = $("#bulwarkChart");
+  new Chart(bctx, {
+    type:"bar",
+    data:{ labels:["Naive split","Helm hardened"],
+      datasets:[{ data:[be.naive_cheater_take, be.hardened_cheater_take],
+        backgroundColor:[cv("--bad"), cv("--good")], borderRadius:6, barThickness:60 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label:i=>"cheater takes $"+i.raw.toFixed(2) },
+          backgroundColor:cv("--panel"), titleColor:cv("--fg"), bodyColor:cv("--muted"),
+          borderColor:cv("--line"), borderWidth:1, padding:10, displayColors:false } },
+      scales:{ x:{ grid:{display:false}, border:{display:false},
+          ticks:{color:cv("--muted"), font:{family:"IBM Plex Sans",size:12}} },
+        y:{ grid:{color:cv("--line-soft")}, border:{display:false}, beginAtZero:true,
+          ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}, callback:v=>"$"+v} } } }
+  });
+  $("#bulwarkNote").innerHTML = `A fake-identity cluster claims <b>${usd0(be.naive_cheater_take)}</b> under a naive split. After Helm merges the cluster it collapses to <b>${usd0(be.hardened_cheater_take)}</b>, one honest share. Fraud defeated.`;
+
+  // marketplace abuse
+  const ab = DATA.abuse;
+  $("#abuseIntro").innerHTML = `A live scan of <b>${ab.accounts}</b> accounts and <b>${ab.orders.toLocaleString()}</b> orders (${ab.bad_orders} returns or chargebacks). ${ab.suspended} suspended: ${ab.buyers_flagged} buyers, ${ab.sellers_flagged} sellers.`;
+  $("#verdicts").innerHTML = ab.flagged.map(v=>
+    `<div class="verdict"><span class="role ${v.role}">${v.role}</span><div><div class="nm">${v.name}</div>
+      <div class="rs">${v.bad} bad across ${v.distinct} counterparties &middot; ${Math.round(v.rate*100)}% rate</div></div>
+      <span class="action">${v.action}</span></div>`).join("");
+
+  // ---- reinvest ----
+  const r = DATA.reinvest;
+  const nctx = $("#navChart");
+  const step = Math.ceil(r.nav_dates.length/6);
+  new Chart(nctx, {
+    type:"line",
+    data:{ labels:r.nav_dates, datasets:[{ data:r.nav_values, borderColor:cv("--gold"),
+      borderWidth:2, pointRadius:0, tension:.25, fill:true,
+      backgroundColor:(c=>{ const g=c.chart.ctx.createLinearGradient(0,0,0,260);
+        g.addColorStop(0, cv("--gold")+"33"); g.addColorStop(1, cv("--gold")+"00"); return g; }) }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ title:i=>i[0].label, label:i=>"NAV "+i.raw.toFixed(2) },
+          backgroundColor:cv("--panel"), titleColor:cv("--fg"), bodyColor:cv("--muted"),
+          borderColor:cv("--line"), borderWidth:1, padding:10, displayColors:false } },
+      scales:{ x:{ grid:{display:false}, border:{display:false},
+          ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}, maxRotation:0, autoSkip:false,
+            callback:(v,i)=> i%step===0 ? r.nav_dates[i].slice(5) : "" } },
+        y:{ grid:{color:cv("--line-soft")}, border:{display:false},
+          ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}} } } }
+  });
+  $("#navcap").textContent = `Pool NAV rebased to 100 on ${r.nav_dates[0]}. Real daily closes, ${r.nav_dates.length} trading days to ${r.as_of}.`;
+  const p = r.pool;
+  $("#poolStats").innerHTML = [
+    [p.reinvesting_creators.toLocaleString(), "creators reinvesting"],
+    [usd(p.total_contributed), "contributed"],
+    [usd(p.current_value), "current value"],
+    [(r.nav_return_pct>=0?"+":"")+r.nav_return_pct.toFixed(2)+"%", "pool return"],
+  ].map(([n,l])=>`<div class="cell"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  $("#holds").innerHTML = r.holdings.map(x=>
+    `<div class="hold"><div class="t">${x.ticker}<span>${x.label} &middot; ${Math.round(x.weight*100)}%</span></div>
+      <div class="r ${x.return_pct>=0?'pos':'neg'}">${x.return_pct>=0?"+":""}${x.return_pct.toFixed(2)}%</div></div>`).join("");
+  $("#poolNote").textContent = r.note;
+
+  // ---- pipeline ----
+  const flow = [
+    ["01","Observe","Reads cash, what is owed, and the week's risk signals."],
+    ["02","Decide","LP allocates the budget to fit the compiled policy weights."],
+    ["03","Verify","A bank of hard checks: constraints, caps, fraud, money conservation."],
+    ["04","Settle","One atomic PayPal Payouts batch, idempotent on a unique batch id."],
+    ["05","Reconcile","Webhooks de-duplicated; partial failure rolls back, never double pays."],
+  ];
+  $("#flow").innerHTML = flow.map(([n,t,p])=>`<div class="node"><div class="n">${n}</div><h3>${t}</h3><p>${p}</p></div>`).join("");
+  const tg = DATA.payout_engine.tollgate, ks = DATA.payout_engine.keystone;
+  $("#conserve").innerHTML =
+    `<span class="box">gross ${usd0(tg.gross)}</span><span class="eq">=</span>`+
+    `<span class="box">net ${usd0(tg.net)}</span><span class="eq">+</span>`+
+    `<span class="box">fees and tax ${usd0(tg.withheld)}</span>`+
+    `<span class="box" style="color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,var(--line))">balanced &check;</span>`;
+  $("#batchcap").textContent = `Last sandbox batch ${ks.batch_id}: ${ks.status}, books conserved. In the live demo the real PayPal sandbox transaction id appears here as the batch settles.`;
+
+  // sources
+  const seen = new Set(); const srcs = [];
+  DATA.facts.forEach(f=>{ if(!seen.has(f.source)){ seen.add(f.source); srcs.push(f.source); } });
+  $("#srcs").innerHTML = "Sources: " + srcs.join(" &middot; ") +
+    " &middot; market data from public daily closes (SPY, VNQ, MCD) &middot; PayPal Orders v2, Payouts, and Agent Toolkit (sandbox).";
+
+  renderPolicy();
+
+  // redraw charts on theme flip so token colors stay correct
+  let t; const redraw = ()=>{ clearTimeout(t); t=setTimeout(()=>{ renderPolicy(); }, 60); };
+  if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+  new MutationObserver(redraw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+})();
+</script>
