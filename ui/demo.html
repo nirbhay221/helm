@@ -1,148 +1,189 @@
-<meta name="claude:viewport-fit-sides" content="cover">
 <title>Helm</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-  /* Layout: a dark control-room ledger. Slim sticky masthead, single narrow column
-     of scenes, hairline-ruled panels, one steel-blue signal, money in warm gold,
-     semantic good/warn/bad kept separate from the accent. */
+  /* Layout: a dark control-room ledger floating on a living aurora. Glass panels,
+     one steel-blue signal, money in warm gold, a drifting gradient-mesh background,
+     and a light/dark switch. Semantic good/warn/bad kept apart from the accent. */
   :root {
-    --bg: #0b0f17;
+    --bg: #080b12;
+    --bg-2: #0b0f17;
     --panel: #121824;
     --panel-2: #0f1420;
-    --line: #222c3d;
+    --glass: color-mix(in srgb, #121824 68%, transparent);
+    --glass-brd: color-mix(in srgb, #ffffff 9%, transparent);
+    --line: #243044;
     --line-soft: #1a2230;
-    --fg: #e7ecf4;
-    --muted: #9aa7bd;
-    --faint: #66748c;
+    --fg: #e9eef6;
+    --muted: #9fadc4;
+    --faint: #677790;
     --accent: #5b9dff;
+    --accent-2: #8f7bff;
     --accent-soft: #1b2b47;
-    --gold: #e7b96b;
-    --good: #46d08a;
+    --gold: #ecc178;
+    --good: #4cd892;
     --warn: #efc05a;
     --bad: #ff6b81;
-    --radius: 14px;
+    --radius: 16px;
     --maxw: 1080px;
     color-scheme: dark;
-    --shadow: 0 1px 0 rgba(255,255,255,.02), 0 18px 40px -24px rgba(0,0,0,.8);
+    --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 24px 60px -30px rgba(0,0,0,.9);
+    --a1: #5b9dff; --a2: #8f7bff; --a3: #ecc178;
     --serif: "Newsreader", Georgia, "Times New Roman", serif;
     --sans: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   :root[data-theme="light"] {
-    --bg: #f4f6fa;
-    --panel: #ffffff;
-    --panel-2: #f7f9fc;
-    --line: #dde3ec;
-    --line-soft: #e8edf4;
-    --fg: #17202e;
-    --muted: #51607a;
-    --faint: #8392a8;
-    --accent: #2f6fe0;
-    --accent-soft: #e3edff;
-    --gold: #b5812a;
-    --good: #1a9e62;
-    --warn: #b7811a;
-    --bad: #d33a52;
+    --bg: #eef1f7; --bg-2: #f5f7fb; --panel: #ffffff; --panel-2: #f6f9fc;
+    --glass: color-mix(in srgb, #ffffff 70%, transparent);
+    --glass-brd: color-mix(in srgb, #1f345c 12%, transparent);
+    --line: #d8dfea; --line-soft: #e7ecf4; --fg: #141c29; --muted: #4c5a73;
+    --faint: #8291a8; --accent: #2f6fe0; --accent-2: #6b4ff0; --accent-soft: #e3edff;
+    --gold: #b5812a; --good: #169057; --warn: #b7811a; --bad: #d5394f;
     color-scheme: light;
-    --shadow: 0 1px 0 rgba(0,0,0,.02), 0 18px 40px -28px rgba(31,52,92,.35);
+    --shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 24px 60px -34px rgba(31,52,92,.4);
+    --a1: #4f86ff; --a2: #7b63f0; --a3: #e0a93f;
   }
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
-      --bg: #f4f6fa; --panel: #ffffff; --panel-2: #f7f9fc; --line: #dde3ec;
-      --line-soft: #e8edf4; --fg: #17202e; --muted: #51607a; --faint: #8392a8;
-      --accent: #2f6fe0; --accent-soft: #e3edff; --gold: #b5812a; --good: #1a9e62;
-      --warn: #b7811a; --bad: #d33a52; color-scheme: light;
-      --shadow: 0 1px 0 rgba(0,0,0,.02), 0 18px 40px -28px rgba(31,52,92,.35);
+      --bg: #eef1f7; --bg-2: #f5f7fb; --panel: #ffffff; --panel-2: #f6f9fc;
+      --glass: color-mix(in srgb, #ffffff 70%, transparent);
+      --glass-brd: color-mix(in srgb, #1f345c 12%, transparent);
+      --line: #d8dfea; --line-soft: #e7ecf4; --fg: #141c29; --muted: #4c5a73;
+      --faint: #8291a8; --accent: #2f6fe0; --accent-2: #6b4ff0; --accent-soft: #e3edff;
+      --gold: #b5812a; --good: #169057; --warn: #b7811a; --bad: #d5394f;
+      color-scheme: light;
+      --shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 24px 60px -34px rgba(31,52,92,.4);
+      --a1: #4f86ff; --a2: #7b63f0; --a3: #e0a93f;
     }
   }
 
   * { box-sizing: border-box; }
+  html, body { margin: 0; }
   body {
     background: var(--bg); color: var(--fg); font-family: var(--sans);
-    line-height: 1.55; -webkit-font-smoothing: antialiased; margin: 0;
+    line-height: 1.55; -webkit-font-smoothing: antialiased; position: relative;
+    overflow-x: hidden;
   }
   body::before {
     content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
     z-index: 60; background: var(--bg);
   }
+
+  /* aurora background */
+  .bg { position: fixed; inset: 0; z-index: -2; overflow: hidden; background: var(--bg); }
+  .bg .blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55;
+    mix-blend-mode: screen; will-change: transform; }
+  :root[data-theme="light"] .bg .blob,
+  :root:not([data-theme="dark"]) .bg .blob { opacity: .4; mix-blend-mode: multiply; }
+  .blob.b1 { width: 52vw; height: 52vw; left: -8vw; top: -12vh;
+    background: radial-gradient(circle at 50% 50%, var(--a1), transparent 68%); animation: drift1 26s ease-in-out infinite; }
+  .blob.b2 { width: 46vw; height: 46vw; right: -10vw; top: 6vh;
+    background: radial-gradient(circle at 50% 50%, var(--a2), transparent 68%); animation: drift2 32s ease-in-out infinite; }
+  .blob.b3 { width: 40vw; height: 40vw; left: 28vw; bottom: -18vh;
+    background: radial-gradient(circle at 50% 50%, var(--a3), transparent 68%); animation: drift3 30s ease-in-out infinite; }
+  @keyframes drift1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(8vw,6vh) scale(1.15)} }
+  @keyframes drift2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-7vw,9vh) scale(1.1)} }
+  @keyframes drift3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(5vw,-8vh) scale(1.2)} }
+  .bg .grain { position: absolute; inset: 0; opacity: .035; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  @media (prefers-reduced-motion: reduce) { .bg .blob { animation: none !important; } }
+
   .wrap { max-width: var(--maxw); margin: 0 auto;
     padding-left: max(20px, env(safe-area-inset-left, 0px));
     padding-right: max(20px, env(safe-area-inset-right, 0px)); }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
 
-  /* masthead */
   header.bar {
     position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-soft);
-  }
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    border-bottom: 1px solid var(--line-soft); }
   .bar .wrap { display: flex; align-items: center; gap: 14px; padding-block: 12px; }
-  .mark { font-family: var(--mono); font-weight: 600; letter-spacing: .28em;
+  .mark { font-family: var(--mono); font-weight: 600; letter-spacing: .3em;
     font-size: 15px; text-transform: uppercase; }
-  .mark b { color: var(--accent); }
+  .mark b { background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
   .bar .tag { font-size: 12.5px; color: var(--muted); border-left: 1px solid var(--line);
     padding-left: 14px; }
   .bar .spacer { flex: 1; }
   .pill { font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em;
     display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px;
     border: 1px solid var(--line); border-radius: 999px; color: var(--muted);
-    background: var(--panel-2); white-space: nowrap; }
+    background: var(--glass); backdrop-filter: blur(8px); white-space: nowrap; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good);
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 70%, transparent); animation: pulse 2.4s infinite; }
+    box-shadow: 0 0 10px var(--good); animation: pulse 2.4s infinite; }
   @keyframes pulse { 0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 55%,transparent)}
-    70%{box-shadow:0 0 0 7px transparent} 100%{box-shadow:0 0 0 0 transparent} }
-  @media (prefers-reduced-motion: reduce){ .dot{animation:none} }
+    70%{box-shadow:0 0 0 8px transparent} 100%{box-shadow:0 0 0 0 transparent} }
+  .tgl { display: inline-grid; place-items: center; width: 34px; height: 34px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--glass);
+    backdrop-filter: blur(8px); color: var(--muted); transition: color .15s, border-color .15s; }
+  .tgl:hover { color: var(--fg); border-color: var(--accent); }
+  .tgl svg { width: 17px; height: 17px; }
+  .tgl .moon { display: none; } .tgl .sun { display: block; }
+  :root[data-theme="light"] .tgl .moon,
+  :root:not([data-theme="dark"]) .tgl .moon { display: block; }
+  :root[data-theme="light"] .tgl .sun,
+  :root:not([data-theme="dark"]) .tgl .sun { display: none; }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
 
-  section { padding-block: 46px; border-bottom: 1px solid var(--line-soft); }
-  .eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: .2em;
-    text-transform: uppercase; color: var(--faint); margin: 0 0 14px; }
-  h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 5.4vw, 52px);
-    line-height: 1.08; letter-spacing: -.01em; margin: 0 0 18px; text-wrap: balance; max-width: 18ch; }
-  h1 .hl { color: var(--accent); font-style: italic; }
-  h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(23px, 3.4vw, 32px);
-    line-height: 1.14; margin: 0 0 12px; text-wrap: balance; }
+  section { padding-block: 52px; border-bottom: 1px solid var(--line-soft); position: relative; }
+  .eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+  h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(32px, 5.8vw, 58px);
+    line-height: 1.05; letter-spacing: -.015em; margin: 0 0 20px; text-wrap: balance; max-width: 17ch; }
+  h1 .hl { font-style: italic;
+    background: linear-gradient(100deg, var(--accent), var(--accent-2) 45%, var(--gold));
+    background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: sheen 9s ease-in-out infinite; }
+  @keyframes sheen { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+  @media (prefers-reduced-motion: reduce){ h1 .hl{animation:none} }
+  h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(24px, 3.6vw, 34px);
+    line-height: 1.12; margin: 0 0 12px; text-wrap: balance; }
   h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.01em; }
-  p.lede { font-size: clamp(16px, 2.1vw, 18.5px); color: var(--muted); max-width: 62ch; margin: 0 0 8px; }
+  p.lede { font-size: clamp(16px, 2.1vw, 19px); color: var(--muted); max-width: 62ch; margin: 0 0 8px; }
   p { max-width: 64ch; }
-  .muted { color: var(--muted); }
-  .faint { color: var(--faint); }
+  .muted { color: var(--muted); } .faint { color: var(--faint); }
 
-  /* hero kpis */
-  .hero { padding-top: 40px; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 30px; }
-  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 18px 18px 16px; box-shadow: var(--shadow); }
-  .kpi .v { font-family: var(--mono); font-weight: 600; font-size: clamp(22px, 3vw, 28px);
+  /* entrance */
+  .anim .reveal { opacity: 0; transform: translateY(16px); }
+  .anim .reveal.shown { opacity: 1; transform: none;
+    transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  @media (prefers-reduced-motion: reduce) { .anim .reveal { opacity: 1 !important; transform: none !important; } }
+
+  .glass { background: var(--glass); backdrop-filter: blur(16px) saturate(1.25);
+    border: 1px solid var(--glass-brd); border-radius: var(--radius); box-shadow: var(--shadow);
+    transition: transform .25s ease, border-color .25s ease; }
+  .glass.lift:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--glass-brd)); }
+
+  .hero { padding-top: 46px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 34px; }
+  .kpi { padding: 20px 18px 16px; }
+  .kpi .v { font-family: var(--mono); font-weight: 600; font-size: clamp(22px, 3vw, 29px);
     letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
   .kpi .v.money { color: var(--gold); }
-  .kpi .k { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
-  .kpi .s { font-size: 11px; color: var(--faint); margin-top: 8px; font-family: var(--mono); }
+  .kpi .k { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .kpi .s { font-size: 11px; color: var(--faint); margin-top: 9px; font-family: var(--mono); }
 
-  /* fact cards */
   .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .fact { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 18px; display: flex; flex-direction: column; gap: 9px; }
-  .fact .stat { font-family: var(--mono); font-weight: 600; font-size: 17px; color: var(--gold);
-    letter-spacing: -.01em; }
+  .fact { padding: 18px; display: flex; flex-direction: column; gap: 9px; }
+  .fact .stat { font-family: var(--mono); font-weight: 600; font-size: 17px; color: var(--gold); letter-spacing: -.01em; }
   .fact .claim { font-size: 13.5px; color: var(--fg); }
   .fact .src { font-size: 11px; color: var(--faint); font-family: var(--mono); margin-top: auto; }
 
-  /* agent / policy console */
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
   .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
   .tab { font-family: var(--mono); font-size: 12.5px; letter-spacing: .02em; cursor: pointer;
     padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
-    background: var(--panel-2); color: var(--muted); transition: all .15s; }
+    background: var(--glass); backdrop-filter: blur(8px); color: var(--muted); transition: all .15s; }
   .tab:hover { border-color: var(--accent); color: var(--fg); }
-  .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent);
-    color: #06111f; font-weight: 600; }
+  .tab[aria-selected="true"] { background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-color: transparent; color: #06111f; font-weight: 600; }
   :root[data-theme="light"] .tab[aria-selected="true"]{ color:#fff; }
 
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 20px; box-shadow: var(--shadow); }
+  .panel { padding: 20px; }
   .policy-quote { font-family: var(--serif); font-size: 19px; line-height: 1.4; color: var(--fg);
-    border-left: 2px solid var(--accent); padding-left: 16px; margin: 0 0 4px; }
+    border-left: 2px solid var(--accent); padding-left: 16px; margin: 0 0 4px; font-style: italic; }
   .step { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
     color: var(--faint); margin: 20px 0 10px; display: flex; align-items: center; gap: 10px; }
   .step::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
@@ -150,72 +191,57 @@
   .meters { display: grid; gap: 10px; }
   .meter { display: grid; grid-template-columns: 54px 1fr 34px; align-items: center; gap: 12px; }
   .meter .lbl { font-family: var(--mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-  .meter .track { height: 8px; background: var(--panel-2); border: 1px solid var(--line-soft);
-    border-radius: 999px; overflow: hidden; }
-  .meter .fill { height: 100%; background: linear-gradient(90deg, var(--accent-soft), var(--accent));
-    border-radius: 999px; transition: width .5s cubic-bezier(.4,0,.2,1); }
-  .meter .num { font-family: var(--mono); font-size: 12.5px; color: var(--fg); text-align: right;
-    font-variant-numeric: tabular-nums; }
+  .meter .track { height: 8px; background: var(--panel-2); border: 1px solid var(--line-soft); border-radius: 999px; overflow: hidden; }
+  .meter .fill { height: 100%; background: linear-gradient(90deg, var(--accent-soft), var(--accent)); border-radius: 999px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+  .meter .num { font-family: var(--mono); font-size: 12.5px; color: var(--fg); text-align: right; font-variant-numeric: tabular-nums; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { font-family: var(--mono); font-size: 11.5px; padding: 5px 10px; border-radius: 8px;
-    border: 1px solid var(--line); background: var(--panel-2); color: var(--muted); }
+  .chip { font-family: var(--mono); font-size: 11.5px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--muted); }
   .chip.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
   .chip.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
 
-  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line-soft);
-    border: 1px solid var(--line-soft); border-radius: 12px; overflow: hidden; margin-top: 4px; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line-soft); border: 1px solid var(--line-soft); border-radius: 12px; overflow: hidden; margin-top: 4px; }
   .stats .cell { background: var(--panel); padding: 13px 15px; }
   .stats .cell .n { font-family: var(--mono); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
   .stats .cell .l { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
   .delta { font-family: var(--mono); font-size: 12px; }
   .delta.down { color: var(--good); } .delta.up { color: var(--bad); }
 
-  .callout { margin-top: 16px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
-    background: color-mix(in srgb, var(--accent) 9%, var(--panel)); border-radius: 12px;
-    padding: 13px 15px; font-size: 13.5px; color: var(--fg); }
+  .callout { margin-top: 16px; border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+    background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 12px; padding: 13px 15px; font-size: 13.5px; color: var(--fg); }
   .callout b { color: var(--accent); font-family: var(--mono); font-weight: 600; }
 
   .chart-box { position: relative; height: 300px; }
   .chart-box.sm { height: 230px; }
   .cap { font-size: 11.5px; color: var(--faint); margin-top: 10px; font-family: var(--mono); }
 
-  /* bulwark */
   .verdicts { display: grid; gap: 10px; margin-top: 4px; }
-  .verdict { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
-    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; }
-  .role { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
-    padding: 4px 9px; border-radius: 7px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .verdict { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 13px 15px; }
+  .role { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 9px; border-radius: 7px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
   .role.buyer { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
   .role.seller { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
   .verdict .nm { font-weight: 600; font-size: 14px; }
   .verdict .rs { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
-  .action { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
-    color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 45%, var(--line)); border-radius: 7px;
-    padding: 5px 10px; white-space: nowrap; }
+  .action { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 45%, var(--line)); border-radius: 7px; padding: 5px 10px; white-space: nowrap; }
 
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
   .holds { display: grid; gap: 8px; margin-top: 6px; }
-  .hold { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    border-bottom: 1px solid var(--line-soft); padding: 9px 0; }
+  .hold { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line-soft); padding: 9px 0; }
   .hold .t { font-family: var(--mono); font-size: 13px; }
   .hold .t span { color: var(--muted); font-family: var(--sans); font-size: 12.5px; margin-left: 8px; }
   .hold .r { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13.5px; }
   .pos { color: var(--good); } .neg { color: var(--bad); }
 
-  /* pipeline */
   .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 6px; }
-  .node { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
-    position: relative; }
+  .node { padding: 15px; }
   .node .n { font-family: var(--mono); font-size: 10.5px; color: var(--accent); letter-spacing: .1em; }
   .node h3 { margin-top: 7px; font-size: 13.5px; }
   .node p { font-size: 12px; color: var(--muted); margin: 5px 0 0; }
-  .conserve { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-    font-family: var(--mono); font-size: 14px; }
-  .conserve .box { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 9px 13px; }
+  .conserve { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-family: var(--mono); font-size: 14px; }
+  .conserve .box { border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(8px); border-radius: 9px; padding: 9px 13px; }
   .conserve .eq { color: var(--faint); }
 
-  footer { padding-block: 34px 60px; color: var(--muted); font-size: 12.5px; }
+  footer { padding-block: 34px 64px; color: var(--muted); font-size: 12.5px; }
   footer .wrap { display: grid; gap: 7px; }
   footer b { color: var(--fg); font-weight: 600; }
   footer .srcs { font-family: var(--mono); font-size: 11.5px; color: var(--faint); line-height: 1.9; }
@@ -225,14 +251,21 @@
     .facts { grid-template-columns: 1fr; }
     .grid2, .two { grid-template-columns: 1fr; }
     .flow { grid-template-columns: 1fr 1fr; }
+    .blob { filter: blur(50px); }
   }
   @media (max-width: 440px) {
     .kpis { grid-template-columns: 1fr 1fr; }
     .stats { grid-template-columns: 1fr; }
     .verdict { grid-template-columns: auto 1fr; }
     .verdict .action { grid-column: 1 / -1; justify-self: start; }
+    .bar .tag { display: none; }
   }
 </style>
+
+<div class="bg" aria-hidden="true">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="grain"></div>
+</div>
 
 <header class="bar">
   <div class="wrap">
@@ -240,14 +273,18 @@
     <span class="tag">autonomous treasury operator</span>
     <span class="spacer"></span>
     <span class="pill"><span class="dot"></span>PayPal sandbox &middot; live</span>
+    <button class="tgl" id="themeBtn" type="button" aria-label="Toggle light and dark">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
   </div>
 </header>
 
 <section class="hero">
   <div class="wrap">
-    <p class="eyebrow">Creator economy &middot; money out, run by an agent</p>
-    <h1>It decides <span class="hl">who gets paid</span>, how much, and when, then moves the money.</h1>
-    <p class="lede">Helm runs the payout treasury for a creator marketplace. You give it a policy in plain
+    <p class="eyebrow reveal">Creator economy &middot; money out, run by an agent</p>
+    <h1 class="reveal">It decides <span class="hl">who gets paid</span>, how much, and when, then moves the money.</h1>
+    <p class="lede reveal">Helm runs the payout treasury for a creator marketplace. You give it a policy in plain
       English. It reads the week, allocates a fixed cash budget across thousands of creators in ten countries
       under hard constraints, defends every payment against fraud, and settles on PayPal.</p>
     <div class="kpis" id="kpis"></div>
@@ -256,24 +293,24 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">Why this exists</p>
-    <h2>Getting creators paid is genuinely broken.</h2>
-    <p class="muted" style="margin-bottom:24px">Every figure below is a public 2026 number, not a prop. Helm is built to attack exactly these.</p>
+    <p class="eyebrow reveal">Why this exists</p>
+    <h2 class="reveal">Getting creators paid is genuinely broken.</h2>
+    <p class="muted reveal" style="margin-bottom:24px">Every figure below is a public 2026 number, not a prop. Helm is built to attack exactly these.</p>
     <div class="facts" id="facts"></div>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">The agent at the controls</p>
-    <h2>Write the policy in English. The model compiles it; the solver obeys it.</h2>
-    <p class="muted" style="margin-bottom:22px;max-width:70ch">A language model turns your instruction into validated
+    <p class="eyebrow reveal">The agent at the controls</p>
+    <h2 class="reveal">Write the policy in English. The model compiles it; the solver obeys it.</h2>
+    <p class="muted reveal" style="margin-bottom:22px;max-width:70ch">A language model turns your instruction into validated
       objective weights and <em>hard</em> constraints. An optimiser (OR-Tools linear program) then allocates the budget
       across every creator to best fit those weights without ever breaking a constraint. The model proposes; a verifier
       disposes. Switch the week to watch the same budget land differently.</p>
-    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="tabs reveal" id="tabs" role="tablist"></div>
     <div class="grid2">
-      <div class="panel">
+      <div class="glass panel reveal">
         <p class="policy-quote" id="pq"></p>
         <div class="step">compiled weights (0 to 3)</div>
         <div class="meters" id="meters"></div>
@@ -283,7 +320,7 @@
         <div class="stats" id="stats"></div>
         <div class="callout" id="callout"></div>
       </div>
-      <div class="panel">
+      <div class="glass panel reveal">
         <h3 style="margin-bottom:2px">Where the money lands</h3>
         <p class="faint" style="font-size:12px;margin:0 0 10px;font-family:var(--mono)">net delivered by country, this policy</p>
         <div class="chart-box"><canvas id="byCountryChart"></canvas></div>
@@ -295,10 +332,10 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">The bulwark</p>
-    <h2>Nobody games the payout, on either side.</h2>
+    <p class="eyebrow reveal">The bulwark</p>
+    <h2 class="reveal">Nobody games the payout, on either side.</h2>
     <div class="two" style="margin-top:20px">
-      <div class="panel">
+      <div class="glass panel reveal">
         <h3>Sybil and collusion defence</h3>
         <p class="muted" style="font-size:13px">A cheater spins up fake identities to claim a bigger slice of a
           shared reward pool. A naive even split rewards the fraud. Helm detects the cluster, merges it, and the
@@ -306,7 +343,7 @@
         <div class="chart-box sm" style="margin-top:8px"><canvas id="bulwarkChart"></canvas></div>
         <div class="callout" id="bulwarkNote"></div>
       </div>
-      <div class="panel">
+      <div class="glass panel reveal">
         <h3>Marketplace abuse, buyers and sellers</h3>
         <p class="muted" style="font-size:13px" id="abuseIntro"></p>
         <div class="verdicts" id="verdicts"></div>
@@ -318,17 +355,17 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">Keep it in, not just cash it out</p>
-    <h2>Creators can pool their payout and own a stake.</h2>
-    <p class="muted" style="max-width:68ch;margin-bottom:20px">Instead of taking the money and leaving, a creator can
+    <p class="eyebrow reveal">Keep it in, not just cash it out</p>
+    <h2 class="reveal">Creators can pool their payout and own a stake.</h2>
+    <p class="muted reveal" style="max-width:68ch;margin-bottom:20px">Instead of taking the money and leaving, a creator can
       leave it in a shared pool that tracks a basket of real assets: US stocks, real estate, and restaurant chains.
       Each creator owns units proportional to what they put in. Priced on real market data.</p>
     <div class="grid2">
-      <div class="panel">
+      <div class="glass panel reveal">
         <div class="chart-box"><canvas id="navChart"></canvas></div>
         <p class="cap" id="navcap"></p>
       </div>
-      <div class="panel">
+      <div class="glass panel reveal">
         <div class="stats" id="poolStats"></div>
         <div class="step">basket holdings</div>
         <div class="holds" id="holds"></div>
@@ -340,9 +377,9 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow">How the money actually moves</p>
-    <h2>Every payment clears a verifier bank, then settles on PayPal.</h2>
-    <p class="muted" style="max-width:70ch;margin-bottom:18px">The agent never pays directly. It proposes a batch;
+    <p class="eyebrow reveal">How the money actually moves</p>
+    <h2 class="reveal">Every payment clears a verifier bank, then settles on PayPal.</h2>
+    <p class="muted reveal" style="max-width:70ch;margin-bottom:18px">The agent never pays directly. It proposes a batch;
       a bank of checks must pass first; then one atomic Payouts call settles it, idempotent on a unique batch id so a
       retry never double pays. Money in equals money out plus fees, checked with plain arithmetic.</p>
     <div class="flow" id="flow"></div>
@@ -365,28 +402,50 @@ const DATA = {"headline": {"creators": 5000, "total_owed": 821393.92, "budget": 
 <script>
 (function(){
   const $ = s => document.querySelector(s);
-  const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const root = document.documentElement;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const cv = n => getComputedStyle(root).getPropertyValue(n).trim();
   const usd0 = n => "$" + Math.round(n).toLocaleString("en-US");
   const usd = n => "$" + n.toLocaleString("en-US", {maximumFractionDigits:0});
   const CC = {US:"United States",IN:"India",BR:"Brazil",GB:"United Kingdom",DE:"Germany",
     CA:"Canada",CN:"China",PH:"Philippines",NG:"Nigeria",MX:"Mexico"};
 
-  // hero kpis
+  // ---- theme toggle ----
+  try { const saved = localStorage.getItem("helm-theme"); if(saved) root.setAttribute("data-theme", saved); } catch(e){}
+  $("#themeBtn").addEventListener("click", ()=>{
+    const isLight = root.getAttribute("data-theme")==="light" ||
+      (!root.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: light)").matches);
+    const next = isLight ? "dark" : "light";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("helm-theme", next); } catch(e){}
+    rebuildCharts();
+  });
+
+  // ---- hero kpis with count-up ----
   const h = DATA.headline;
-  $("#kpis").innerHTML = [
-    ["v", h.creators.toLocaleString(), "creators under management", "across "+h.countries+" countries"],
-    ["v money", usd(h.total_owed), "owed to creators", "cumulative, this marketplace"],
-    ["v money", usd(h.budget), "cash budget this cycle", "allocated by the agent"],
-    ["v", DATA.directory.paid_count.toLocaleString(), "paid this cycle", DATA.reinvest.pool.reinvesting_creators.toLocaleString()+" reinvesting"],
-  ].map(([c,v,k,s])=>`<div class="kpi"><div class="${c}">${v}</div><div class="k">${k}</div><div class="s">${s}</div></div>`).join("");
+  const kpis = [
+    {cls:"v", target:h.creators, fmt:n=>Math.round(n).toLocaleString(), k:"creators under management", s:"across "+h.countries+" countries"},
+    {cls:"v money", target:h.total_owed, fmt:usd, k:"owed to creators", s:"cumulative, this marketplace"},
+    {cls:"v money", target:h.budget, fmt:usd, k:"cash budget this cycle", s:"allocated by the agent"},
+    {cls:"v", target:DATA.directory.paid_count, fmt:n=>Math.round(n).toLocaleString(), k:"paid this cycle", s:DATA.reinvest.pool.reinvesting_creators.toLocaleString()+" reinvesting"},
+  ];
+  $("#kpis").innerHTML = kpis.map((o,i)=>
+    `<div class="glass kpi lift reveal"><div class="${o.cls}" id="kpi${i}">${o.fmt(o.target)}</div><div class="k">${o.k}</div><div class="s">${o.s}</div></div>`).join("");
+  function countUp(el, target, fmt){
+    if(reduce){ el.textContent = fmt(target); return; }
+    const dur = 1100, t0 = performance.now();
+    function tick(now){ const p = Math.min((now-t0)/dur, 1); const e = 1-Math.pow(1-p,3);
+      el.textContent = fmt(target*e); if(p<1) requestAnimationFrame(tick); }
+    requestAnimationFrame(tick);
+  }
 
   // facts
   $("#facts").innerHTML = DATA.facts.map(f=>
-    `<div class="fact"><div class="stat">${f.stat}</div><div class="claim">${f.claim}</div><div class="src">${f.source}</div></div>`).join("");
+    `<div class="glass fact lift reveal"><div class="stat">${f.stat}</div><div class="claim">${f.claim}</div><div class="src">${f.source}</div></div>`).join("");
 
   // ---- policy console ----
   const S = DATA.scenarios, base = S[0];
-  let cur = 0, byChart = null;
+  let cur = 0, byChart = null, bulwarkChart = null, navChart = null;
   $("#tabs").innerHTML = S.map((s,i)=>`<button class="tab" role="tab" data-i="${i}" aria-selected="${i===0}">${s.label}</button>`).join("");
   $("#tabs").addEventListener("click", e=>{
     const b = e.target.closest(".tab"); if(!b) return;
@@ -407,14 +466,13 @@ const DATA = {"headline": {"creators": 5000, "total_owed": 821393.92, "budget": 
     if(c.exclude_countries.length) chips.push(`<span class="chip bad">frozen: ${c.exclude_countries.map(x=>CC[x]||x).join(", ")}</span>`);
     else chips.push(`<span class="chip">no country frozen</span>`);
     $("#cons").innerHTML = chips.join("");
-    const re = s.risk_exposure, reB = base.risk_exposure;
-    const d = re - reB, dpct = (d/reB*100);
+    const re = s.risk_exposure, reB = base.risk_exposure, d = re - reB, dpct = (d/reB*100);
     $("#stats").innerHTML = [
-      ["n", s.paid_count.toLocaleString(), "creators paid"],
-      ["n", usd(s.net_delivered), "net delivered"],
-      ["n", usd(s.tax_withheld), "tax withheld"],
-      ["n", usd(s.risk_exposure), "risk exposure"],
-    ].map(([_,n,l])=>`<div class="cell"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+      [s.paid_count.toLocaleString(), "creators paid"],
+      [usd(s.net_delivered), "net delivered"],
+      [usd(s.tax_withheld), "tax withheld"],
+      [usd(s.risk_exposure), "risk exposure"],
+    ].map(([n,l])=>`<div class="cell"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
     if(cur===0){
       $("#callout").innerHTML = `Baseline week. Weights balanced, no creator or country restricted. <b>${usd(s.net_delivered)}</b> reaches creators net of tax and currency conversion.`;
     } else {
@@ -422,85 +480,79 @@ const DATA = {"headline": {"creators": 5000, "total_owed": 821393.92, "budget": 
       $("#callout").innerHTML = `Versus the normal week, this policy <b>${word} risk exposure</b> from ${usd(reB)} to ${usd(re)} <span class="delta ${dir}">(${d<0?"":"+"}${dpct.toFixed(0)}%)</span>, from the same ${usd(s.total_paid)} budget.`;
     }
     drawByCountry(s);
-    const n = Object.keys(s.by_country).length;
-    $("#ccap").textContent = `${n} countries funded this policy. Hover a bar for the creator count.`;
+    $("#ccap").textContent = `${Object.keys(s.by_country).length} countries funded this policy. Hover a bar for the creator count.`;
   }
+
+  function tip(){ return { backgroundColor:cv("--panel"), titleColor:cv("--fg"), bodyColor:cv("--muted"),
+    borderColor:cv("--line"), borderWidth:1, padding:10, displayColors:false }; }
 
   function drawByCountry(s){
     const rows = Object.entries(s.by_country).map(([k,v])=>({k,...v})).sort((a,b)=>b.amount-a.amount);
     const labels = rows.map(r=>r.k), vals = rows.map(r=>Math.round(r.amount)), counts = rows.map(r=>r.count);
-    const ctx = $("#byCountryChart");
     if(byChart) byChart.destroy();
-    byChart = new Chart(ctx, {
+    byChart = new Chart($("#byCountryChart"), {
       type:"bar",
-      data:{ labels, datasets:[{ data:vals, backgroundColor:cv("--accent"),
-        borderRadius:4, barThickness:14, counts }] },
-      options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      data:{ labels, datasets:[{ data:vals, backgroundColor:cv("--accent"), borderRadius:4, barThickness:14 }] },
+      options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false, animation:{duration:reduce?0:700},
         plugins:{ legend:{display:false},
-          tooltip:{ callbacks:{ title:i=>CC[i[0].label]||i[0].label,
-            label:i=>usd0(i.raw)+" to "+counts[i.dataIndex].toLocaleString()+" creators" },
-            backgroundColor:cv("--panel"), titleColor:cv("--fg"), bodyColor:cv("--muted"),
-            borderColor:cv("--line"), borderWidth:1, padding:10, displayColors:false } },
-        scales:{
-          x:{ grid:{color:cv("--line-soft")}, border:{display:false},
-            ticks:{ color:cv("--faint"), font:{family:"IBM Plex Mono",size:10},
-              callback:v=>"$"+(v/1000)+"k" } },
+          tooltip:{ ...tip(), callbacks:{ title:i=>CC[i[0].label]||i[0].label,
+            label:i=>usd0(i.raw)+" to "+counts[i.dataIndex].toLocaleString()+" creators" } } },
+        scales:{ x:{ grid:{color:cv("--line-soft")}, border:{display:false},
+            ticks:{ color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}, callback:v=>"$"+(v/1000)+"k" } },
           y:{ grid:{display:false}, border:{display:false},
             ticks:{ color:cv("--muted"), font:{family:"IBM Plex Mono",size:11} } } } }
     });
   }
 
-  // ---- bulwark ----
-  const be = DATA.payout_engine.bulwark;
-  const bctx = $("#bulwarkChart");
-  new Chart(bctx, {
-    type:"bar",
-    data:{ labels:["Naive split","Helm hardened"],
-      datasets:[{ data:[be.naive_cheater_take, be.hardened_cheater_take],
-        backgroundColor:[cv("--bad"), cv("--good")], borderRadius:6, barThickness:60 }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false},
-        tooltip:{ callbacks:{ label:i=>"cheater takes $"+i.raw.toFixed(2) },
-          backgroundColor:cv("--panel"), titleColor:cv("--fg"), bodyColor:cv("--muted"),
-          borderColor:cv("--line"), borderWidth:1, padding:10, displayColors:false } },
-      scales:{ x:{ grid:{display:false}, border:{display:false},
-          ticks:{color:cv("--muted"), font:{family:"IBM Plex Sans",size:12}} },
-        y:{ grid:{color:cv("--line-soft")}, border:{display:false}, beginAtZero:true,
-          ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}, callback:v=>"$"+v} } } }
-  });
-  $("#bulwarkNote").innerHTML = `A fake-identity cluster claims <b>${usd0(be.naive_cheater_take)}</b> under a naive split. After Helm merges the cluster it collapses to <b>${usd0(be.hardened_cheater_take)}</b>, one honest share. Fraud defeated.`;
+  function drawBulwark(){
+    const be = DATA.payout_engine.bulwark;
+    if(bulwarkChart) bulwarkChart.destroy();
+    bulwarkChart = new Chart($("#bulwarkChart"), {
+      type:"bar",
+      data:{ labels:["Naive split","Helm hardened"],
+        datasets:[{ data:[be.naive_cheater_take, be.hardened_cheater_take],
+          backgroundColor:[cv("--bad"), cv("--good")], borderRadius:6, barThickness:60 }] },
+      options:{ responsive:true, maintainAspectRatio:false, animation:{duration:reduce?0:700},
+        plugins:{ legend:{display:false}, tooltip:{ ...tip(), callbacks:{ label:i=>"cheater takes $"+i.raw.toFixed(2) } } },
+        scales:{ x:{ grid:{display:false}, border:{display:false}, ticks:{color:cv("--muted"), font:{family:"IBM Plex Sans",size:12}} },
+          y:{ grid:{color:cv("--line-soft")}, border:{display:false}, beginAtZero:true,
+            ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}, callback:v=>"$"+v} } } }
+    });
+    $("#bulwarkNote").innerHTML = `A fake-identity cluster claims <b>${usd0(be.naive_cheater_take)}</b> under a naive split. After Helm merges the cluster it collapses to <b>${usd0(be.hardened_cheater_take)}</b>, one honest share. Fraud defeated.`;
+  }
 
-  // marketplace abuse
+  function drawNav(){
+    const r = DATA.reinvest, step = Math.ceil(r.nav_dates.length/6);
+    if(navChart) navChart.destroy();
+    navChart = new Chart($("#navChart"), {
+      type:"line",
+      data:{ labels:r.nav_dates, datasets:[{ data:r.nav_values, borderColor:cv("--gold"), borderWidth:2,
+        pointRadius:0, tension:.25, fill:true,
+        backgroundColor:(c=>{ const g=c.chart.ctx.createLinearGradient(0,0,0,260);
+          g.addColorStop(0, cv("--gold")+"33"); g.addColorStop(1, cv("--gold")+"00"); return g; }) }] },
+      options:{ responsive:true, maintainAspectRatio:false, animation:{duration:reduce?0:700},
+        plugins:{ legend:{display:false}, tooltip:{ ...tip(), callbacks:{ title:i=>i[0].label, label:i=>"NAV "+i.raw.toFixed(2) } } },
+        scales:{ x:{ grid:{display:false}, border:{display:false},
+            ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}, maxRotation:0, autoSkip:false,
+              callback:(v,i)=> i%step===0 ? r.nav_dates[i].slice(5) : "" } },
+          y:{ grid:{color:cv("--line-soft")}, border:{display:false},
+            ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}} } } }
+    });
+  }
+
+  function rebuildCharts(){ renderPolicy(); drawBulwark(); drawNav(); }
+
+  // abuse
   const ab = DATA.abuse;
   $("#abuseIntro").innerHTML = `A live scan of <b>${ab.accounts}</b> accounts and <b>${ab.orders.toLocaleString()}</b> orders (${ab.bad_orders} returns or chargebacks). ${ab.suspended} suspended: ${ab.buyers_flagged} buyers, ${ab.sellers_flagged} sellers.`;
   $("#verdicts").innerHTML = ab.flagged.map(v=>
-    `<div class="verdict"><span class="role ${v.role}">${v.role}</span><div><div class="nm">${v.name}</div>
+    `<div class="verdict glass"><span class="role ${v.role}">${v.role}</span><div><div class="nm">${v.name}</div>
       <div class="rs">${v.bad} bad across ${v.distinct} counterparties &middot; ${Math.round(v.rate*100)}% rate</div></div>
       <span class="action">${v.action}</span></div>`).join("");
 
-  // ---- reinvest ----
-  const r = DATA.reinvest;
-  const nctx = $("#navChart");
-  const step = Math.ceil(r.nav_dates.length/6);
-  new Chart(nctx, {
-    type:"line",
-    data:{ labels:r.nav_dates, datasets:[{ data:r.nav_values, borderColor:cv("--gold"),
-      borderWidth:2, pointRadius:0, tension:.25, fill:true,
-      backgroundColor:(c=>{ const g=c.chart.ctx.createLinearGradient(0,0,0,260);
-        g.addColorStop(0, cv("--gold")+"33"); g.addColorStop(1, cv("--gold")+"00"); return g; }) }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false},
-        tooltip:{ callbacks:{ title:i=>i[0].label, label:i=>"NAV "+i.raw.toFixed(2) },
-          backgroundColor:cv("--panel"), titleColor:cv("--fg"), bodyColor:cv("--muted"),
-          borderColor:cv("--line"), borderWidth:1, padding:10, displayColors:false } },
-      scales:{ x:{ grid:{display:false}, border:{display:false},
-          ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}, maxRotation:0, autoSkip:false,
-            callback:(v,i)=> i%step===0 ? r.nav_dates[i].slice(5) : "" } },
-        y:{ grid:{color:cv("--line-soft")}, border:{display:false},
-          ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}} } } }
-  });
+  // reinvest text
+  const r = DATA.reinvest, p = r.pool;
   $("#navcap").textContent = `Pool NAV rebased to 100 on ${r.nav_dates[0]}. Real daily closes, ${r.nav_dates.length} trading days to ${r.as_of}.`;
-  const p = r.pool;
   $("#poolStats").innerHTML = [
     [p.reinvesting_creators.toLocaleString(), "creators reinvesting"],
     [usd(p.total_contributed), "contributed"],
@@ -512,7 +564,7 @@ const DATA = {"headline": {"creators": 5000, "total_owed": 821393.92, "budget": 
       <div class="r ${x.return_pct>=0?'pos':'neg'}">${x.return_pct>=0?"+":""}${x.return_pct.toFixed(2)}%</div></div>`).join("");
   $("#poolNote").textContent = r.note;
 
-  // ---- pipeline ----
+  // pipeline
   const flow = [
     ["01","Observe","Reads cash, what is owed, and the week's risk signals."],
     ["02","Decide","LP allocates the budget to fit the compiled policy weights."],
@@ -520,7 +572,7 @@ const DATA = {"headline": {"creators": 5000, "total_owed": 821393.92, "budget": 
     ["04","Settle","One atomic PayPal Payouts batch, idempotent on a unique batch id."],
     ["05","Reconcile","Webhooks de-duplicated; partial failure rolls back, never double pays."],
   ];
-  $("#flow").innerHTML = flow.map(([n,t,p])=>`<div class="node"><div class="n">${n}</div><h3>${t}</h3><p>${p}</p></div>`).join("");
+  $("#flow").innerHTML = flow.map(([n,t,q])=>`<div class="glass node lift"><div class="n">${n}</div><h3>${t}</h3><p>${q}</p></div>`).join("");
   const tg = DATA.payout_engine.tollgate, ks = DATA.payout_engine.keystone;
   $("#conserve").innerHTML =
     `<span class="box">gross ${usd0(tg.gross)}</span><span class="eq">=</span>`+
@@ -530,16 +582,28 @@ const DATA = {"headline": {"creators": 5000, "total_owed": 821393.92, "budget": 
   $("#batchcap").textContent = `Last sandbox batch ${ks.batch_id}: ${ks.status}, books conserved. In the live demo the real PayPal sandbox transaction id appears here as the batch settles.`;
 
   // sources
-  const seen = new Set(); const srcs = [];
+  const seen = new Set(), srcs = [];
   DATA.facts.forEach(f=>{ if(!seen.has(f.source)){ seen.add(f.source); srcs.push(f.source); } });
   $("#srcs").innerHTML = "Sources: " + srcs.join(" &middot; ") +
     " &middot; market data from public daily closes (SPY, VNQ, MCD) &middot; PayPal Orders v2, Payouts, and Agent Toolkit (sandbox).";
 
-  renderPolicy();
+  // first paint
+  rebuildCharts();
+  kpis.forEach((o,i)=>countUp($("#kpi"+i), o.target, o.fmt));
 
-  // redraw charts on theme flip so token colors stay correct
-  let t; const redraw = ()=>{ clearTimeout(t); t=setTimeout(()=>{ renderPolicy(); }, 60); };
-  if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
-  new MutationObserver(redraw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+  // entrance: resting state is visible; add hidden-then-shown only when JS runs
+  root.classList.add("anim");
+  const revs = [...document.querySelectorAll(".reveal")];
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    revs.forEach((el,i)=>{ el.style.transitionDelay = Math.min(i*45, 500)+"ms"; el.classList.add("shown"); });
+  }));
+  // safety: ensure everything is visible shortly after load no matter what
+  setTimeout(()=>revs.forEach(el=>el.classList.add("shown")), 1400);
+
+  // recolor charts if the OS theme flips while in system mode
+  if(window.matchMedia){
+    let t; const redraw=()=>{ clearTimeout(t); t=setTimeout(rebuildCharts,60); };
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+  }
 })();
 </script>

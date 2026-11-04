@@ -3,8 +3,8 @@
 PayPal ships an official MCP server (orders, invoices, subscriptions, disputes),
 but it has no tool for paying out. Helm fills exactly that gap and adds the two
 capabilities that make it a controller rather than a wrapper: the sourcing
-optimizer and the AI signal desk. Any MCP client (Claude Desktop, Cursor, an
-agent runtime) can connect over stdio and call:
+optimizer and the AI signal desk. Any MCP client (a desktop AI assistant, Cursor,
+an agent runtime) can connect over stdio and call:
 
   paypal_create_payout - send a PayPal Payouts batch, AUP-gated, idempotent, and
                          held for human approval above a threshold. Runs live
