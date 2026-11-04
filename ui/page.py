@@ -21,6 +21,8 @@ _TEMPLATE = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Helm Global Payout Operator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="__VMAP_CSS__">
 <script src="__CHART_JS__"></script>
 <script src="__VMAP_JS__"></script>
@@ -31,18 +33,25 @@ _TEMPLATE = """<!doctype html>
     --muted:#8aa0b6; --accent:#4ea1ff; --good:#36d399; --warn:#f6c343; --bad:#f06868; --target:#9aa7b5;
   }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink);
-    font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-  header { padding:24px 16px 4px; max-width:1200px; margin:0 auto; }
-  h1 { margin:0 0 4px; font-size:26px; letter-spacing:.2px; }
-  .sub { color:var(--muted); font-size:14px; }
+  body { margin:0; color:var(--ink); font-family:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+    background:radial-gradient(1200px 500px at 20% -10%, rgba(78,161,255,.10), transparent 60%), var(--bg); }
+  header { padding:28px 16px 6px; max-width:1200px; margin:0 auto; }
+  .brand { display:flex; align-items:center; gap:11px; }
+  .brand svg { flex:0 0 auto; }
+  h1 { margin:0; font-size:26px; font-weight:800; letter-spacing:-.4px; }
+  .badge { color:var(--accent); font-size:12px; font-weight:600; letter-spacing:.3px;
+    border:1px solid rgba(78,161,255,.35); background:rgba(78,161,255,.08); border-radius:999px; padding:4px 11px; }
+  .sub { color:var(--muted); font-size:14px; margin-top:8px; max-width:900px; }
   main { max-width:1200px; margin:0 auto; padding:16px; }
   .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
-  .card .k { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.6px; }
-  .card .v { font-size:23px; font-weight:650; margin-top:4px; } .card .v.accent{color:var(--accent);} .card .v.good{color:var(--good);}
-  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
-  .panel h2 { margin:0 0 2px; font-size:15px; } .panel p { margin:0 0 12px; color:var(--muted); font-size:13px; }
+  .card { background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--line);
+    border-radius:14px; padding:15px 17px; }
+  .card .k { color:var(--muted); font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.7px; }
+  .card .v { font-size:25px; font-weight:700; letter-spacing:-.5px; margin-top:5px; } .card .v.accent{color:var(--accent);} .card .v.good{color:var(--good);}
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .panel h2 { margin:0 0 3px; font-size:15.5px; font-weight:700; letter-spacing:-.2px; } .panel p { margin:0 0 13px; color:var(--muted); font-size:13px; }
+  tbody tr:hover { background:rgba(78,161,255,.05); }
   .grid2 { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; } @media (max-width:900px){ .grid2{grid-template-columns:1fr;} }
   .grid3 { display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:820px){ .grid3{grid-template-columns:1fr;} }
   .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
@@ -64,7 +73,13 @@ _TEMPLATE = """<!doctype html>
 </head>
 <body>
 <header>
-  <h1>Helm &mdash; global payout operator</h1>
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4ea1ff" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4" fill="#4ea1ff" stroke="none"/>
+      <path d="M12 3v3.6M12 17.4V21M3 12h3.6M17.4 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5"/>
+    </svg>
+    <h1>Helm</h1><span class="badge">GLOBAL PAYOUT OPERATOR</span>
+  </div>
   <div class="sub">An AI agent runs payouts for a creator platform with thousands of creators across the world. You write the treasury policy in plain English; the agent compiles it into objective weights and hard constraints; a solver allocates the cycle budget across everyone, net of each country's tax and FX; guardrails clamp it.</div>
 </header>
 <main>
