@@ -37,9 +37,10 @@ def test_page_renders_with_embedded_data():
     assert "<!doctype html>" in html.lower()
     assert "__CHART_JS__" not in html                  # placeholder replaced
     assert "window.HELM_DATA=" in html
-    assert 'id="countryChart"' in html                 # payouts-by-country chart
+    assert 'id="worldmap"' in html                     # the inline SVG world choropleth
+    assert "<svg" in html                              # the map actually embedded
     assert 'id="navChart"' in html                     # the reinvestment NAV chart
-    assert html.count("<canvas") == 4
+    assert html.count("<canvas") == 3
 
 
 def test_page_renders_for_live_server_without_embedded_data():

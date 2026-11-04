@@ -8,12 +8,17 @@ guarded so the page still renders if a CDN is unavailable.
 """
 from __future__ import annotations
 
+import os
+
 import json
 
 CHART_JS = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
-VMAP_CSS = "https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css"
-VMAP_JS = "https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/jsvectormap.min.js"
-VMAP_WORLD = "https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"
+_WORLD_SVG = ""
+try:
+    with open(os.path.join(os.path.dirname(__file__), "world_map.svg"), encoding="utf-8") as _f:
+        _WORLD_SVG = _f.read()
+except Exception:
+    _WORLD_SVG = "<div style='color:#8b9bb0;padding:40px;text-align:center'>world map unavailable</div>"
 
 _TEMPLATE = """<!doctype html>
 <html lang="en">
@@ -66,6 +71,8 @@ _TEMPLATE = """<!doctype html>
     padding:4px 10px; margin:3px 5px 3px 0; font-size:12px; color:var(--muted); }
   .pill b { color:var(--ink); font-weight:700; } .pill.bad b{ color:var(--bad);} .pill.good b{color:var(--good);}
   canvas { max-height:250px; }
+  .worldmap svg { width:100%; height:auto; display:block; }
+  .worldmap path { fill:rgba(255,255,255,.055); stroke:#0a0e14; stroke-width:.3; transition:fill .7s cubic-bezier(.4,0,.2,1); }
   table { width:100%; border-collapse:collapse; font-size:12.5px; }
   th,td { text-align:right; padding:9px 10px; border-bottom:1px solid rgba(255,255,255,.045); white-space:nowrap; }
   th:first-child,td:first-child { text-align:left; }
@@ -104,8 +111,8 @@ _TEMPLATE = """<!doctype html>
   </div>
 
   <div class="grid2">
-    <div class="panel" style="margin:0"><h2>Payouts by country</h2><p>How this policy spreads the cycle budget across the world.</p><canvas id="countryChart" style="max-height:320px"></canvas></div>
-    <div class="panel" style="margin:0"><h2>Where the money goes</h2><p>Payout and creators paid per country, this policy.</p><div style="overflow-x:auto;max-height:300px"><table id="countries"></table></div></div>
+    <div class="panel" style="margin:0"><h2>Payouts across the world</h2><p>Brighter means more paid under this policy. Watch it shift as the policy changes.</p><div id="worldmap" class="worldmap" role="img" aria-label="payouts by country">__WORLD_SVG__</div></div>
+    <div class="panel" style="margin:0"><h2>Where the money goes</h2><p>Payout and creators paid per country, this policy.</p><div style="overflow-x:auto;max-height:340px"><table id="countries"></table></div></div>
   </div>
 
   <div class="panel">
@@ -153,13 +160,18 @@ _TEMPLATE = """<!doctype html>
   const SH = {x:{grid:{color:FAINT},border:{display:false},ticks:{callback:v=>'$'+Math.round(v/1000)+'k'}}, y:{grid:{display:false},border:{display:false}}};
 
   const h=data.headline, S=data.scenarios, ctx=data.context;
-  document.getElementById('cards').innerHTML = [
-    ['creators', Number(h.creators).toLocaleString(), ''],
-    ['owed to creators', money(h.total_owed), 'accent'],
-    ['this cycle budget', money(h.budget), ''],
-    ['countries', String(h.countries), ''],
-    ['policies the agent ran', String(S.length), 'good'],
-  ].map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v ${c[2]||''}">${c[1]}</div></div>`).join('');
+  const countUp=(el,target,fmt,dur=1000)=>{ const t0=performance.now();
+    (function f(now){ const t=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-t,3);
+      el.textContent=fmt(target*e); if(t<1) requestAnimationFrame(f); })(t0); };
+  const defs=[
+    ['creators', h.creators, v=>Math.round(v).toLocaleString(), ''],
+    ['owed to creators', h.total_owed, money, 'accent'],
+    ['this cycle budget', h.budget, money, ''],
+    ['countries', h.countries, v=>String(Math.round(v)), ''],
+    ['policies the agent ran', S.length, v=>String(Math.round(v)), 'good'],
+  ];
+  document.getElementById('cards').innerHTML = defs.map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v ${c[3]||''}">0</div></div>`).join('');
+  document.querySelectorAll('#cards .v').forEach((el,i)=>countUp(el, defs[i][1], defs[i][2]));
 
   // creator directory: scale + individuals
   const dir=data.directory;
@@ -180,17 +192,18 @@ _TEMPLATE = """<!doctype html>
     document.getElementById('dirSearch').addEventListener('input', e=>draw(e.target.value));
   }
 
-  // payouts by country bar chart (reliable; replaces the vector map)
-  let countryCh=null;
-  if (window.Chart){ countryCh = new Chart(document.getElementById('countryChart'), {
-    type:'bar', data:{labels:[], datasets:[{data:[], backgroundColor:C('--accent'), maxBarThickness:22}]},
-    options:{ indexAxis:'y', responsive:true, animation:false, plugins:{legend:{display:false}}, scales:SH } }); }
-  const setCountryChart = byCountry => {
-    if(!countryCh) return;
-    const rows=Object.entries(byCountry).sort((a,b)=>b[1].amount-a[1].amount);
-    countryCh.data.labels=rows.map(r=>r[0]);
-    countryCh.data.datasets[0].data=rows.map(r=>r[1].amount);
-    countryCh.update('none');
+  // world choropleth: colour the inline SVG; CSS transitions animate it on policy change
+  const mapEl=document.getElementById('worldmap');
+  const mix=(a,b,t)=>{ const h=x=>[parseInt(x.slice(0,2),16),parseInt(x.slice(2,4),16),parseInt(x.slice(4,6),16)];
+    const A=h(a),B=h(b); return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join(''); };
+  const setMap = byCountry => {
+    if(!mapEl) return;
+    const mx=Math.max(1,...Object.values(byCountry).map(v=>v.amount));
+    mapEl.querySelectorAll('path').forEach(p=>{ p.style.fill=''; });
+    Object.entries(byCountry).forEach(([code,v])=>{
+      const el=mapEl.querySelector('#'+code.toLowerCase());
+      if(el) el.style.fill=mix('17304a','5b9dff', Math.sqrt(v.amount/mx));
+    });
   };
 
   // scenario comparison: risk exposure per policy
@@ -225,7 +238,7 @@ _TEMPLATE = """<!doctype html>
       `<span class="pill">net <b>${money(s.net_delivered)}</b></span>`+
       `<span class="pill">tax withheld <b>${money(s.tax_withheld)}</b></span>`+
       `<span class="pill">risk exposure <b>${Math.round(s.risk_exposure).toLocaleString()}</b></span>`;
-    setCountryChart(s.by_country);
+    setMap(s.by_country);
     const rows=Object.entries(s.by_country).sort((a,b)=>b[1].amount-a[1].amount)
       .map(([k,v])=>`<tr><td>${k}</td><td>${money(v.amount)}</td><td>${v.count}</td></tr>`).join('');
     document.getElementById('countries').innerHTML =
@@ -245,7 +258,7 @@ _TEMPLATE = """<!doctype html>
       new Chart(document.getElementById('navChart'), { type:'line',
       data:{ labels:ri.nav.dates, datasets:[{ label:'pool NAV (rebased to 100)', data:ri.nav.values,
         borderColor:C('--accent'), backgroundColor:ng, fill:true }]},
-      options:{ responsive:true, animation:false, plugins:{legend:{display:false}},
+      options:{ responsive:true, animation:{duration:900}, plugins:{legend:{display:false}},
         scales:{ x:{grid:{display:false},border:{display:false},ticks:{maxTicksLimit:6}},
                  y:{grid:{color:FAINT},border:{display:false},ticks:{maxTicksLimit:5}} }}}); }
     const p=ri.pool;
@@ -265,7 +278,8 @@ _TEMPLATE = """<!doctype html>
   document.getElementById('foot').innerHTML =
     `Context: a ~$${ctx.market_size_b}B creator economy, ~${ctx.creators_m}M creators, up to ${ctx.late_pct}% paid late. `+
     `Bulwark cheat defeated: ${bw.defeated}. Clearwright legal: ${pe.clearwright_ok}. `+
-    `Tollgate withheld ${money(tg.withheld)} of ${money(tg.gross)} for global creators. Keystone ${ks.status}, conserved ${ks.conserved}.`;
+    `Tollgate withheld ${money(tg.withheld)} of ${money(tg.gross)} for global creators. Keystone ${ks.status}, conserved ${ks.conserved}. `+
+    `World map: simple-world-map (CC BY-SA 3.0).`;
 })();
 </script>
 </body>
@@ -274,8 +288,7 @@ _TEMPLATE = """<!doctype html>
 
 
 def render_page(embedded_data: dict | None = None) -> str:
-    html = (_TEMPLATE.replace("__CHART_JS__", CHART_JS).replace("__VMAP_CSS__", VMAP_CSS)
-            .replace("__VMAP_JS__", VMAP_JS).replace("__VMAP_WORLD__", VMAP_WORLD))
+    html = _TEMPLATE.replace("__CHART_JS__", CHART_JS).replace("__WORLD_SVG__", _WORLD_SVG)
     if embedded_data is not None:
         inject = f"<script>window.HELM_DATA={json.dumps(embedded_data)};</script>"
         html = html.replace("</head>", inject + "\n</head>")
