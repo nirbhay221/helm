@@ -26,52 +26,59 @@ _TEMPLATE = """<!doctype html>
 <script src="__CHART_JS__"></script>
 <style>
   :root {
-    --bg:#0b0f14; --panel:#131a23; --panel2:#182230; --line:#223042; --ink:#e7eef7;
-    --muted:#8aa0b6; --accent:#4ea1ff; --good:#36d399; --warn:#f6c343; --bad:#f06868; --target:#9aa7b5;
+    --bg:#0a0e14; --panel:#121824; --line:rgba(255,255,255,.07); --ink:#eef3fa; --muted:#8b9bb0;
+    --accent:#5b9dff; --good:#3ddc97; --warn:#f6c454; --bad:#ff6b6b; --target:#9aa7b5;
+    --shadow:0 12px 32px rgba(0,0,0,.32); --radius:16px;
   }
   * { box-sizing:border-box; }
   body { margin:0; color:var(--ink); font-family:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
-    background:radial-gradient(1200px 500px at 20% -10%, rgba(78,161,255,.10), transparent 60%), var(--bg); }
-  header { padding:28px 16px 6px; max-width:1200px; margin:0 auto; }
-  .brand { display:flex; align-items:center; gap:11px; }
+    font-size:15px; line-height:1.55; letter-spacing:-.1px; -webkit-font-smoothing:antialiased;
+    background:radial-gradient(900px 480px at 10% -8%, rgba(91,157,255,.14), transparent 55%),
+               radial-gradient(760px 520px at 100% -2%, rgba(61,220,151,.06), transparent 52%), var(--bg); }
+  header { padding:34px 22px 8px; max-width:1180px; margin:0 auto; }
+  .brand { display:flex; align-items:center; gap:12px; }
   .brand svg { flex:0 0 auto; }
-  h1 { margin:0; font-size:26px; font-weight:800; letter-spacing:-.4px; }
-  .badge { color:var(--accent); font-size:12px; font-weight:600; letter-spacing:.3px;
-    border:1px solid rgba(78,161,255,.35); background:rgba(78,161,255,.08); border-radius:999px; padding:4px 11px; }
-  .sub { color:var(--muted); font-size:14px; margin-top:8px; max-width:900px; }
-  main { max-width:1200px; margin:0 auto; padding:16px; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
-  .card { background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--line);
-    border-radius:14px; padding:15px 17px; }
-  .card .k { color:var(--muted); font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.7px; }
-  .card .v { font-size:25px; font-weight:700; letter-spacing:-.5px; margin-top:5px; } .card .v.accent{color:var(--accent);} .card .v.good{color:var(--good);}
-  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
-  .panel h2 { margin:0 0 3px; font-size:15.5px; font-weight:700; letter-spacing:-.2px; } .panel p { margin:0 0 13px; color:var(--muted); font-size:13px; }
-  tbody tr:hover { background:rgba(78,161,255,.05); }
-  .grid2 { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; } @media (max-width:900px){ .grid2{grid-template-columns:1fr;} }
-  .grid3 { display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:820px){ .grid3{grid-template-columns:1fr;} }
-  .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-  .tab { background:var(--panel2); color:var(--muted); border:1px solid var(--line); border-radius:999px;
-    padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; }
-  .tab.on { background:var(--accent); color:#06121f; border-color:var(--accent); }
-  .policy { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
-  .policy .q { color:var(--ink); font-style:italic; } .policy .c { color:var(--muted); font-size:13px; margin-top:6px; }
-  .pill { display:inline-block; background:#0e1a27; border:1px solid var(--line); border-radius:7px; padding:2px 8px; margin:2px 4px 2px 0; font-size:12px; }
-  .pill b { color:var(--accent); } .pill.bad b{ color:var(--bad);} .pill.good b{color:var(--good);}
-  canvas { max-height:240px; }
+  h1 { margin:0; font-size:27px; font-weight:800; letter-spacing:-.7px; }
+  .badge { color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.9px;
+    border:1px solid rgba(91,157,255,.3); background:rgba(91,157,255,.1); border-radius:999px; padding:4px 12px; }
+  .sub { color:var(--muted); font-size:14px; margin-top:9px; max-width:880px; line-height:1.6; }
+  main { max-width:1180px; margin:0 auto; padding:18px 22px 44px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:14px; margin-bottom:18px; }
+  .card { background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(255,255,255,0)), var(--panel);
+    border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); }
+  .card .k { color:var(--muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; }
+  .card .v { font-size:27px; font-weight:800; letter-spacing:-.9px; margin-top:7px; }
+  .card .v.accent{color:var(--accent);} .card .v.good{color:var(--good);}
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 22px; margin-bottom:18px; box-shadow:var(--shadow); }
+  .panel h2 { margin:0 0 4px; font-size:16px; font-weight:700; letter-spacing:-.3px; }
+  .panel p { margin:0 0 15px; color:var(--muted); font-size:13px; line-height:1.55; }
+  .grid2 { display:grid; grid-template-columns:1.25fr 1fr; gap:18px; } @media (max-width:900px){ .grid2{grid-template-columns:1fr;} }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr; gap:18px; } @media (max-width:820px){ .grid3{grid-template-columns:1fr;} }
+  .tabs { display:flex; gap:9px; flex-wrap:wrap; margin-bottom:14px; }
+  .tab { background:rgba(255,255,255,.04); color:var(--muted); border:1px solid var(--line); border-radius:11px;
+    padding:8px 15px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s ease; }
+  .tab:hover { color:var(--ink); border-color:rgba(91,157,255,.4); }
+  .tab.on { background:var(--accent); color:#06121f; border-color:var(--accent); box-shadow:0 6px 18px rgba(91,157,255,.32); }
+  .policy { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:12px; padding:15px 17px; margin-bottom:14px; }
+  .policy .q { color:var(--ink); font-style:italic; font-size:15px; } .policy .c { color:var(--muted); font-size:13px; margin-top:7px; }
+  .pill { display:inline-block; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:9px;
+    padding:4px 10px; margin:3px 5px 3px 0; font-size:12px; color:var(--muted); }
+  .pill b { color:var(--ink); font-weight:700; } .pill.bad b{ color:var(--bad);} .pill.good b{color:var(--good);}
+  canvas { max-height:250px; }
   table { width:100%; border-collapse:collapse; font-size:12.5px; }
-  th,td { text-align:right; padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th,td { text-align:right; padding:9px 10px; border-bottom:1px solid rgba(255,255,255,.045); white-space:nowrap; }
   th:first-child,td:first-child { text-align:left; }
-  th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
-  .foot { color:var(--muted); font-size:12px; padding:8px 16px 32px; max-width:1200px; margin:0 auto; }
+  th { color:var(--muted); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; }
+  tbody tr:hover { background:rgba(91,157,255,.06); }
+  .foot { color:var(--muted); font-size:12px; padding:10px 22px 40px; max-width:1180px; margin:0 auto; line-height:1.6; }
 </style>
 </head>
 <body>
 <header>
   <div class="brand">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4ea1ff" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4" fill="#4ea1ff" stroke="none"/>
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#5b9dff" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4" fill="#5b9dff" stroke="none"/>
       <path d="M12 3v3.6M12 17.4V21M3 12h3.6M17.4 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5"/>
     </svg>
     <h1>Helm</h1><span class="badge">GLOBAL PAYOUT OPERATOR</span>
@@ -123,8 +130,27 @@ _TEMPLATE = """<!doctype html>
   const css = getComputedStyle(document.documentElement);
   const C = n => css.getPropertyValue(n).trim();
   const money = v => '$' + Number(v).toLocaleString(undefined,{maximumFractionDigits:0});
-  if (window.Chart){ Chart.defaults.color=C('--muted'); Chart.defaults.borderColor=C('--line');
-    Chart.defaults.font.family=getComputedStyle(document.body).fontFamily; }
+  const FAINT='rgba(255,255,255,.055)';
+  if (window.Chart){
+    Chart.defaults.color=C('--muted');
+    Chart.defaults.borderColor=FAINT;
+    Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;
+    Chart.defaults.font.size=12;
+    Chart.defaults.elements.bar.borderRadius=7;
+    Chart.defaults.elements.bar.borderSkipped=false;
+    Chart.defaults.elements.line.tension=0.4;
+    Chart.defaults.elements.line.borderWidth=2.5;
+    Chart.defaults.elements.point.radius=0;
+    Chart.defaults.elements.point.hoverRadius=4;
+    Chart.defaults.plugins.legend.labels.boxWidth=9;
+    Chart.defaults.plugins.legend.labels.usePointStyle=true;
+    Chart.defaults.plugins.legend.labels.pointStyle='circle';
+    Object.assign(Chart.defaults.plugins.tooltip, {backgroundColor:'#0e1724', borderColor:'rgba(255,255,255,.1)',
+      borderWidth:1, cornerRadius:9, padding:11, titleColor:'#eef3fa', displayColors:false});
+  }
+  // modern scales: faint value grid, no category grid, no axis borders
+  const SV = {x:{grid:{display:false},border:{display:false}}, y:{grid:{color:FAINT},border:{display:false},ticks:{maxTicksLimit:6}}};
+  const SH = {x:{grid:{color:FAINT},border:{display:false},ticks:{callback:v=>'$'+Math.round(v/1000)+'k'}}, y:{grid:{display:false},border:{display:false}}};
 
   const h=data.headline, S=data.scenarios, ctx=data.context;
   document.getElementById('cards').innerHTML = [
@@ -157,10 +183,8 @@ _TEMPLATE = """<!doctype html>
   // payouts by country bar chart (reliable; replaces the vector map)
   let countryCh=null;
   if (window.Chart){ countryCh = new Chart(document.getElementById('countryChart'), {
-    type:'bar', data:{labels:[], datasets:[{data:[], backgroundColor:C('--accent'), borderRadius:5}]},
-    options:{ indexAxis:'y', responsive:true, animation:false, plugins:{legend:{display:false}},
-      scales:{ x:{grid:{color:'rgba(34,48,66,.6)'}, ticks:{callback:v=>'$'+Math.round(v/1000)+'k'}},
-               y:{grid:{display:false}} } } }); }
+    type:'bar', data:{labels:[], datasets:[{data:[], backgroundColor:C('--accent'), maxBarThickness:22}]},
+    options:{ indexAxis:'y', responsive:true, animation:false, plugins:{legend:{display:false}}, scales:SH } }); }
   const setCountryChart = byCountry => {
     if(!countryCh) return;
     const rows=Object.entries(byCountry).sort((a,b)=>b[1].amount-a[1].amount);
@@ -171,14 +195,14 @@ _TEMPLATE = """<!doctype html>
 
   // scenario comparison: risk exposure per policy
   if (window.Chart){ new Chart(document.getElementById('riskChart'), { type:'bar',
-    data:{ labels:S.map(s=>s.label), datasets:[{ data:S.map(s=>s.risk_exposure),
-      backgroundColor:S.map(s=>s.label.toLowerCase().includes('fraud')?C('--good'):C('--target')), borderRadius:6 }]},
-    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}}}); }
+    data:{ labels:S.map(s=>s.label), datasets:[{ data:S.map(s=>s.risk_exposure), maxBarThickness:54,
+      backgroundColor:S.map(s=>s.label.toLowerCase().includes('fraud')?C('--good'):'rgba(154,167,181,.45)') }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:SV }}); }
   const bw=data.payout_engine.bulwark;
   if (window.Chart){ new Chart(document.getElementById('bulwarkChart'), { type:'bar',
     data:{ labels:['naive take','hardened','honest share'], datasets:[{ data:[bw.naive_cheater_take,bw.hardened_cheater_take,bw.honest_share],
-      backgroundColor:[C('--bad'),C('--good'),C('--target')], borderRadius:6 }]},
-    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}}}); }
+      maxBarThickness:70, backgroundColor:[C('--bad'),C('--good'),'rgba(154,167,181,.45)'] }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:SV }}); }
 
   // tabs
   const tabsEl=document.getElementById('tabs');
@@ -215,11 +239,15 @@ _TEMPLATE = """<!doctype html>
   const ri=data.reinvest;
   if (ri){
     const asof=document.getElementById('rAsOf'); if(asof) asof.textContent=ri.as_of;
-    if (window.Chart){ new Chart(document.getElementById('navChart'), { type:'line',
+    if (window.Chart){
+      const nctx=document.getElementById('navChart').getContext('2d');
+      const ng=nctx.createLinearGradient(0,0,0,250); ng.addColorStop(0,'rgba(91,157,255,.30)'); ng.addColorStop(1,'rgba(91,157,255,0)');
+      new Chart(document.getElementById('navChart'), { type:'line',
       data:{ labels:ri.nav.dates, datasets:[{ label:'pool NAV (rebased to 100)', data:ri.nav.values,
-        borderColor:C('--accent'), backgroundColor:'rgba(78,161,255,.08)', fill:true }]},
-      options:{ responsive:true, animation:false, elements:{point:{radius:0}},
-        plugins:{legend:{labels:{boxWidth:12}}}, scales:{x:{grid:{display:false}, ticks:{maxTicksLimit:6}}}}}); }
+        borderColor:C('--accent'), backgroundColor:ng, fill:true }]},
+      options:{ responsive:true, animation:false, plugins:{legend:{display:false}},
+        scales:{ x:{grid:{display:false},border:{display:false},ticks:{maxTicksLimit:6}},
+                 y:{grid:{color:FAINT},border:{display:false},ticks:{maxTicksLimit:5}} }}}); }
     const p=ri.pool;
     document.getElementById('reinvestHead').innerHTML =
       `<span class="pill good">reinvested <b>${money(p.total_contributed)}</b></span>`+
