@@ -1,0 +1,375 @@
+{
+  "driver": "model",
+  "paypal": "live sandbox",
+  "creators": [
+    {
+      "name": "Manuela B.",
+      "context": "Brazil, two years on platform, steady sales, clean refund history"
+    },
+    {
+      "name": "Aarav R.",
+      "context": "India, 14 months, consistent, very few refunds"
+    },
+    {
+      "name": "Ben D.",
+      "context": "United States, brand new this week, just went viral with a huge spike"
+    },
+    {
+      "name": "Zainab K.",
+      "context": "Nigeria, 8 months, mid-tier, occasional small refunds"
+    },
+    {
+      "name": "Noah D.",
+      "context": "United States, flagged this week for a cluster of disputes and chargebacks"
+    }
+  ],
+  "gmv_path": [
+    1000,
+    1100,
+    1500,
+    2600,
+    2100,
+    1300,
+    1000,
+    950
+  ],
+  "approval_threshold": 1500.0,
+  "cycles": [
+    {
+      "period": 0,
+      "driver": "model",
+      "signal": "",
+      "assessment": "The signal does not imply a demand change.",
+      "suggests_caution": false,
+      "risk_multiplier": 1.0,
+      "safe_release": 0.0,
+      "forecast_gmv": 1000.0,
+      "forecast_sigma": 0.0,
+      "paid": [],
+      "held": [],
+      "status": "nothing_to_pay",
+      "needs_approval": false,
+      "batch_id": null,
+      "paid_total": 0.0,
+      "cash_after": 2750.0,
+      "reserve_ok_after": true,
+      "overrides": [],
+      "narration": ""
+    },
+    {
+      "period": 1,
+      "driver": "model",
+      "signal": "",
+      "assessment": "The signal does not imply a demand change.",
+      "suggests_caution": false,
+      "risk_multiplier": 1.0,
+      "safe_release": 800.01,
+      "forecast_gmv": 1000.0,
+      "forecast_sigma": 0.0,
+      "paid": [
+        {
+          "creator": "Manuela B.",
+          "amount": 228.57
+        },
+        {
+          "creator": "Aarav R.",
+          "amount": 190.48
+        },
+        {
+          "creator": "Zainab K.",
+          "amount": 114.29
+        }
+      ],
+      "held": [
+        {
+          "creator": "Ben D.",
+          "context": "United States, brand new this week, just went viral with a huge spike",
+          "owed": 152.38
+        },
+        {
+          "creator": "Noah D.",
+          "context": "United States, flagged this week for a cluster of disputes and chargebacks",
+          "owed": 114.29
+        }
+      ],
+      "status": "completed",
+      "needs_approval": false,
+      "batch_id": "BATCH-helm-op-1",
+      "paid_total": 533.34,
+      "cash_after": 3261.66,
+      "reserve_ok_after": true,
+      "overrides": [],
+      "narration": ""
+    },
+    {
+      "period": 2,
+      "driver": "model",
+      "signal": "",
+      "assessment": "The signal does not imply a demand change.",
+      "suggests_caution": false,
+      "risk_multiplier": 1.0,
+      "safe_release": 1146.66,
+      "forecast_gmv": 1176.45,
+      "forecast_sigma": 10.0,
+      "paid": [
+        {
+          "creator": "Manuela B.",
+          "amount": 251.43
+        },
+        {
+          "creator": "Aarav R.",
+          "amount": 209.52
+        },
+        {
+          "creator": "Zainab K.",
+          "amount": 125.71
+        },
+        {
+          "creator": "Ben D.",
+          "amount": 152.38
+        },
+        {
+          "creator": "Noah D.",
+          "amount": 114.29
+        }
+      ],
+      "held": [],
+      "status": "completed",
+      "needs_approval": false,
+      "batch_id": "BATCH-helm-op-2",
+      "paid_total": 853.33,
+      "cash_after": 3803.33,
+      "reserve_ok_after": true,
+      "overrides": [],
+      "narration": ""
+    },
+    {
+      "period": 3,
+      "driver": "model",
+      "signal": "",
+      "assessment": "The signal does not imply a demand change.",
+      "suggests_caution": true,
+      "risk_multiplier": 1.5,
+      "safe_release": 1463.35,
+      "forecast_gmv": 1426.09,
+      "forecast_sigma": 156.77,
+      "paid": [
+        {
+          "creator": "Manuela B.",
+          "amount": 334.29
+        },
+        {
+          "creator": "Aarav R.",
+          "amount": 278.58
+        },
+        {
+          "creator": "Zainab K.",
+          "amount": 167.15
+        }
+      ],
+      "held": [
+        {
+          "creator": "Ben D.",
+          "context": "United States, brand new this week, just went viral with a huge spike",
+          "owed": 390.48
+        },
+        {
+          "creator": "Noah D.",
+          "context": "United States, flagged this week for a cluster of disputes and chargebacks",
+          "owed": 292.85
+        }
+      ],
+      "status": "completed",
+      "needs_approval": false,
+      "batch_id": "BATCH-helm-op-3",
+      "paid_total": 780.02,
+      "cash_after": 5460.31,
+      "reserve_ok_after": true,
+      "overrides": [],
+      "narration": ""
+    },
+    {
+      "period": 4,
+      "driver": "model",
+      "signal": "Risk alert: a fraud and chargeback wave is hitting brand-new viral accounts in this category this week.",
+      "assessment": "The signal does not imply a demand change.",
+      "suggests_caution": false,
+      "risk_multiplier": 1.0,
+      "safe_release": 2730.33,
+      "forecast_gmv": 2144.95,
+      "forecast_sigma": 491.72,
+      "paid": [
+        {
+          "creator": "Manuela B.",
+          "amount": 584.86
+        },
+        {
+          "creator": "Aarav R.",
+          "amount": 487.38
+        },
+        {
+          "creator": "Zainab K.",
+          "amount": 292.43
+        },
+        {
+          "creator": "Ben D.",
+          "amount": 384.19
+        }
+      ],
+      "held": [
+        {
+          "creator": "Noah D.",
+          "context": "United States, flagged this week for a cluster of disputes and chargebacks",
+          "owed": 585.28
+        }
+      ],
+      "status": "completed",
+      "needs_approval": false,
+      "batch_id": "BATCH-helm-op-4",
+      "paid_total": 1748.86,
+      "cash_after": 5661.45,
+      "reserve_ok_after": true,
+      "overrides": [],
+      "narration": ""
+    },
+    {
+      "period": 5,
+      "driver": "model",
+      "signal": "",
+      "assessment": "The signal does not imply a demand change.",
+      "suggests_caution": false,
+      "risk_multiplier": 1.0,
+      "safe_release": 2616.47,
+      "forecast_gmv": 2239.17,
+      "forecast_sigma": 487.37,
+      "paid": [
+        {
+          "creator": "Manuela B.",
+          "amount": 467.14
+        },
+        {
+          "creator": "Aarav R.",
+          "amount": 389.29
+        },
+        {
+          "creator": "Zainab K.",
+          "amount": 233.57
+        },
+        {
+          "creator": "Ben D.",
+          "amount": 387.62
+        },
+        {
+          "creator": "Noah D.",
+          "amount": 578.85
+        }
+      ],
+      "held": [],
+      "status": "completed",
+      "needs_approval": false,
+      "batch_id": "BATCH-helm-op-5",
+      "paid_total": 2056.47,
+      "cash_after": 4761.98,
+      "reserve_ok_after": true,
+      "overrides": [],
+      "narration": ""
+    },
+    {
+      "period": 6,
+      "driver": "model",
+      "signal": "",
+      "assessment": "The signal does not imply a demand change.",
+      "suggests_caution": false,
+      "risk_multiplier": 1.0,
+      "safe_release": 1522.01,
+      "forecast_gmv": 1832.34,
+      "forecast_sigma": 680.02,
+      "paid": [
+        {
+          "creator": "Manuela B.",
+          "amount": 274.86
+        },
+        {
+          "creator": "Aarav R.",
+          "amount": 229.05
+        },
+        {
+          "creator": "Zainab K.",
+          "amount": 137.43
+        },
+        {
+          "creator": "Ben D.",
+          "amount": 305.14
+        },
+        {
+          "creator": "Noah D.",
+          "amount": 228.86
+        }
+      ],
+      "held": [],
+      "status": "completed",
+      "needs_approval": false,
+      "batch_id": "BATCH-helm-op-6",
+      "paid_total": 1175.34,
+      "cash_after": 4473.64,
+      "reserve_ok_after": true,
+      "overrides": [],
+      "narration": ""
+    },
+    {
+      "period": 7,
+      "driver": "model",
+      "signal": "",
+      "assessment": "The signal does not imply a demand change.",
+      "suggests_caution": false,
+      "risk_multiplier": 1.0,
+      "safe_release": 1083.68,
+      "forecast_gmv": 1435.2,
+      "forecast_sigma": 712.25,
+      "paid": [
+        {
+          "creator": "Manuela B.",
+          "amount": 210.57
+        },
+        {
+          "creator": "Aarav R.",
+          "amount": 175.48
+        },
+        {
+          "creator": "Zainab K.",
+          "amount": 105.29
+        },
+        {
+          "creator": "Ben D.",
+          "amount": 186.1
+        },
+        {
+          "creator": "Noah D.",
+          "amount": 139.57
+        }
+      ],
+      "held": [],
+      "status": "completed",
+      "needs_approval": false,
+      "batch_id": "BATCH-helm-op-7",
+      "paid_total": 817.01,
+      "cash_after": 4520.13,
+      "reserve_ok_after": true,
+      "overrides": [],
+      "narration": ""
+    }
+  ],
+  "gate_demo": {
+    "threshold": 1500.0,
+    "proposed_total": 2250.0,
+    "held": {
+      "status": "needs_approval",
+      "paid_total": 0.0
+    },
+    "approved": {
+      "status": "completed",
+      "paid_total": 2250.0,
+      "batch_id": "BATCH-helm-op-0"
+    }
+  }
+}

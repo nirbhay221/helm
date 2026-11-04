@@ -65,6 +65,39 @@ def test_risky_creator_is_held_and_safe_ones_are_paid():
     assert "Ava" in paid_names                      # long-tenured creator paid
 
 
+def _solo_tools(threshold: float):
+    params = MarketplaceParams(baseline_gmv=1000.0, init_cash=2000.0,
+                               chargeback_window=2, cash_floor=0.0)
+    sim = CreatorMarketplace(params, seed=7, n_periods=4)
+    controller = CashPayoutController(CashPayoutParams(horizon=6))
+    client = PayPalClient(env={"DEMO_MODE": "1"})
+    desk = SignalDesk(LLMClient(env={}))
+    tools = OperatorTools(sim, controller, [OperatorCreator("Ava", "ava@ex.com", 1.0)],
+                          desk, client, Ledger(), approval_threshold=threshold)
+    tools.led.accrue("Ava", 500.0, period=0)
+    tools.observe()
+    tools.size_safe_release(1.0)
+    return tools
+
+
+def test_agent_cannot_self_approve_a_large_payout():
+    # Even when the model passes approved=true, the agent path ignores it, so a
+    # batch over the threshold is HELD for a human (loopjacking defence).
+    tools = _solo_tools(threshold=10.0)
+    res = tools.call("pay_creators",
+                     {"allocations": [{"creator": "Ava", "amount": 500.0}], "approved": True})
+    assert res["status"] == "needs_approval"
+    assert res["paid_total"] == 0.0
+
+
+def test_human_path_can_release_a_held_payout():
+    # The out-of-band human approval (not reachable by the model) does release it.
+    tools = _solo_tools(threshold=10.0)
+    res = tools.pay_creators([{"creator": "Ava", "amount": 500.0}], approved=True)
+    assert res["status"] == "completed"
+    assert res["paid_total"] > 0.0
+
+
 def test_guardrail_clamps_an_overspend_and_drops_unknown_creators():
     operator, tools = _build()
     tools.led.accrue("Ava", 5000.0, period=0)   # a large real balance to overspend from

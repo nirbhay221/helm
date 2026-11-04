@@ -42,6 +42,7 @@ FACTS = [
 _SCENARIOS_FILE = os.path.join(os.path.dirname(__file__), "scenarios_data.json")
 _REINVEST_FILE = os.path.join(os.path.dirname(__file__), "reinvest_data.json")
 _DIRECTORY_FILE = os.path.join(os.path.dirname(__file__), "directory_data.json")
+_OPERATOR_FILE = os.path.join(os.path.dirname(__file__), "operator_run.json")
 
 
 def _payout_engine_panel() -> dict:
@@ -108,6 +109,7 @@ def build_dashboard_data() -> dict:
         "directory": directory,
         "payout_engine": _payout_engine_panel(),
         "abuse": _abuse_panel(),
+        "operator_run": _load_json(_OPERATOR_FILE) if os.path.exists(_OPERATOR_FILE) else None,
         "facts": FACTS,
         "headline": {
             "creators": directory["total"],

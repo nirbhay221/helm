@@ -73,8 +73,7 @@ TOOL_SCHEMAS: list[dict] = [
         "parameters": {"type": "object", "properties": {
             "allocations": {"type": "array", "items": {"type": "object", "properties": {
                 "creator": {"type": "string"}, "amount": {"type": "number"}},
-                "required": ["creator", "amount"]}},
-            "approved": {"type": "boolean"}},
+                "required": ["creator", "amount"]}}},
             "required": ["allocations"]}}},
 ]
 
@@ -246,6 +245,9 @@ class OperatorTools:
         if name == "size_safe_release":
             return self.size_safe_release(float(arguments.get("risk_multiplier", 1.0)))
         if name == "pay_creators":
-            return self.pay_creators(arguments.get("allocations", []),
-                                     approved=bool(arguments.get("approved", False)))
+            # The agent can never approve its own payout. Approval above the
+            # threshold is a human action injected out of band (loopjacking:
+            # the gate must not be a field the model controls), so the agent
+            # path always runs unapproved and a large batch is held.
+            return self.pay_creators(arguments.get("allocations", []), approved=False)
         return {"error": f"unknown tool '{name}'"}

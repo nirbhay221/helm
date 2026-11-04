@@ -293,6 +293,15 @@
   .co b { color: var(--gold); font-family: var(--mono); font-weight: 600; margin-left: 5px; }
   .co.more { color: var(--faint); border-style: dashed; }
 
+  /* human-approval gate */
+  .gate { display: grid; gap: 8px; margin-top: 12px; }
+  .gstep { display: flex; gap: 10px; align-items: baseline; padding: 9px 12px; border-radius: 10px;
+    background: var(--panel-2); border-left: 2px solid var(--line); font-size: 12.5px; }
+  .gstep .s { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--faint); flex: none; width: 70px; }
+  .gstep.hold { border-left-color: var(--bad); } .gstep.human { border-left-color: var(--warn); } .gstep.done { border-left-color: var(--good); }
+  .gstep b { font-family: var(--mono); }
+
   @media (max-width: 820px) {
     .cyclegrid { grid-template-columns: 1fr; }
     .roster { grid-template-columns: repeat(2, 1fr); }
@@ -382,19 +391,32 @@
 
 <section>
   <div class="wrap">
-    <p class="eyebrow reveal">Watch a cycle run</p>
-    <h2 class="reveal">A budget goes out to real creators, live.</h2>
-    <p class="muted reveal" style="max-width:68ch;margin-bottom:4px">Press play. The agent releases the batch: creators
-      are paid on PayPal, a serial abuser is caught and held, and some creators roll their payout into the pool. Every
-      name and number below comes from the run.</p>
+    <p class="eyebrow reveal">The autonomous loop</p>
+    <h2 class="reveal">Watch the agent actually run the treasury.</h2>
+    <p class="muted reveal" style="max-width:72ch;margin-bottom:4px">A real run on the live model. Each cycle the agent
+      reads the week's signal, picks a risk posture, asks the solver how much is safe to release under the chargeback
+      reserve, then decides which creators to pay and which to hold. The deterministic tools size the money and
+      hard-clamp every move; the model supplies the judgment.</p>
     <div class="runbar reveal">
-      <button class="playbtn" id="playBtn" type="button">&#9654;&nbsp;Run the cycle</button>
+      <button class="playbtn" id="playBtn" type="button">&#9654;&nbsp;Run the loop</button>
       <div class="runmeter"><i id="runFill"></i></div>
-      <span class="runtotal" id="runTotal">$0 settled</span>
+      <span class="runtotal" id="runTotal">cycle 0</span>
     </div>
     <div class="cyclegrid">
       <div class="roster reveal" id="roster"></div>
       <div class="glass feed reveal" id="feed"></div>
+    </div>
+    <div class="grid2" style="margin-top:22px">
+      <div class="glass panel reveal">
+        <h3 style="margin-bottom:2px">Safe to release vs actually paid</h3>
+        <p class="faint" style="font-size:12px;margin:0 0 10px;font-family:var(--mono)">the solver caps each cycle; the agent pays within it</p>
+        <div class="chart-box sm"><canvas id="opChart"></canvas></div>
+      </div>
+      <div class="glass panel reveal">
+        <h3>The human stays in the loop</h3>
+        <p class="muted" id="gateText" style="font-size:13px"></p>
+        <div class="gate" id="gateViz"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -609,7 +631,7 @@ const DATA = __DATA__;
     });
   }
 
-  function rebuildCharts(){ renderPolicy(); drawBulwark(); drawNav(); }
+  function rebuildCharts(){ renderPolicy(); drawBulwark(); drawNav(); if(typeof drawOp==="function") drawOp(); }
 
   // abuse
   const ab = DATA.abuse;
@@ -637,56 +659,85 @@ const DATA = __DATA__;
   }).join("");
   $("#poolNote").textContent = r.note;
 
-  // ---- personas roster + live cycle ----
-  const P = DATA.personas;
+  // ---- the autonomous loop (real operator run) ----
+  const OP = DATA.operator || {creators:[], cycles:[], gate_demo:null};
   const initials = n => n.split(/\s+/).map(w=>w[0]||"").join("").slice(0,2).toUpperCase();
-  const metaLine = p => p.kind==="suspended" ? `${p.craft} &middot; ${p.role}` : `${p.craft} &middot; ${CC[p.country]||p.country}`;
-  const amtLine = p => p.kind==="paid" ? `owed ${usd0(p.gross)}`
-    : p.kind==="reinvestor" ? `staked ${usd0(p.contributed)}`
-    : `${p.bad} returns / ${p.distinct} counterparties`;
-  $("#roster").innerHTML = P.map((p,i)=>
-    `<div class="pcard" id="pc${i}"><div class="av">${initials(p.name)}</div><div style="min-width:0">
-      <div class="nm">${p.name}</div><div class="meta">${metaLine(p)}</div>
-      <div class="amt" id="amt${i}">${amtLine(p)}</div></div></div>`).join("");
+  const first = n => n.split(/\s+/)[0];
+  $("#roster").innerHTML = (OP.creators||[]).map((c,i)=>{
+    const risky = /new|viral|dispute|chargeback|flag/i.test(c.context);
+    return `<div class="pcard" id="pc${i}"><div class="av">${initials(c.name)}</div><div style="min-width:0">
+      <div class="nm">${c.name}</div><div class="meta">${c.context}</div>
+      <div class="amt" id="amt${i}">${risky ? "higher risk" : "steady"}</div></div></div>`;
+  }).join("");
 
-  const events = [];
-  P.forEach((p,i)=>{ if(p.kind==="paid") events.push({i,p,type:"pay"}); });
-  P.forEach((p,i)=>{ if(p.kind==="suspended") events.push({i,p,type:"susp"}); });
-  P.forEach((p,i)=>{ if(p.kind==="reinvestor") events.push({i,p,type:"inv"}); });
   const feedEl = $("#feed"), fill = $("#runFill"), totalEl = $("#runTotal"), btn = $("#playBtn");
-  feedEl.innerHTML = `<div class="hint">Press Run the cycle to release the batch</div>`;
-  let settled = 0, idx = 0, timer = null;
-  const clk = () => new Date().toLocaleTimeString("en-US", {hour12:false});
-  function resetCycle(){
-    settled = 0; idx = 0; fill.style.width = "0"; totalEl.textContent = "$0 settled";
-    P.forEach((p,i)=>{ $("#pc"+i).classList.remove("paid","reinvest","susp"); $("#amt"+i).textContent = amtLine(p); });
+  const cyc = OP.cycles || [];
+  const lastCycle = Math.max(0, cyc.length - 1);
+  feedEl.innerHTML = `<div class="hint">Press Run the loop to step through the agent's cycles</div>`;
+  let ci = 0, timer = null;
+  function fl(cls, t, x){ const d = document.createElement("div"); d.className = "fl " + cls;
+    d.innerHTML = `<span class="t">${t}</span><span class="x">${x}</span>`; feedEl.appendChild(d); }
+  function resetLoop(){
+    ci = 0; fill.style.width = "0"; totalEl.textContent = `cycle 0 / ${lastCycle}`;
+    (OP.creators||[]).forEach((c,i)=>$("#pc"+i).classList.remove("paid","susp"));
+    feedEl.innerHTML = "";
   }
-  function doEvent(){
-    const e = events[idx++], card = $("#pc"+e.i); let line, cls;
-    if(e.type==="pay"){ card.classList.add("paid"); settled += e.p.net; cls = "pay";
-      $("#amt"+e.i).textContent = `paid ${usd0(e.p.net)} net`;
-      line = `Paid <b>${e.p.name}</b> &middot; ${CC[e.p.country]||e.p.country} &middot; ${e.p.craft} &middot; ${usd0(e.p.net)} net &middot; PayPal &check;`;
-    } else if(e.type==="susp"){ card.classList.add("susp"); cls = "susp";
-      line = `Held <b>${e.p.name}</b> &middot; ${e.p.bad} returns across ${e.p.distinct} ${e.p.role==="buyer"?"sellers":"buyers"} &middot; suspended`;
-    } else { card.classList.add("reinvest"); cls = "inv";
-      $("#amt"+e.i).textContent = `reinvested ${usd0(e.p.contributed)}`;
-      line = `<b>${e.p.name}</b> rolled ${usd0(e.p.contributed)} into the pool`;
-    }
-    const fl = document.createElement("div"); fl.className = "fl " + cls;
-    fl.innerHTML = `<span class="t">${clk()}</span><span class="x">${line}</span>`;
-    feedEl.appendChild(fl);
-    while(feedEl.children.length > 9) feedEl.removeChild(feedEl.firstChild);
-    totalEl.textContent = usd0(settled) + " settled";
-    fill.style.width = Math.round(idx/events.length*100) + "%";
+  function doCycle(){
+    const c = cyc[ci];
+    const paid = new Set((c.paid||[]).map(p=>p.creator));
+    const held = new Set((c.held||[]).map(h=>h.creator));
+    (OP.creators||[]).forEach((cr,i)=>{ const card = $("#pc"+i); card.classList.remove("paid","susp");
+      if(paid.has(cr.name)) card.classList.add("paid"); else if(held.has(cr.name)) card.classList.add("susp"); });
+    if(c.signal) fl("susp", "signal", c.signal);
+    fl("", "cycle " + c.period, `posture <b>${c.risk_multiplier}x</b>, solver says safe to release <b>${usd0(c.safe_release)}</b>`);
+    const paidTxt = (c.paid||[]).map(p=>`${first(p.creator)} ${usd0(p.amount)}`).join(", ") || "nobody";
+    fl("pay", "pay", `Paid ${paidTxt}${c.batch_id ? ` &middot; PayPal ${c.batch_id}` : ""}`);
+    const heldTxt = (c.held||[]).map(h=>first(h.creator)).join(", ");
+    if(heldTxt) fl("", "hold", `Held ${heldTxt} (judged higher risk this cycle)`);
+    while(feedEl.children.length > 8) feedEl.removeChild(feedEl.firstChild);
+    totalEl.textContent = `cycle ${c.period} / ${lastCycle}`;
+    fill.style.width = Math.round((ci + 1) / cyc.length * 100) + "%";
+    ci++;
   }
   btn.addEventListener("click", ()=>{
     if(timer) return;
-    resetCycle(); feedEl.innerHTML = ""; btn.disabled = true; btn.textContent = "Running...";
+    resetLoop(); btn.disabled = true; btn.textContent = "Running...";
     timer = setInterval(()=>{
-      if(idx >= events.length){ clearInterval(timer); timer = null; btn.disabled = false; btn.innerHTML = "&#8635;&nbsp;Run again"; return; }
-      doEvent();
-    }, reduce ? 140 : 560);
+      if(ci >= cyc.length){ clearInterval(timer); timer = null; btn.disabled = false; btn.innerHTML = "&#8635;&nbsp;Run again"; return; }
+      doCycle();
+    }, reduce ? 160 : 900);
   });
+
+  let opChart = null;
+  function drawOp(){
+    if(!cyc.length) return;
+    if(opChart) opChart.destroy();
+    opChart = new Chart($("#opChart"), {
+      type:"bar",
+      data:{ labels: cyc.map(c=>c.period), datasets:[
+        {label:"safe to release", data: cyc.map(c=>Math.round(c.safe_release)),
+         backgroundColor: cv("--accent-soft"), borderColor: cv("--accent"), borderWidth:1, borderRadius:3},
+        {label:"paid", data: cyc.map(c=>Math.round(c.paid_total)), backgroundColor: cv("--gold"), borderRadius:3}]},
+      options:{ responsive:true, maintainAspectRatio:false, animation:{duration:reduce?0:600},
+        plugins:{ legend:{labels:{color:cv("--muted"), font:{family:"IBM Plex Mono",size:10}, boxWidth:10}},
+          tooltip:{ ...tip() } },
+        scales:{ x:{ grid:{display:false}, border:{display:false},
+            title:{display:true, text:"cycle", color:cv("--faint"), font:{size:10}},
+            ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}} },
+          y:{ grid:{color:cv("--line-soft")}, border:{display:false},
+            ticks:{color:cv("--faint"), font:{family:"IBM Plex Mono",size:10}, callback:v=>"$"+(v/1000)+"k"} } } }
+    });
+  }
+
+  const gd = OP.gate_demo;
+  if(gd){
+    $("#gateText").innerHTML = "A release above the limit is held until a human approves it, and the agent cannot approve itself. Enforced in code and bound to the exact batch.";
+    $("#gateViz").innerHTML =
+      `<div class="gstep"><span class="s">agent</span><span>proposes a release of <b>${usd0(gd.proposed_total)}</b></span></div>`+
+      `<div class="gstep hold"><span class="s">gate</span><span>over the <b>${usd0(gd.threshold)}</b> limit, so it is <b>held</b>; ${usd0(gd.held.paid_total)} moved</span></div>`+
+      `<div class="gstep human"><span class="s">human</span><span>reviews and approves (the agent has no approve power)</span></div>`+
+      `<div class="gstep done"><span class="s">settled</span><span><b>${usd0(gd.approved.paid_total)}</b> paid on PayPal &middot; ${gd.approved.batch_id}</span></div>`;
+  }
 
   // pipeline
   const flow = [
