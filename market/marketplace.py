@@ -165,7 +165,7 @@ def generate_marketplace(n_accounts: int = 120, seed: int = 7,
         (m.mark_chargeback if rng.random() < 0.3 else m.mark_return)(o, "abuse pattern")
 
     acc_ids = [a.id for a in accs]
-    for sid in serial:                                  # serial returner, many sellers
+    for sid in sorted(serial):                          # serial returner, many sellers
         for tgt in [x for x in rng.permutation(acc_ids).tolist() if x != sid][:16]:
             tl = [l for l in listings if l.seller == tgt]
             if not tl:
@@ -176,7 +176,7 @@ def generate_marketplace(n_accounts: int = 120, seed: int = 7,
             oid += 1
             if rng.random() < 0.85:
                 _hit(o)
-    for sid in bad_sellers:                             # bad seller, many buyers
+    for sid in sorted(bad_sellers):                     # bad seller, many buyers
         sl = [l for l in listings if l.seller == sid]
         if not sl:
             continue

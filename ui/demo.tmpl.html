@@ -246,7 +246,56 @@
   footer b { color: var(--fg); font-weight: 600; }
   footer .srcs { font-family: var(--mono); font-size: 11.5px; color: var(--faint); line-height: 1.9; }
 
+  /* live cycle */
+  .runbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 8px 0 20px; }
+  .playbtn { font-family: var(--mono); font-size: 13px; letter-spacing: .03em; cursor: pointer; border: none;
+    border-radius: 999px; padding: 11px 20px; color: #06111f; font-weight: 600;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2)); display: inline-flex; align-items: center; gap: 8px; }
+  :root[data-theme="light"] .playbtn { color: #fff; }
+  .playbtn:disabled { opacity: .45; cursor: default; }
+  .runmeter { flex: 1; min-width: 120px; height: 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line-soft); overflow: hidden; }
+  .runmeter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--gold)); transition: width .3s ease; }
+  .runtotal { font-family: var(--mono); font-size: 14px; color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cyclegrid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; align-items: start; }
+  .roster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .pcard { padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel);
+    display: flex; gap: 10px; align-items: flex-start; transition: border-color .4s, box-shadow .4s, transform .2s; }
+  .pcard.paid { border-color: color-mix(in srgb, var(--good) 55%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--good) 28%, transparent), 0 14px 32px -22px var(--good); }
+  .pcard.reinvest { border-color: color-mix(in srgb, var(--gold) 55%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 28%, transparent); }
+  .pcard.susp { border-color: color-mix(in srgb, var(--bad) 55%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--bad) 28%, transparent); }
+  .av { width: 34px; height: 34px; border-radius: 9px; flex: none; display: grid; place-items: center;
+    font-family: var(--mono); font-weight: 600; font-size: 12px; color: #06111f; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+  .pcard.susp .av { background: linear-gradient(135deg, var(--bad), #b23047); color: #fff; }
+  .pcard.reinvest .av { background: linear-gradient(135deg, var(--gold), #c88f3a); }
+  .pcard .nm { font-size: 13px; font-weight: 600; line-height: 1.2; }
+  .pcard .meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .pcard .amt { font-family: var(--mono); font-size: 11.5px; margin-top: 5px; font-variant-numeric: tabular-nums; color: var(--faint); }
+  .pcard.paid .amt { color: var(--good); } .pcard.reinvest .amt { color: var(--gold); } .pcard.susp .amt { color: var(--bad); }
+  .feed { padding: 14px; height: 364px; overflow: hidden; display: flex; flex-direction: column; gap: 7px; font-family: var(--mono); font-size: 12px; }
+  .feed .hint { color: var(--faint); margin: auto; text-align: center; }
+  .feed .fl { display: flex; gap: 9px; align-items: baseline; padding: 6px 9px; border-radius: 8px;
+    background: var(--panel-2); border-left: 2px solid var(--line); opacity: 0; transform: translateY(6px); animation: fin .4s forwards; }
+  @keyframes fin { to { opacity: 1; transform: none; } }
+  .feed .fl.pay { border-left-color: var(--good); } .feed .fl.susp { border-left-color: var(--bad); } .feed .fl.inv { border-left-color: var(--gold); }
+  .feed .fl .t { color: var(--faint); font-size: 10.5px; flex: none; }
+  .feed .fl .x { color: var(--fg); min-width: 0; }
+  @media (prefers-reduced-motion: reduce) { .feed .fl { animation: none; opacity: 1; transform: none; } }
+
+  /* named companies */
+  .sleeves { display: grid; gap: 10px; margin-top: 6px; }
+  .sleeve { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px 14px; }
+  .sleeve .sh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .sleeve .sh b { font-family: var(--mono); font-size: 13px; }
+  .sleeve .sh .w { font-size: 11.5px; color: var(--muted); margin-left: 6px; }
+  .sleeve .sh .r { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .cos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .co { font-size: 11.5px; padding: 4px 9px; border-radius: 7px; border: 1px solid var(--line-soft); background: var(--panel-2); color: var(--fg); }
+  .co b { color: var(--gold); font-family: var(--mono); font-weight: 600; margin-left: 5px; }
+  .co.more { color: var(--faint); border-style: dashed; }
+
   @media (max-width: 820px) {
+    .cyclegrid { grid-template-columns: 1fr; }
+    .roster { grid-template-columns: repeat(2, 1fr); }
     .kpis { grid-template-columns: repeat(2, 1fr); }
     .facts { grid-template-columns: 1fr; }
     .grid2, .two { grid-template-columns: 1fr; }
@@ -259,6 +308,7 @@
     .verdict { grid-template-columns: auto 1fr; }
     .verdict .action { grid-column: 1 / -1; justify-self: start; }
     .bar .tag { display: none; }
+    .roster { grid-template-columns: 1fr; }
   }
 </style>
 
@@ -332,6 +382,25 @@
 
 <section>
   <div class="wrap">
+    <p class="eyebrow reveal">Watch a cycle run</p>
+    <h2 class="reveal">A budget goes out to real creators, live.</h2>
+    <p class="muted reveal" style="max-width:68ch;margin-bottom:4px">Press play. The agent releases the batch: creators
+      are paid on PayPal, a serial abuser is caught and held, and some creators roll their payout into the pool. Every
+      name and number below comes from the run.</p>
+    <div class="runbar reveal">
+      <button class="playbtn" id="playBtn" type="button">&#9654;&nbsp;Run the cycle</button>
+      <div class="runmeter"><i id="runFill"></i></div>
+      <span class="runtotal" id="runTotal">$0 settled</span>
+    </div>
+    <div class="cyclegrid">
+      <div class="roster reveal" id="roster"></div>
+      <div class="glass feed reveal" id="feed"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
     <p class="eyebrow reveal">The bulwark</p>
     <h2 class="reveal">Nobody games the payout, on either side.</h2>
     <div class="two" style="margin-top:20px">
@@ -367,8 +436,8 @@
       </div>
       <div class="glass panel reveal">
         <div class="stats" id="poolStats"></div>
-        <div class="step">basket holdings</div>
-        <div class="holds" id="holds"></div>
+        <div class="step">what the pool owns</div>
+        <div class="sleeves" id="sleeves"></div>
         <div class="callout" id="poolNote" style="font-size:12.5px"></div>
       </div>
     </div>
@@ -559,10 +628,65 @@ const DATA = __DATA__;
     [usd(p.current_value), "current value"],
     [(r.nav_return_pct>=0?"+":"")+r.nav_return_pct.toFixed(2)+"%", "pool return"],
   ].map(([n,l])=>`<div class="cell"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
-  $("#holds").innerHTML = r.holdings.map(x=>
-    `<div class="hold"><div class="t">${x.ticker}<span>${x.label} &middot; ${Math.round(x.weight*100)}%</span></div>
-      <div class="r ${x.return_pct>=0?'pos':'neg'}">${x.return_pct>=0?"+":""}${x.return_pct.toFixed(2)}%</div></div>`).join("");
+  $("#sleeves").innerHTML = DATA.holdings_detail.map(s=>{
+    const cos = s.names.map(([nm,w])=>`<span class="co">${nm}<b>${w}%</b></span>`).join("")
+      + `<span class="co more">${s.rest}</span>`;
+    return `<div class="sleeve"><div class="sh"><span><b>${s.sleeve}</b><span class="w">${s.ticker} &middot; ${Math.round(s.weight*100)}% of pool</span></span>`+
+      `<span class="r ${s.return_pct>=0?'pos':'neg'}">${s.return_pct>=0?"+":""}${s.return_pct.toFixed(2)}%</span></div>`+
+      `<div class="cos">${cos}</div></div>`;
+  }).join("");
   $("#poolNote").textContent = r.note;
+
+  // ---- personas roster + live cycle ----
+  const P = DATA.personas;
+  const initials = n => n.split(/\s+/).map(w=>w[0]||"").join("").slice(0,2).toUpperCase();
+  const metaLine = p => p.kind==="suspended" ? `${p.craft} &middot; ${p.role}` : `${p.craft} &middot; ${CC[p.country]||p.country}`;
+  const amtLine = p => p.kind==="paid" ? `owed ${usd0(p.gross)}`
+    : p.kind==="reinvestor" ? `staked ${usd0(p.contributed)}`
+    : `${p.bad} returns / ${p.distinct} counterparties`;
+  $("#roster").innerHTML = P.map((p,i)=>
+    `<div class="pcard" id="pc${i}"><div class="av">${initials(p.name)}</div><div style="min-width:0">
+      <div class="nm">${p.name}</div><div class="meta">${metaLine(p)}</div>
+      <div class="amt" id="amt${i}">${amtLine(p)}</div></div></div>`).join("");
+
+  const events = [];
+  P.forEach((p,i)=>{ if(p.kind==="paid") events.push({i,p,type:"pay"}); });
+  P.forEach((p,i)=>{ if(p.kind==="suspended") events.push({i,p,type:"susp"}); });
+  P.forEach((p,i)=>{ if(p.kind==="reinvestor") events.push({i,p,type:"inv"}); });
+  const feedEl = $("#feed"), fill = $("#runFill"), totalEl = $("#runTotal"), btn = $("#playBtn");
+  feedEl.innerHTML = `<div class="hint">Press Run the cycle to release the batch</div>`;
+  let settled = 0, idx = 0, timer = null;
+  const clk = () => new Date().toLocaleTimeString("en-US", {hour12:false});
+  function resetCycle(){
+    settled = 0; idx = 0; fill.style.width = "0"; totalEl.textContent = "$0 settled";
+    P.forEach((p,i)=>{ $("#pc"+i).classList.remove("paid","reinvest","susp"); $("#amt"+i).textContent = amtLine(p); });
+  }
+  function doEvent(){
+    const e = events[idx++], card = $("#pc"+e.i); let line, cls;
+    if(e.type==="pay"){ card.classList.add("paid"); settled += e.p.net; cls = "pay";
+      $("#amt"+e.i).textContent = `paid ${usd0(e.p.net)} net`;
+      line = `Paid <b>${e.p.name}</b> &middot; ${CC[e.p.country]||e.p.country} &middot; ${e.p.craft} &middot; ${usd0(e.p.net)} net &middot; PayPal &check;`;
+    } else if(e.type==="susp"){ card.classList.add("susp"); cls = "susp";
+      line = `Held <b>${e.p.name}</b> &middot; ${e.p.bad} returns across ${e.p.distinct} ${e.p.role==="buyer"?"sellers":"buyers"} &middot; suspended`;
+    } else { card.classList.add("reinvest"); cls = "inv";
+      $("#amt"+e.i).textContent = `reinvested ${usd0(e.p.contributed)}`;
+      line = `<b>${e.p.name}</b> rolled ${usd0(e.p.contributed)} into the pool`;
+    }
+    const fl = document.createElement("div"); fl.className = "fl " + cls;
+    fl.innerHTML = `<span class="t">${clk()}</span><span class="x">${line}</span>`;
+    feedEl.appendChild(fl);
+    while(feedEl.children.length > 9) feedEl.removeChild(feedEl.firstChild);
+    totalEl.textContent = usd0(settled) + " settled";
+    fill.style.width = Math.round(idx/events.length*100) + "%";
+  }
+  btn.addEventListener("click", ()=>{
+    if(timer) return;
+    resetCycle(); feedEl.innerHTML = ""; btn.disabled = true; btn.textContent = "Running...";
+    timer = setInterval(()=>{
+      if(idx >= events.length){ clearInterval(timer); timer = null; btn.disabled = false; btn.innerHTML = "&#8635;&nbsp;Run again"; return; }
+      doEvent();
+    }, reduce ? 140 : 560);
+  });
 
   // pipeline
   const flow = [

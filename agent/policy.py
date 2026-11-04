@@ -28,10 +28,6 @@ _COUNTRY_NAMES = {
     "mexico": "MX", "germany": "DE", "canada": "CA", "united states": "US", "usa": "US",
     "u.s.": "US", "america": "US", "united kingdom": "GB", "u.k.": "GB", "uk": "GB", "britain": "GB",
 }
-_EXCLUDE_WORDS = ("freeze", "stop", "halt", "suspend", "exclude", "no payout", "no payouts",
-                  "do not pay", "don't pay", "pending review", "block", "pause")
-
-
 def _to_code(token: str) -> str | None:
     t = str(token).strip().upper()
     if t in _KNOWN_COUNTRIES:
@@ -68,11 +64,21 @@ COMPILE_POLICY_TOOL = {
 }
 
 _SYSTEM = (
-    "You compile a creator-payout policy stated in English into weights and hard constraints "
-    "by calling compile_policy. Be faithful: only set a constraint the policy actually states. "
-    "Weights default near 1. Use max_fraction_per_creator for diversification rules ('no one "
-    "more than 20% of a batch' -> 0.2), max_risk to hold risky accounts, exclude_countries for "
-    "'do not pay X this week', min_priority to pay only urgent ones. Always give a short reading."
+    "You compile a creator-payout policy stated in English into optimizer WEIGHTS and HARD "
+    "CONSTRAINTS by calling compile_policy.\n"
+    "Weights (0-3) are soft priorities that steer how the fixed budget is split; raise the one "
+    "the policy cares about. speed = pay the longest-waiting first; tax = deliver more net; "
+    "risk = steer money toward safer creators and away from risky ones; fx = avoid currency "
+    "cost. If the policy is about fraud, chargebacks, disputes or holding risky accounts, set "
+    "the risk weight high (about 2 to 3) so the allocation actually pulls off risky creators; "
+    "add max_risk too only if a ceiling is named.\n"
+    "Constraints are hard limits the solver may never break: max_fraction_per_creator caps any "
+    "one creator's share ('no one over 20%' -> 0.2); exclude_countries lists 2-letter codes not "
+    "paid this cycle ('freeze Nigeria and China' -> ['NG','CN']); max_risk refuses anyone riskier "
+    "than it (0-1; 'hold high-risk' is about 0.7, never 0); min_priority pays only creators at "
+    "least this urgent.\n"
+    "Only set a constraint the policy actually states. Weights default near 1. Always give a "
+    "short plain-English reading of what you compiled."
 )
 
 
@@ -107,7 +113,7 @@ class PolicyDesk:
                       {"role": "user", "content": f"Policy: {policy_text.strip()}\n\nCompile it."}],
             tools=[COMPILE_POLICY_TOOL],
             tool_choice={"type": "function", "function": {"name": "compile_policy"}},
-            temperature=0.0)
+            temperature=0.35)
         calls = (msg or {}).get("tool_calls") or []
         if not calls:
             return self._compile_fallback(policy_text)
@@ -130,17 +136,13 @@ class PolicyDesk:
         return self._assemble(data, source="fallback", policy_text=policy_text)
 
     def _assemble(self, data: dict, source: str, policy_text: str = "") -> PolicyDecision:
+        # The model's judgment drives every field. We only PARSE its output (providers
+        # often return each argument as a string) and VERIFY it for soundness: bounds,
+        # known countries, degenerate ceilings. We never rewrite what the model decided;
+        # a bad decision is surfaced as a violation for the verifier and a human, not
+        # silently overridden by hardcoded rules.
         w, wv = validate_weights(data)
         violations = list(wv)
-
-        # deterministic net: if the policy flags fraud / holding risky accounts, the
-        # risk weight must be high, so the allocation visibly pulls off risky creators
-        # (a reliability guard against the model leaving it near neutral).
-        tl = (policy_text or "").lower()
-        if any(k in tl for k in ("fraud", "chargeback", "high-risk", "high risk", "hold risky",
-                                 "risky account", "dispute wave")) and w.risk < 2.5:
-            violations.append(f"policy flags fraud/risk; risk weight raised from {w.risk} to 3.0")
-            w.risk = 3.0
 
         def _clip01(name, default):
             try:
@@ -152,29 +154,28 @@ class PolicyDesk:
                 v = max(0.0, min(1.0, v))
             return v
 
-        raw_ex = data.get("exclude_countries") or []
+        # parse exclude_countries whether the model returns a real list, a JSON string,
+        # or a comma-separated string, then keep only countries the solver knows.
+        raw_ex = data.get("exclude_countries")
         if isinstance(raw_ex, str):
-            raw_ex = [raw_ex]
+            s = raw_ex.strip()
+            try:
+                parsed = json.loads(s)
+                raw_ex = parsed if isinstance(parsed, list) else [parsed]
+            except (ValueError, TypeError):
+                raw_ex = [p for p in s.strip("[]").replace("'", "").replace('"', "").split(",")]
+        raw_ex = [str(x).strip() for x in (raw_ex or []) if str(x).strip()]
         codes = {c for c in (_to_code(x) for x in raw_ex) if c}   # accept codes OR names
-        # deterministic net: if the policy says freeze/stop and names a country, honor it
-        # even when the model left the field empty (a known reliability gap).
-        text = (policy_text or "").lower()
-        if any(k in text for k in _EXCLUDE_WORDS):
-            for nm, code in _COUNTRY_NAMES.items():
-                if nm in text:
-                    codes.add(code)
         exclude = tuple(sorted(codes))
-        dropped = [c for c in raw_ex if not _to_code(c) and str(c).strip().isalpha()]
+        dropped = [c for c in raw_ex if not _to_code(c) and c.isalpha()]
         if dropped:
             violations.append(f"unknown countries ignored: {dropped}")
 
         max_risk = _clip01("max_risk", 1.0)
-        # Sanity guard against the known semantic error: a near-zero risk ceiling
-        # validates but freezes nearly everyone, which "hold high-risk" never means.
-        if 0.0 < max_risk < 0.1:
-            violations.append(f"max_risk {round(max_risk,2)} would freeze almost all payouts; "
-                              "read 'hold high-risk' as 0.7")
-            max_risk = 0.7
+        # Soundness readback only: a near-zero ceiling pays almost no one. We flag it so
+        # a human sees the consequence, but we leave the model's number in place.
+        if 0.0 <= max_risk < 0.1:
+            violations.append(f"max_risk {round(max_risk,2)} pays almost no one this cycle")
         con = Constraints(
             max_fraction_per_creator=_clip01("max_fraction_per_creator", 1.0),
             exclude_countries=exclude,
