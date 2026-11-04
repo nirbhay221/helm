@@ -133,6 +133,15 @@ class PolicyDesk:
         w, wv = validate_weights(data)
         violations = list(wv)
 
+        # deterministic net: if the policy flags fraud / holding risky accounts, the
+        # risk weight must be high, so the allocation visibly pulls off risky creators
+        # (a reliability guard against the model leaving it near neutral).
+        tl = (policy_text or "").lower()
+        if any(k in tl for k in ("fraud", "chargeback", "high-risk", "high risk", "hold risky",
+                                 "risky account", "dispute wave")) and w.risk < 2.5:
+            violations.append(f"policy flags fraud/risk; risk weight raised from {w.risk} to 3.0")
+            w.risk = 3.0
+
         def _clip01(name, default):
             try:
                 v = float(data.get(name, default))

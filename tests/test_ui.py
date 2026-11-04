@@ -35,12 +35,11 @@ def test_dashboard_data_is_complete_and_serializable():
 def test_page_renders_with_embedded_data():
     html = render_page(embedded_data=build_dashboard_data())
     assert "<!doctype html>" in html.lower()
-    for ph in ("__CHART_JS__", "__VMAP_CSS__", "__VMAP_JS__", "__VMAP_WORLD__"):
-        assert ph not in html                          # all placeholders replaced
+    assert "__CHART_JS__" not in html                  # placeholder replaced
     assert "window.HELM_DATA=" in html
-    assert 'id="worldmap"' in html                     # the world choropleth
+    assert 'id="countryChart"' in html                 # payouts-by-country chart
     assert 'id="navChart"' in html                     # the reinvestment NAV chart
-    assert html.count("<canvas") == 3
+    assert html.count("<canvas") == 4
 
 
 def test_page_renders_for_live_server_without_embedded_data():

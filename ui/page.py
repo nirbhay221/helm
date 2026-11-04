@@ -23,10 +23,7 @@ _TEMPLATE = """<!doctype html>
 <title>Helm Global Payout Operator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="__VMAP_CSS__">
 <script src="__CHART_JS__"></script>
-<script src="__VMAP_JS__"></script>
-<script src="__VMAP_WORLD__"></script>
 <style>
   :root {
     --bg:#0b0f14; --panel:#131a23; --panel2:#182230; --line:#223042; --ink:#e7eef7;
@@ -62,7 +59,6 @@ _TEMPLATE = """<!doctype html>
   .policy .q { color:var(--ink); font-style:italic; } .policy .c { color:var(--muted); font-size:13px; margin-top:6px; }
   .pill { display:inline-block; background:#0e1a27; border:1px solid var(--line); border-radius:7px; padding:2px 8px; margin:2px 4px 2px 0; font-size:12px; }
   .pill b { color:var(--accent); } .pill.bad b{ color:var(--bad);} .pill.good b{color:var(--good);}
-  #worldmap { height:340px; } .mapwrap { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px; }
   canvas { max-height:240px; }
   table { width:100%; border-collapse:collapse; font-size:12.5px; }
   th,td { text-align:right; padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
@@ -101,8 +97,8 @@ _TEMPLATE = """<!doctype html>
   </div>
 
   <div class="grid2">
-    <div class="mapwrap"><div id="worldmap" role="img" aria-label="payouts by country"></div></div>
-    <div class="panel" style="margin:0"><h2>Where the money goes</h2><p>Payout by country for this policy.</p><div style="overflow-x:auto;max-height:300px"><table id="countries"></table></div></div>
+    <div class="panel" style="margin:0"><h2>Payouts by country</h2><p>How this policy spreads the cycle budget across the world.</p><canvas id="countryChart" style="max-height:320px"></canvas></div>
+    <div class="panel" style="margin:0"><h2>Where the money goes</h2><p>Payout and creators paid per country, this policy.</p><div style="overflow-x:auto;max-height:300px"><table id="countries"></table></div></div>
   </div>
 
   <div class="panel">
@@ -158,16 +154,20 @@ _TEMPLATE = """<!doctype html>
     document.getElementById('dirSearch').addEventListener('input', e=>draw(e.target.value));
   }
 
-  // world map (guarded)
-  let map=null;
-  if (window.jsVectorMap){ try {
-    map = new jsVectorMap({ selector:'#worldmap', map:'world', zoomButtons:false,
-      backgroundColor:'transparent',
-      regionStyle:{ initial:{ fill:C('--line') }, hover:{ fill:C('--accent') } },
-      series:{ regions:[{ attribute:'fill', scale:['#17304a', C('--accent')],
-        normalizeFunction:'polynomial', values:{} }] } });
-  } catch(e){ map=null; } }
-  const setMap = vals => { if(map&&map.series&&map.series.regions[0]){ try{ map.series.regions[0].setValues(vals);}catch(e){} } };
+  // payouts by country bar chart (reliable; replaces the vector map)
+  let countryCh=null;
+  if (window.Chart){ countryCh = new Chart(document.getElementById('countryChart'), {
+    type:'bar', data:{labels:[], datasets:[{data:[], backgroundColor:C('--accent'), borderRadius:5}]},
+    options:{ indexAxis:'y', responsive:true, animation:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{color:'rgba(34,48,66,.6)'}, ticks:{callback:v=>'$'+Math.round(v/1000)+'k'}},
+               y:{grid:{display:false}} } } }); }
+  const setCountryChart = byCountry => {
+    if(!countryCh) return;
+    const rows=Object.entries(byCountry).sort((a,b)=>b[1].amount-a[1].amount);
+    countryCh.data.labels=rows.map(r=>r[0]);
+    countryCh.data.datasets[0].data=rows.map(r=>r[1].amount);
+    countryCh.update('none');
+  };
 
   // scenario comparison: risk exposure per policy
   if (window.Chart){ new Chart(document.getElementById('riskChart'), { type:'bar',
@@ -201,8 +201,7 @@ _TEMPLATE = """<!doctype html>
       `<span class="pill">net <b>${money(s.net_delivered)}</b></span>`+
       `<span class="pill">tax withheld <b>${money(s.tax_withheld)}</b></span>`+
       `<span class="pill">risk exposure <b>${Math.round(s.risk_exposure).toLocaleString()}</b></span>`;
-    const vals={}; Object.entries(s.by_country).forEach(([k,v])=>vals[k]=v.amount);
-    setMap(vals);
+    setCountryChart(s.by_country);
     const rows=Object.entries(s.by_country).sort((a,b)=>b[1].amount-a[1].amount)
       .map(([k,v])=>`<tr><td>${k}</td><td>${money(v.amount)}</td><td>${v.count}</td></tr>`).join('');
     document.getElementById('countries').innerHTML =

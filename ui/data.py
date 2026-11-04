@@ -28,7 +28,7 @@ def _payout_engine_panel() -> dict:
         [Contribution("Ava", {"c1", "c2", "c3", "c4"}), Contribution("Ben", {"c3", "c4", "c5"}),
          Contribution("Cy", {"c5", "c6"})],
         [Party("Ava", 400), Party("Ben", 300), Party("Cy", 150)],
-        Party("Sybil", 500, cluster="Sybil", honest=False),
+        Party("Sybil", 1500, verified_activity=120, cluster="Sybil", honest=False),
         {"Ava": {"email": "ava@ex.com", "country": "US"}, "Ben": {"email": "ben@ex.com", "country": "IN"},
          "Cy": {"email": "cy@ex.com", "country": "BR"}, "Sybil": {"email": "z@ex.com", "country": "US"}},
         client, ledger, sender_batch_id="dash-payengine", purpose="COMMISSION",

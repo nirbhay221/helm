@@ -188,7 +188,7 @@
       "weights": {
         "speed": 1.0,
         "tax": 1.0,
-        "risk": 1.0,
+        "risk": 3.0,
         "fx": 1.0
       },
       "constraints": {
@@ -197,53 +197,55 @@
         "max_risk": 0.7,
         "min_priority": 0.0
       },
-      "violations": [],
-      "paid_count": 1440,
+      "violations": [
+        "policy flags fraud/risk; risk weight raised from 1.0 to 3.0"
+      ],
+      "paid_count": 1417,
       "total_paid": 246418.18,
-      "net_delivered": 228668.95,
-      "tax_withheld": 17749.23,
-      "fx_cost": 2451.91,
-      "risk_exposure": 39428.1,
+      "net_delivered": 226620.49,
+      "tax_withheld": 19797.69,
+      "fx_cost": 2563.53,
+      "risk_exposure": 27296.4,
       "by_country": {
         "BR": {
-          "amount": 27191.88,
-          "count": 119
+          "amount": 24700.25,
+          "count": 117
         },
         "US": {
-          "amount": 73005.52,
-          "count": 419
-        },
-        "GB": {
-          "amount": 22296.02,
-          "count": 129
-        },
-        "IN": {
-          "amount": 45017.9,
-          "count": 293
-        },
-        "CA": {
-          "amount": 14739.94,
-          "count": 85
-        },
-        "CN": {
-          "amount": 13582.29,
-          "count": 103
+          "amount": 72153.4,
+          "count": 395
         },
         "PH": {
-          "amount": 13745.38,
-          "count": 88
+          "amount": 18009.23,
+          "count": 97
         },
         "DE": {
-          "amount": 18523.41,
-          "count": 99
+          "amount": 19871.14,
+          "count": 95
+        },
+        "IN": {
+          "amount": 49252.3,
+          "count": 300
+        },
+        "CA": {
+          "amount": 14350.89,
+          "count": 77
+        },
+        "CN": {
+          "amount": 11473.21,
+          "count": 95
+        },
+        "GB": {
+          "amount": 14737.9,
+          "count": 107
         },
         "NG": {
-          "amount": 4894.39,
-          "count": 27
+          "amount": 8843.28,
+          "count": 43
         },
         "MX": {
-          "amount": 13421.45,
-          "count": 78
+          "amount": 13026.58,
+          "count": 91
         }
       },
       "top": [
@@ -272,6 +274,14 @@
           "net": 3355.19
         },
         {
+          "name": "c03341_PH",
+          "display": "Angel H.",
+          "country": "PH",
+          "currency": "PHP",
+          "amount": 2551.59,
+          "net": 2041.27
+        },
+        {
           "name": "c03933_US",
           "display": "Olivia L.",
           "country": "US",
@@ -280,12 +290,20 @@
           "net": 2498.87
         },
         {
-          "name": "c04875_GB",
-          "display": "George M.",
-          "country": "GB",
-          "currency": "GBP",
-          "amount": 2453.65,
-          "net": 2453.65
+          "name": "c00738_DE",
+          "display": "Paul V.",
+          "country": "DE",
+          "currency": "EUR",
+          "amount": 2410.49,
+          "net": 2410.49
+        },
+        {
+          "name": "c02719_US",
+          "display": "Olivia N.",
+          "country": "US",
+          "currency": "USD",
+          "amount": 2295.39,
+          "net": 2295.39
         },
         {
           "name": "c01054_IN",
@@ -294,22 +312,6 @@
           "currency": "INR",
           "amount": 1949.8,
           "net": 1657.33
-        },
-        {
-          "name": "c04528_US",
-          "display": "Mason F.",
-          "country": "US",
-          "currency": "USD",
-          "amount": 1897.8,
-          "net": 1897.8
-        },
-        {
-          "name": "c03837_CA",
-          "display": "Liam D.",
-          "country": "CA",
-          "currency": "CAD",
-          "amount": 1893.57,
-          "net": 1893.57
         }
       ]
     },
@@ -317,7 +319,7 @@
       "label": "Country freeze",
       "policy": "Freeze all payouts to Nigeria and China this week pending a compliance review, and deliver as much net as possible to everyone else.",
       "source": "model",
-      "reading": "Freeze Nigeria and China, pay all others with max net",
+      "reading": "Freeze all payouts to Nigeria and China this week pending a compliance review, and deliver as much net as possible to everyone else.",
       "weights": {
         "speed": 1.0,
         "tax": 3.0,
@@ -447,9 +449,9 @@
       "source": "model",
       "reading": "Cash is tight this week. Be conservative, favour delivering more net to creators, and cap any one creator at 15% of the batch.",
       "weights": {
-        "speed": 0.0,
+        "speed": 1.0,
         "tax": 3.0,
-        "risk": 0.0,
+        "risk": 1.0,
         "fx": 1.0
       },
       "constraints": {
@@ -459,27 +461,59 @@
         "min_priority": 0.0
       },
       "violations": [],
-      "paid_count": 1479,
+      "paid_count": 1417,
       "total_paid": 246418.18,
-      "net_delivered": 246418.18,
-      "tax_withheld": 0.0,
-      "fx_cost": 666.0,
-      "risk_exposure": 54729.9,
+      "net_delivered": 237057.38,
+      "tax_withheld": 9360.8,
+      "fx_cost": 1755.01,
+      "risk_exposure": 39779.3,
       "by_country": {
+        "BR": {
+          "amount": 16035.66,
+          "count": 63
+        },
         "US": {
-          "amount": 163168.72,
-          "count": 1006
+          "amount": 102427.13,
+          "count": 586
         },
         "GB": {
-          "amount": 44006.07,
-          "count": 246
+          "amount": 28358.06,
+          "count": 174
         },
         "DE": {
-          "amount": 39243.39,
-          "count": 227
+          "amount": 27972.46,
+          "count": 144
+        },
+        "CA": {
+          "amount": 19476.3,
+          "count": 112
+        },
+        "CN": {
+          "amount": 9511.0,
+          "count": 87
+        },
+        "PH": {
+          "amount": 4497.86,
+          "count": 16
+        },
+        "IN": {
+          "amount": 25816.21,
+          "count": 165
+        },
+        "MX": {
+          "amount": 12323.5,
+          "count": 70
         }
       },
       "top": [
+        {
+          "name": "c01588_BR",
+          "display": "Manuela B.",
+          "country": "BR",
+          "currency": "BRL",
+          "amount": 4780.78,
+          "net": 4063.66
+        },
         {
           "name": "c00597_US",
           "display": "Noah A.",
@@ -505,14 +539,6 @@
           "net": 2498.87
         },
         {
-          "name": "c02308_GB",
-          "display": "Amelia L.",
-          "country": "GB",
-          "currency": "GBP",
-          "amount": 2492.76,
-          "net": 2492.76
-        },
-        {
           "name": "c04875_GB",
           "display": "George M.",
           "country": "GB",
@@ -521,20 +547,20 @@
           "net": 2453.65
         },
         {
+          "name": "c00738_DE",
+          "display": "Paul V.",
+          "country": "DE",
+          "currency": "EUR",
+          "amount": 2410.49,
+          "net": 2410.49
+        },
+        {
           "name": "c02719_US",
           "display": "Olivia N.",
           "country": "US",
           "currency": "USD",
           "amount": 2295.39,
           "net": 2295.39
-        },
-        {
-          "name": "c02811_GB",
-          "display": "Oliver M.",
-          "country": "GB",
-          "currency": "GBP",
-          "amount": 2038.42,
-          "net": 2038.42
         },
         {
           "name": "c02450_US",
