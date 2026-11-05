@@ -41,3 +41,6 @@ tmp/
 
 # Generated dashboard (rebuild with scripts/build_dashboard.py)
 dashboard.html
+
+# Internal research and competitor analysis (not for the public repo)
+research/
