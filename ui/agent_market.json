@@ -1,0 +1,379 @@
+{
+  "driver": "model",
+  "agents": [
+    {
+      "name": "Ava A.",
+      "persona": "steady maker",
+      "balance": 916.0
+    },
+    {
+      "name": "Aarav B.",
+      "persona": "prolific seller",
+      "balance": 671.76
+    },
+    {
+      "name": "Davi C.",
+      "persona": "bargain buyer",
+      "balance": 212.75
+    },
+    {
+      "name": "Olivia D.",
+      "persona": "cautious saver",
+      "balance": 847.0
+    },
+    {
+      "name": "Zainab E.",
+      "persona": "serial returner",
+      "balance": 378.0
+    },
+    {
+      "name": "Noah F.",
+      "persona": "bad seller",
+      "balance": 833.49
+    }
+  ],
+  "ticks": [
+    {
+      "tick": 0,
+      "events": [
+        {
+          "agent": "Noah F.",
+          "persona": "bad seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Noah F. listed an item",
+          "balance": 789.0
+        },
+        {
+          "agent": "Olivia D.",
+          "persona": "cautious saver",
+          "action": "hold",
+          "reason": "",
+          "outcome": "Olivia D. held",
+          "balance": 847.0
+        },
+        {
+          "agent": "Zainab E.",
+          "persona": "serial returner",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Zainab E. bought another cheap item for 5.0",
+          "balance": 373.0
+        },
+        {
+          "agent": "Aarav B.",
+          "persona": "prolific seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Aarav B. listed an item",
+          "balance": 646.0
+        },
+        {
+          "agent": "Davi C.",
+          "persona": "bargain buyer",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Davi C. bought another cheap item for 5.0",
+          "balance": 328.0
+        },
+        {
+          "agent": "Ava A.",
+          "persona": "steady maker",
+          "action": "list",
+          "reason": "",
+          "outcome": "Ava A. listed an item",
+          "balance": 866.0
+        }
+      ]
+    },
+    {
+      "tick": 1,
+      "events": [
+        {
+          "agent": "Davi C.",
+          "persona": "bargain buyer",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Davi C. bought prolific seller's item for 25.76",
+          "balance": 302.24
+        },
+        {
+          "agent": "Zainab E.",
+          "persona": "serial returner",
+          "action": "return",
+          "reason": "not needed",
+          "outcome": "Zainab E. returned l0006",
+          "balance": 378.0
+        },
+        {
+          "agent": "Ava A.",
+          "persona": "steady maker",
+          "action": "list",
+          "reason": "",
+          "outcome": "Ava A. listed an item",
+          "balance": 866.0
+        },
+        {
+          "agent": "Olivia D.",
+          "persona": "cautious saver",
+          "action": "hold",
+          "reason": "",
+          "outcome": "Olivia D. held",
+          "balance": 847.0
+        },
+        {
+          "agent": "Aarav B.",
+          "persona": "prolific seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Aarav B. listed an item",
+          "balance": 671.76
+        },
+        {
+          "agent": "Noah F.",
+          "persona": "bad seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Noah F. listed an item",
+          "balance": 794.0
+        }
+      ]
+    },
+    {
+      "tick": 2,
+      "events": [
+        {
+          "agent": "Ava A.",
+          "persona": "steady maker",
+          "action": "list",
+          "reason": "",
+          "outcome": "Ava A. listed an item",
+          "balance": 866.0
+        },
+        {
+          "agent": "Noah F.",
+          "persona": "bad seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Noah F. listed an item",
+          "balance": 794.0
+        },
+        {
+          "agent": "Aarav B.",
+          "persona": "prolific seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Aarav B. listed an item",
+          "balance": 671.76
+        },
+        {
+          "agent": "Zainab E.",
+          "persona": "serial returner",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Zainab E. bought another cheap item for 5.0",
+          "balance": 373.0
+        },
+        {
+          "agent": "Davi C.",
+          "persona": "bargain buyer",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Davi C. bought Ava A.'s Item for 50.0",
+          "balance": 252.24
+        },
+        {
+          "agent": "Olivia D.",
+          "persona": "cautious saver",
+          "action": "hold",
+          "reason": "",
+          "outcome": "Olivia D. held",
+          "balance": 847.0
+        }
+      ]
+    },
+    {
+      "tick": 3,
+      "events": [
+        {
+          "agent": "Ava A.",
+          "persona": "steady maker",
+          "action": "list",
+          "reason": "",
+          "outcome": "Ava A. listed an item",
+          "balance": 916.0
+        },
+        {
+          "agent": "Aarav B.",
+          "persona": "prolific seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Aarav B. listed an item",
+          "balance": 671.76
+        },
+        {
+          "agent": "Davi C.",
+          "persona": "bargain buyer",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Davi C. bought bad seller's item for 29.49",
+          "balance": 222.75
+        },
+        {
+          "agent": "Zainab E.",
+          "persona": "serial returner",
+          "action": "return",
+          "reason": "didn't like it",
+          "outcome": "Zainab E. returned l0006",
+          "balance": 378.0
+        },
+        {
+          "agent": "Olivia D.",
+          "persona": "cautious saver",
+          "action": "hold",
+          "reason": "",
+          "outcome": "Olivia D. held",
+          "balance": 847.0
+        },
+        {
+          "agent": "Noah F.",
+          "persona": "bad seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Noah F. listed an item",
+          "balance": 823.49
+        }
+      ]
+    },
+    {
+      "tick": 4,
+      "events": [
+        {
+          "agent": "Olivia D.",
+          "persona": "cautious saver",
+          "action": "hold",
+          "reason": "",
+          "outcome": "Olivia D. held",
+          "balance": 847.0
+        },
+        {
+          "agent": "Ava A.",
+          "persona": "steady maker",
+          "action": "list",
+          "reason": "",
+          "outcome": "Ava A. listed an item",
+          "balance": 916.0
+        },
+        {
+          "agent": "Noah F.",
+          "persona": "bad seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Noah F. listed an item",
+          "balance": 823.49
+        },
+        {
+          "agent": "Davi C.",
+          "persona": "bargain buyer",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Davi C. bought another cheap item for 5.0",
+          "balance": 217.75
+        },
+        {
+          "agent": "Aarav B.",
+          "persona": "prolific seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Aarav B. listed an item",
+          "balance": 671.76
+        },
+        {
+          "agent": "Zainab E.",
+          "persona": "serial returner",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Zainab E. bought another cheap item for 5.0",
+          "balance": 373.0
+        }
+      ]
+    },
+    {
+      "tick": 5,
+      "events": [
+        {
+          "agent": "Noah F.",
+          "persona": "bad seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Noah F. listed an item",
+          "balance": 833.49
+        },
+        {
+          "agent": "Davi C.",
+          "persona": "bargain buyer",
+          "action": "buy",
+          "reason": "",
+          "outcome": "Davi C. bought another cheap item for 5.0",
+          "balance": 212.75
+        },
+        {
+          "agent": "Aarav B.",
+          "persona": "prolific seller",
+          "action": "list",
+          "reason": "",
+          "outcome": "Aarav B. listed an item",
+          "balance": 671.76
+        },
+        {
+          "agent": "Ava A.",
+          "persona": "steady maker",
+          "action": "list",
+          "reason": "",
+          "outcome": "Ava A. listed an item",
+          "balance": 916.0
+        },
+        {
+          "agent": "Olivia D.",
+          "persona": "cautious saver",
+          "action": "hold",
+          "reason": "",
+          "outcome": "Olivia D. held",
+          "balance": 847.0
+        },
+        {
+          "agent": "Zainab E.",
+          "persona": "serial returner",
+          "action": "return",
+          "reason": "did not like it",
+          "outcome": "Zainab E. returned l0006",
+          "balance": 378.0
+        }
+      ]
+    }
+  ],
+  "orders": 9,
+  "returns": 3,
+  "action_mix_by_persona": {
+    "bad seller": {
+      "list": 6
+    },
+    "cautious saver": {
+      "hold": 6
+    },
+    "serial returner": {
+      "buy": 3,
+      "return": 3
+    },
+    "prolific seller": {
+      "list": 6
+    },
+    "bargain buyer": {
+      "buy": 6
+    },
+    "steady maker": {
+      "list": 6
+    }
+  },
+  "emergent_abuse": []
+}
