@@ -23,6 +23,13 @@ class Account:
     status: str = "active"            # active | suspended
     joined_day: int = 0
     suspend_reason: str = ""
+    # identity signals a real platform observes. Fraud rings reuse them; honest
+    # users are independent. The linkage engine infers rings from these, it is
+    # never told who is linked.
+    device_id: str = ""
+    payment_fp: str = ""             # payment instrument fingerprint
+    ip_prefix: str = ""
+    email_domain: str = ""
 
 
 @dataclass
@@ -137,6 +144,25 @@ def generate_marketplace(n_accounts: int = 120, seed: int = 7,
 
     serial = set(a.id for a in accs[:n_serial_returners])
     bad_sellers = set(a.id for a in accs[n_serial_returners:n_serial_returners + n_bad_sellers])
+
+    # identity signals: honest accounts are independent (unique device, payment,
+    # IP); a few share a common email domain as benign noise. The serial-returner
+    # accounts are one coordinated ring and the bad sellers another, each reusing
+    # one device, one payment instrument and one IP block and signing up in a
+    # burst, which is what the linkage engine must infer from signals alone.
+    _domains = ["gmail.com", "outlook.com", "yahoo.com", "proton.me", "icloud.com"]
+    for i, a in enumerate(accs):
+        a.device_id = f"dev-{i:04d}"
+        a.payment_fp = f"card-{i:04d}"
+        a.ip_prefix = f"ip-{int(rng.integers(0, 254))}.{int(rng.integers(0, 254))}"
+        a.email_domain = str(rng.choice(_domains))
+    for tag, ids, day_lo, day_hi in (("A", serial, 0, 5), ("B", bad_sellers, 5, 10)):
+        for x in sorted(ids):
+            a = m.accounts[x]
+            a.device_id = f"dev-ring{tag}"
+            a.payment_fp = f"card-ring{tag}"
+            a.ip_prefix = f"ip-ring{tag}"
+            a.joined_day = int(rng.integers(day_lo, day_hi))
 
     oid = 0
     for _ in range(n_accounts * 10):

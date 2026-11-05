@@ -8,5 +8,7 @@ responsible, with a recorded reason.
 """
 from .marketplace import Account, Listing, Order, Marketplace
 from .abuse import AbuseEngine, AbuseVerdict
+from .linkage import LinkageEngine, Ring
 
-__all__ = ["Account", "Listing", "Order", "Marketplace", "AbuseEngine", "AbuseVerdict"]
+__all__ = ["Account", "Listing", "Order", "Marketplace", "AbuseEngine", "AbuseVerdict",
+           "LinkageEngine", "Ring"]
