@@ -120,12 +120,22 @@ class ForecastAdjustment:
 
 class SignalDesk:
     def __init__(self, llm: LLMClient | None = None, models: list[str] | None = None,
-                 max_disagreement: float = 0.6) -> None:
+                 max_disagreement: float = 0.6, samples: int = 3,
+                 sample_temperature: float = 0.5) -> None:
         self.llm = llm or LLMClient()
-        # An optional panel of model ids. With more than one, each reads the
-        # signal and we act on their CONSENSUS, scaled by how much they agree.
+        # An optional panel of distinct model ids. With more than one, each reads
+        # the signal and we act on their CONSENSUS, scaled by how much they agree.
         self.models = [m for m in (models or []) if m]
         self.max_disagreement = max_disagreement
+        # With one model, read the signal `samples` times at a non-zero
+        # temperature and act on the SELF-CONSISTENCY of those reads. The
+        # evidence (and our own earlier eval) is that most of the gain people
+        # attribute to a multi-model panel is really this ensembling, and that it
+        # is cheaper and does not hide one member silently regressing. Its real
+        # value is calibration: when the samples disagree on a vague or misleading
+        # signal, the bet shrinks toward nothing.
+        self.samples = max(1, int(samples))
+        self.sample_temperature = sample_temperature
 
     @property
     def available(self) -> bool:
@@ -146,6 +156,12 @@ class SignalDesk:
                 return self.interpret_panel(signal_text, current_period, baseline_demand, horizon)
             except Exception:
                 pass
+        if self.available and self.samples > 1:
+            try:
+                return self.interpret_selfconsistency(signal_text, current_period,
+                                                      baseline_demand, horizon)
+            except Exception:
+                pass
         if self.available:
             try:
                 model = self.models[0] if self.models else None
@@ -154,6 +170,45 @@ class SignalDesk:
             except Exception:
                 pass  # fall through to the scripted parser
         return self._interpret_fallback(signal_text, current_period, baseline_demand, horizon)
+
+    # --- self-consistency path (one model, several reads) -------------------
+    def interpret_selfconsistency(self, signal_text: str, current_period: int,
+                                  baseline_demand: float, horizon: int = 12) -> ForecastAdjustment:
+        """Read the signal several times with one model and act on the median,
+        scaled by how much the reads agree. The first read is at temperature 0
+        (the base reading); the rest are sampled for diversity. When the reads
+        diverge (a vague or misleading signal) the bet shrinks toward nothing."""
+        model = self.models[0] if self.models else None
+        votes: list[ForecastAdjustment] = []
+        for i in range(self.samples):
+            temp = 0.0 if i == 0 else self.sample_temperature
+            try:
+                votes.append(self._interpret_llm(signal_text, current_period, baseline_demand,
+                                                 horizon, model=model, temperature=temp))
+            except Exception:
+                continue
+        if not votes:
+            raise RuntimeError("no sample responded")
+
+        periods = sorted({p for v in votes for p in v.period_deltas})
+        median_deltas = {p: _median(sorted(v.delta_for(p) for v in votes)) for p in periods}
+        totals = [sum(v.period_deltas.values()) for v in votes]
+        disagreement = _disagreement(totals)
+        confidence = round(max(0.0, 1.0 - disagreement), 3)
+        scaled = {p: round(d * confidence, 2) for p, d in median_deltas.items()
+                  if abs(d * confidence) > 1e-9}
+        cited = next((v.cited_signal for v in votes if v.cited_signal.strip()), "")
+        return ForecastAdjustment(
+            period_deltas=scaled,
+            rationale=(f"self-consistency over {len(votes)} samples; "
+                       f"disagreement={disagreement:.2f}, confidence={confidence:.2f}"),
+            cited_signal=cited,
+            source="self-consistency",
+            model_votes={f"s{i}": {"deltas": {int(k): round(x, 2) for k, x in v.period_deltas.items()},
+                                   "cited": v.cited_signal} for i, v in enumerate(votes)},
+            disagreement=round(disagreement, 3),
+            confidence=confidence,
+        )
 
     # --- panel path ---------------------------------------------------------
     def interpret_panel(self, signal_text: str, current_period: int,
@@ -204,7 +259,8 @@ class SignalDesk:
 
     # --- model path ---------------------------------------------------------
     def _interpret_llm(self, signal_text: str, current_period: int, baseline_demand: float,
-                       horizon: int, model: str | None = None) -> ForecastAdjustment:
+                       horizon: int, model: str | None = None,
+                       temperature: float = 0.0) -> ForecastAdjustment:
         user = (
             f"Current period: {current_period}. Planned demand is about "
             f"{baseline_demand:.0f} units per period. Planning horizon reaches period "
@@ -215,7 +271,7 @@ class SignalDesk:
             messages=[{"role": "system", "content": _SYSTEM}, {"role": "user", "content": user}],
             tools=[ADJUST_FORECAST_TOOL],
             tool_choice={"type": "function", "function": {"name": "adjust_forecast"}},
-            temperature=0.0,
+            temperature=temperature,
             model=model,
         )
         calls = (msg or {}).get("tool_calls") or []
