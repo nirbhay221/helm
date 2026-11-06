@@ -31,6 +31,21 @@ def test_honest_accounts_are_not_grouped_into_rings():
     assert ringed == {f"u{i:04d}" for i in range(6)}
 
 
+def test_links_a_rotated_device_ring_on_weaker_combined_signals():
+    from market.marketplace import Account, Marketplace
+    m = Marketplace()
+    a = m.add_account(Account(id="x1", name="X1", country="US"))
+    b = m.add_account(Account(id="x2", name="X2", country="US"))
+    c = m.add_account(Account(id="x3", name="X3", country="US"))
+    for acc, dev in ((a, "dev-A"), (b, "dev-B")):             # rotated device
+        acc.payment_fp, acc.ip_prefix, acc.email_domain, acc.device_id = "card-Z", "ip-9.9", "ring.me", dev
+    c.device_id, c.payment_fp, c.ip_prefix, c.email_domain = "dev-C", "card-C", "ip-1.1", "ring.me"
+    rings = LinkageEngine().infer(m)
+    members = {tuple(r.members) for r in rings}
+    assert ("x1", "x2") in members                            # linked on payment+ip+email despite new device
+    assert all("x3" not in r.members for r in rings)          # one weak shared signal is not enough
+
+
 def test_cluster_of_maps_ring_members_to_an_inferred_id():
     m = generate_marketplace(n_accounts=120, seed=7)
     label = LinkageEngine().cluster_of(m)

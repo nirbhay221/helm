@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from marketplace.invest import Business, PaperBroker, Portfolio  # noqa: E402
+from marketplace.invest import Business, PaperBroker, Portfolio, Property  # noqa: E402
 from marketplace.reinvest import BASKET  # noqa: E402
 
 
@@ -30,6 +30,15 @@ def test_broker_backend_is_paper_without_keys():
     assert broker.backend == "paper-live-price"
     fill = broker.buy("SPY", 100.0)
     assert fill["units"] == 100.0 and fill["routed_to_alpaca"] is False
+
+
+def test_property_is_collective_prorata_and_grows_with_rent_and_appreciation():
+    p = Property("Maple St", "Austin", value=1000.0, rent_yield_annual=0.05, appreciation_annual=0.04)
+    assert p.buy("Ava", 600.0) == 600.0
+    assert p.buy("Ben", 600.0) == 400.0                 # capped at the property value
+    assert abs(p.share_of("Ava") - 0.6) < 1e-6
+    v = p.value_for("Ava", months=12)                   # one year of appreciation plus rent
+    assert v == round(600.0 * 1.04 + 600.0 * 0.05, 2)
 
 
 def test_business_shares_are_prorata_and_capped_at_target():

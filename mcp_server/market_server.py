@@ -12,7 +12,7 @@ import os
 
 from mcp.server.mcpserver import MCPServer
 
-from marketplace.invest import Business, PaperBroker, Portfolio
+from marketplace.invest import Business, PaperBroker, Portfolio, Property
 
 
 def build_market_server() -> MCPServer:
@@ -54,5 +54,19 @@ def build_market_server() -> MCPServer:
         got = b.back(creator, float(amount))
         return {"business": name, "backed": got, "share": b.share_of(creator),
                 "value_1mo": b.value_for(creator, 1)}
+
+    @server.tool(
+        name="back_property",
+        description=("Buy a fractional share of a property together with other creators. Returns the "
+                     "amount invested, the pro-rata share, and the projected one-year value. Illiquid, "
+                     "multi-year hold; simulated with real-world yield and appreciation."),
+    )
+    def back_property(name: str, location: str, value: float, amount: float, creator: str,
+                      rent_yield_annual: float = 0.05, appreciation_annual: float = 0.04) -> dict:
+        p = Property(name, location, float(value), rent_yield_annual=float(rent_yield_annual),
+                     appreciation_annual=float(appreciation_annual))
+        got = p.buy(creator, float(amount))
+        return {"property": name, "location": location, "invested": got,
+                "share": p.share_of(creator), "value_1yr": p.value_for(creator, 12), "note": p.note}
 
     return server

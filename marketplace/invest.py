@@ -107,6 +107,48 @@ class Portfolio:
 
 
 @dataclass
+class Property:
+    """A property creators can own together in fractions, Arrived-style ($100
+    shares in one home). Simulated with real-world rent yield and appreciation,
+    and honest about illiquidity: a multi-year hold with limited redemptions."""
+    name: str
+    location: str
+    value: float                       # total property value
+    share_price: float = 100.0
+    rent_yield_annual: float = 0.05
+    appreciation_annual: float = 0.04
+    hold_months: int = 60
+    owners: dict = field(default_factory=dict)      # creator -> dollars invested
+
+    def total_raised(self) -> float:
+        return round(sum(self.owners.values()), 2)
+
+    def available(self) -> float:
+        return round(max(0.0, self.value - self.total_raised()), 2)
+
+    def buy(self, creator: str, amount: float) -> float:
+        amount = round(min(float(amount), self.available()), 2)
+        if amount <= 0:
+            return 0.0
+        self.owners[creator] = round(self.owners.get(creator, 0.0) + amount, 2)
+        return amount
+
+    def share_of(self, creator: str) -> float:
+        return round(self.owners.get(creator, 0.0) / self.value, 4) if self.value else 0.0
+
+    def value_for(self, creator: str, months: int = 12) -> float:
+        invested = self.owners.get(creator, 0.0)
+        appreciated = invested * ((1.0 + self.appreciation_annual) ** (months / 12.0))
+        rent = invested * self.rent_yield_annual * (months / 12.0)
+        return round(appreciated + rent, 2)
+
+    @property
+    def note(self) -> str:
+        return ("Fractional property is illiquid: a multi-year hold with limited redemptions. "
+                "Simulated with real-world yield and appreciation assumptions, not a live security.")
+
+
+@dataclass
 class Business:
     """A shop or restaurant creators can back for a pro-rata share. Simulated
     crowd-equity: real pro-rata ownership, modeled business performance."""

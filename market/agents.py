@@ -70,6 +70,8 @@ class CustomerAgent:
     behavior: str
     balance: float = 500.0
     llm: LLMClient = field(default_factory=LLMClient)
+    memory: list = field(default_factory=list)      # recency-ordered log of what happened
+    reflection: str = ""                            # a periodic higher-level lesson
 
     def decide(self, m: Marketplace, rng) -> dict:
         if self.llm.available:
@@ -79,6 +81,39 @@ class CustomerAgent:
                 pass
         return self._decide_fallback(m, rng)
 
+    def remember(self, event: str, cap: int = 8) -> None:
+        self.memory.append(event)
+        if len(self.memory) > cap:
+            self.memory = self.memory[-cap:]            # keep the most recent (recency)
+
+    def reflect(self) -> None:
+        """Form one short lesson from recent memory that should steer what comes
+        next, the reflection step from Generative Agents. Model-written when a key
+        is present, a simple heuristic otherwise."""
+        if not self.memory:
+            return
+        if self.llm.available:
+            try:
+                msg = self.llm.chat(
+                    messages=[{"role": "system", "content":
+                               "You are a marketplace member. In ONE short sentence, state the lesson "
+                               "from your recent activity that should guide what you do next."},
+                              {"role": "user", "content": "Recent: " + "; ".join(self.memory[-6:])}],
+                    temperature=0.6, max_tokens=60)
+                txt = (msg or {}).get("content")
+                if txt:
+                    self.reflection = txt.strip()[:160]
+                    return
+            except Exception:
+                pass
+        returns = sum(1 for m in self.memory if "return" in m)
+        if returns >= 2:
+            self.reflection = "returning what I buy keeps working, so keep buying and returning"
+        elif any("listed" in m for m in self.memory):
+            self.reflection = "listing items is bringing sales, keep listing"
+        else:
+            self.reflection = "nothing notable yet, stay the course"
+
     def _state(self, m: Marketplace) -> dict:
         mine = [l.id for l in m.listings.values() if l.seller == self.account.id]
         others = [{"id": l.id, "title": l.title, "price": l.price}
@@ -86,11 +121,13 @@ class CustomerAgent:
         my_buys = [{"order": o.id, "listing": o.listing}
                    for o in m.orders_as_buyer(self.account.id) if o.status == "fulfilled"][-5:]
         return {"you": self.account.name, "balance": round(self.balance, 2),
-                "your_listings": mine, "buyable": others, "your_recent_buys": my_buys}
+                "your_listings": mine, "buyable": others, "your_recent_buys": my_buys,
+                "recent_memory": self.memory[-5:], "your_reflection": self.reflection}
 
     def _decide_llm(self, m: Marketplace) -> dict:
         sysmsg = (f"You are {self.account.name}, a member of a creator marketplace. {self.behavior} "
-                  "Choose exactly one action for this cycle by calling choose_action. Act in character.")
+                  "Use your recent_memory and your_reflection to learn from what happened, then choose "
+                  "exactly one action for this cycle by calling choose_action. Act in character.")
         user = "Your state:\n" + json.dumps(self._state(m)) + "\n\nChoose one action."
         msg = self.llm.chat(
             messages=[{"role": "system", "content": sysmsg}, {"role": "user", "content": user}],
@@ -119,11 +156,13 @@ class CustomerAgent:
 class AgentMarket:
     """A marketplace driven by customer agents deciding each cycle."""
 
-    def __init__(self, llm: LLMClient | None = None, n_agents: int = 6, seed: int = 7) -> None:
+    def __init__(self, llm: LLMClient | None = None, n_agents: int = 6, seed: int = 7,
+                 reflect_every: int = 2) -> None:
         import numpy as np
         self.rng = np.random.default_rng(seed)
         self.m = Marketplace()
         self.llm = llm or LLMClient()
+        self.reflect_every = max(1, int(reflect_every))
         self.agents: list[CustomerAgent] = []
         self._lid = 0
         self._oid = 0
@@ -193,10 +232,18 @@ class AgentMarket:
             agent = self.agents[i]
             act = agent.decide(self.m, self.rng)
             outcome = self._execute(agent, act)
+            agent.remember(f"t{len(self.log)}: {act.get('action', 'hold')} -> {outcome}")
             ev = {"agent": agent.account.name, "persona": agent.persona,
                   "action": act.get("action", "hold"), "reason": act.get("reason", ""),
-                  "outcome": outcome, "balance": round(agent.balance, 2)}
+                  "outcome": outcome, "balance": round(agent.balance, 2),
+                  "reflection": agent.reflection}
             events.append(ev)
+        if (len(self.log) + 1) % self.reflect_every == 0:   # periodic reflection pass
+            for a in self.agents:
+                try:
+                    a.reflect()
+                except Exception:
+                    pass
         self.log.append({"tick": len(self.log), "events": events})
         return events
 

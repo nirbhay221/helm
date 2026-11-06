@@ -26,6 +26,13 @@ def test_agents_drive_the_market_and_transact():
     assert all("action" in e for t in mk.log for e in t["events"])
 
 
+def test_agents_build_memory_and_reflect():
+    mk = _market()
+    mk.run(4)
+    assert all(len(a.memory) > 0 for a in mk.agents)      # each agent recorded what happened
+    assert any(a.reflection for a in mk.agents)            # the reflection pass formed lessons
+
+
 def test_bookkeeping_rules_hold_whatever_the_agent_chose():
     mk = _market()
     mk.run(6)
