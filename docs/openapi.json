@@ -1,0 +1,5245 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Helm API",
+    "summary": "Autonomous money layer for a creator marketplace, settled on PayPal.",
+    "description": "Autonomous money layer for a creator marketplace, settled on PayPal. Every endpoint calls the live backend: a model for judgment, deterministic code and ES256 signatures for the money and the limits, the PayPal sandbox for settlement, Alpaca paper for investing, Channel3 for product search, and Z3 and zero-knowledge proofs for safety. With no credentials each endpoint runs in a clearly labeled demo mode rather than failing.",
+    "termsOfService": "https://184-194-177-73.sslip.io",
+    "contact": {
+      "name": "Helm",
+      "url": "https://184-194-177-73.sslip.io/"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/license/mit"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://184-194-177-73.sslip.io",
+      "description": "hosted demo"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "The dashboard page",
+        "description": "Serve the single-page dashboard with its data embedded.",
+        "operationId": "index",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/data": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Full dashboard data",
+        "description": "The complete cached dashboard payload (headline, scenarios, directory, reinvest, engine).",
+        "operationId": "data",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Data"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Liveness probe",
+        "description": "Returns 'ok' when the server is up.",
+        "operationId": "healthz",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/policy": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Compile a treasury policy",
+        "description": "Compile an English treasury policy into objective weights and hard constraints with the live model.",
+        "operationId": "api_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signal": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Read an operational signal",
+        "description": "Read an operational signal into a bounded, per-period forecast adjustment (live model).",
+        "operationId": "api_signal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operator/graph": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Run the multi-agent operator",
+        "description": "Run ONE payout cycle through the multi-agent operator graph and return the full trace:\nthe risk analyst's per-creator pay/hold calls, the bull/bear debate, the manager's proposal,\nthe compliance screen, and the deterministic decision. The agents only propose; the solver and\nthe PayPal guardrails dispose (a large batch is held for a human).",
+        "operationId": "api_operator_graph",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperatorGraphIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account": {
+      "get": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Your account's live books",
+        "description": "The shared state every capability reads and writes: the safety fund, what the platform owes\ncreators, your earnings, the advance book, open holds, and the receipt chain.",
+        "operationId": "api_account",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/reset": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Start your account over",
+        "description": "Reset your account to the starting books.",
+        "operationId": "api_account_reset",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market": {
+      "get": {
+        "tags": [
+          "marketplace"
+        ],
+        "summary": "Your marketplace",
+        "description": "The live two-sided marketplace behind your account: its creators, what each is owed (settled\npast the chargeback window or still at risk), your listings and recent sales, and how money\nsettles (to the creator as PayPal payee when they have a seller account, else the platform).",
+        "operationId": "api_market",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market/scan": {
+      "post": {
+        "tags": [
+          "marketplace"
+        ],
+        "summary": "Scan your marketplace for abuse and rings",
+        "description": "Run the abuse engine (serial returners, bad sellers) and the ring-linkage engine on YOUR\nmarketplace. Suspended creators' earnings freeze: the operator cannot pay them and buyers cannot\nbuy from them until review.",
+        "operationId": "api_market_scan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/creator": {
+      "get": {
+        "tags": [
+          "marketplace"
+        ],
+        "summary": "Your creator page",
+        "description": "Your page as a creator, computed from your real sales in this marketplace: earnings by window,\na Holt-Winters forecast, what to make next, approval-gated money proposals (an advance priced off\nyour own earnings, investing, saving), and your tax statement (1099-K / DAC7 shape).",
+        "operationId": "api_creator",
+        "parameters": [
+          {
+            "name": "brief",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Also write the model's briefing.",
+              "default": false,
+              "title": "Brief"
+            },
+            "description": "Also write the model's briefing."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market/negotiate": {
+      "post": {
+        "tags": [
+          "marketplace"
+        ],
+        "summary": "Your agent negotiates with a creator",
+        "description": "Agent-to-agent commerce on your marketplace: your buyer agent negotiates a creator's listing\nunder the mandate YOUR owner key signed, a deterministic fit check blocks anything outside it,\nand the deal settles on PayPal Orders paid to that creator. The sale lands in their earnings.",
+        "operationId": "api_market_negotiate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NegotiateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market/agents": {
+      "post": {
+        "tags": [
+          "marketplace"
+        ],
+        "summary": "Run agent customers on your marketplace",
+        "description": "Six creators in your marketplace act as model-driven customer agents for a cycle: they list,\nbuy (including from you) and return, each in character, with memory and reflection. Their sales\nland in the sellers' earnings and their returns claw back, so the abuse engine sees it.",
+        "operationId": "api_market_agents",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/paypal/webhook": {
+      "post": {
+        "tags": [
+          "marketplace"
+        ],
+        "summary": "PayPal webhook receiver",
+        "description": "PayPal webhook receiver. Verifies the signature (live), de-duplicates on event id, and applies\nCUSTOMER.DISPUTE.* to whichever account booked the disputed capture: the sale is charged back to\nthe creator, the abuse engines re-run, and the seller's evidence is built from the receipts.",
+        "operationId": "api_paypal_webhook",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/disputes/simulate": {
+      "post": {
+        "tags": [
+          "marketplace"
+        ],
+        "summary": "Simulate a buyer dispute",
+        "description": "Apply a CUSTOMER.DISPUTE.CREATED event shaped exactly like PayPal's to one of your marketplace\norders (labeled simulated; nothing is sent to PayPal). It runs the same path as the real webhook:\nchargeback to the seller, abuse re-scan, evidence from the receipt chain.",
+        "operationId": "api_disputes_simulate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/escrow/settle": {
+      "post": {
+        "tags": [
+          "commerce"
+        ],
+        "summary": "Confirm or reject delivery on a hold",
+        "description": "Settle one of your open pay-on-proof holds: confirmed delivery captures the PayPal\nauthorization to the merchant; a failed delivery voids it and your earnings come back.",
+        "operationId": "api_escrow_settle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/customer/graph": {
+      "post": {
+        "tags": [
+          "commerce"
+        ],
+        "summary": "Run the multi-agent buyer",
+        "description": "Run the buyer journey through a LangGraph supervisor that dispatches to worker agents:\nunderstand the need, search real products, quarantine injected listings, select within budget,\nauthorize against the owner-signed mandate, and settle via pay-on-proof escrow. The agents\npropose; cryptography and PayPal dispose, so the buyer cannot pay outside the signed budget.",
+        "operationId": "api_customer_graph",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerGraphIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rl/advance": {
+      "get": {
+        "tags": [
+          "treasury"
+        ],
+        "summary": "RL advance-sizing policy",
+        "description": "A reinforcement-learning advance-sizer trained OFFLINE on simulated outcomes: it learns,\nper risk estimate, how much of a creator's earnings to advance, maximizing fee minus default\nloss. Returns the learned policy and its held-out net profit versus fixed and rule-of-thumb\nlenders. RL proposes the fraction; the advance engine still applies the caps.",
+        "operationId": "api_rl_advance",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Rl Advance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/quote": {
+      "get": {
+        "tags": [
+          "treasury"
+        ],
+        "summary": "Live market quote",
+        "description": "Latest real market price for a ticker (Alpaca paper when keys are present, else a live-price source).",
+        "operationId": "api_quote",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Ticker symbol to quote.",
+              "examples": [
+                "SPY"
+              ],
+              "default": "SPY",
+              "title": "Ticker"
+            },
+            "description": "Ticker symbol to quote."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invest": {
+      "post": {
+        "tags": [
+          "treasury"
+        ],
+        "summary": "Invest at live prices",
+        "description": "Invest a notional amount across the basket at live prices.",
+        "operationId": "api_invest",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advance": {
+      "post": {
+        "tags": [
+          "treasury"
+        ],
+        "summary": "Price an advance",
+        "description": "A safety-capped, risk-priced advance offer against proven earnings, priced against your\naccount's live safety fund. With take=true the fund pays it out and books it, which moves the\nsolvency margin, the P&L and the zero-knowledge proof.",
+        "operationId": "api_advance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvanceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvanceOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tax": {
+      "get": {
+        "tags": [
+          "treasury"
+        ],
+        "summary": "Tax regime",
+        "description": "A creator's reporting regime (US 1099-K thresholds or EU DAC7).",
+        "operationId": "api_tax",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Two-letter country code.",
+              "examples": [
+                "US"
+              ],
+              "default": "US",
+              "title": "Country"
+            },
+            "description": "Two-letter country code."
+          },
+          {
+            "name": "gross",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "description": "Gross for the year.",
+              "examples": [
+                25000
+              ],
+              "default": 0.0,
+              "title": "Gross"
+            },
+            "description": "Gross for the year."
+          },
+          {
+            "name": "transactions",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Transaction count.",
+              "examples": [
+                250
+              ],
+              "default": 0,
+              "title": "Transactions"
+            },
+            "description": "Transaction count."
+          },
+          {
+            "name": "fees",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "description": "Platform fees withheld.",
+              "examples": [
+                0
+              ],
+              "default": 0.0,
+              "title": "Fees"
+            },
+            "description": "Platform fees withheld."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/a2a/check": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Check a signed mandate",
+        "description": "Verify a signed owner mandate and decide if a proposed deal is allowed.",
+        "operationId": "api_a2a_check",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/A2ACheckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/A2ACheckOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/a2a/demo": {
+      "get": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Issue demo mandates",
+        "description": "Issue a fresh owner-signed intent mandate, plus a tampered copy of it, so the page can\nshow live that a valid mandate verifies and a forged one is rejected. The key is generated\nper call and never leaves the server.",
+        "operationId": "api_a2a_demo",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/A2ADemoOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pool/invest": {
+      "post": {
+        "tags": [
+          "pooling"
+        ],
+        "summary": "Pool to co-own a position",
+        "description": "Several people pool cash to co-own one position. The server signs each member's\ncontribution with their own ES256 mandate, optionally forging one to show it is excluded,\nthen places ONE real paper order for the pooled total and splits the units pro-rata.",
+        "operationId": "api_pool_invest",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolInvestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoolInvestOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pool/groupbuy": {
+      "post": {
+        "tags": [
+          "pooling"
+        ],
+        "summary": "Group-buy a bulk discount",
+        "description": "Several people buy the same item together to clear a volume-discount tier none could reach\nalone. Each contribution is signed; the discounted total is shared pro-rata and the saving is\nattributed by the Shapley value.",
+        "operationId": "api_pool_groupbuy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupBuyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupBuyOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/verify/mandate": {
+      "post": {
+        "tags": [
+          "proofs"
+        ],
+        "summary": "Prove a mandate is budget-bounded",
+        "description": "Prove with Z3 that an agent's signed mandate is budget-bounded for ANY sequence of deals\n(an unbounded inductive-invariant proof), show the guard set is necessary via a counterexample,\nand return an ES256-signed authorization verdict. A forge flag tampers the mandate to show it\nis rejected.",
+        "operationId": "api_verify_mandate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMandateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyMandateOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reserves/prove": {
+      "post": {
+        "tags": [
+          "proofs"
+        ],
+        "summary": "Prove solvency in zero knowledge",
+        "description": "Prove in zero knowledge that the safety fund covers its liabilities without revealing any\nbalance. Returns only the verification outcome and the proof shape; the amounts never leave\nthe server.",
+        "operationId": "api_reserves_prove",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservesOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/escrow/demo": {
+      "post": {
+        "tags": [
+          "commerce"
+        ],
+        "summary": "Pay-on-proof escrow",
+        "description": "Pay-on-proof escrow: PayPal authorizes and holds the money, deterministic criteria decide\nrelease (capture) or refund (void). A cheat flag sends a junk delivery to show the money is\nreturned, not released.",
+        "operationId": "api_escrow_demo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EscrowIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EscrowOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shop/search": {
+      "post": {
+        "tags": [
+          "commerce"
+        ],
+        "summary": "Search real products",
+        "description": "The buyer side: a person spends earnings on a real product. Finds products with Channel3\nwhen a key is set, or a demo catalog otherwise, and flags which fit the stated budget.",
+        "operationId": "api_shop_search",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopSearchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopSearchOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shop/buy": {
+      "post": {
+        "tags": [
+          "commerce"
+        ],
+        "summary": "Buy a product within a signed budget",
+        "description": "Buy a found product: the person's owner-signed spend mandate authorizes the purchase\n(budget and per-item cap enforced by the signature, not a rule), and pay-on-proof escrow\nsettles it on PayPal. The same account that earns can spend.",
+        "operationId": "api_shop_buy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopBuyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopBuyOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pnl": {
+      "post": {
+        "tags": [
+          "treasury"
+        ],
+        "summary": "Predictive platform P&L",
+        "description": "Forecast the platform's profit and loss: expected revenue from the conformal GMV\nforecast minus expected loss (PD x LGD x EAD on the advance book plus chargebacks),\nwith a confidence band, a CECL-style provision, and RAROC. This is how the platform\nmakes money, safely, made quantitative.",
+        "operationId": "api_pnl",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PnlIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Pnl"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/knowledge": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Ground an agent on financial principles",
+        "description": "Retrieve the financial principles relevant to a decision, the same grounding the\noperator and manager agents pull (and the MCP financial_knowledge tool serves).",
+        "operationId": "api_knowledge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Which live rails are configured",
+        "description": "Report which real rails are live (not a bare 'ok'): PayPal sandbox, the model,\nAlpaca paper, and Channel3. Lets a judge see at a glance what is really wired.",
+        "operationId": "api_health",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receipts/demo": {
+      "post": {
+        "tags": [
+          "commerce"
+        ],
+        "summary": "Tamper-evident receipt chain",
+        "description": "Chain a sequence of money actions into hash-linked receipts and verify the chain.\nWith tamper on, a settled receipt is edited after the fact and verification pinpoints\nthe break, proving the log cannot be altered unnoticed.",
+        "operationId": "api_receipts_demo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Receipts Demo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconcile/demo": {
+      "post": {
+        "tags": [
+          "treasury"
+        ],
+        "summary": "Reconcile against the processor",
+        "description": "Match what the platform expected to settle against what the processor actually did,\nflagging missing, mismatched, unexpected and duplicate settlements. Nothing is reported\nas done unless the processor's record agrees.",
+        "operationId": "api_reconcile_demo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Reconcile Demo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/compliance/demo": {
+      "get": {
+        "tags": [
+          "treasury"
+        ],
+        "summary": "Screen outbound payouts (AML)",
+        "description": "Run a sequence of outbound payments through banking-grade screening (sanctions,\nstructuring, velocity, duplicate) and show the decision for each. A clean payment is\nallowed; a sanctioned payee or structuring is blocked; velocity and duplicates are held.",
+        "operationId": "api_compliance_demo",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Compliance Demo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/x402/demo": {
+      "post": {
+        "tags": [
+          "commerce"
+        ],
+        "summary": "x402 agentic micropayment",
+        "description": "Pay-per-request the x402 way, settled on PayPal. Without payment the server returns\nHTTP 402 with the requirements; the agent pays the exact amount and the resource\nunlocks; a tampered amount is refused. This is agent-native, inline micropayment.",
+        "operationId": "api_x402_demo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/X402In"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api X402 Demo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/graphfraud/demo": {
+      "get": {
+        "tags": [
+          "proofs"
+        ],
+        "summary": "Graph-structural fraud scoring",
+        "description": "Score each inferred fraud ring by its graph structure: a sparse group is organic,\na near-clique is one actor. Reports edge density, mean link probability and degree\nconcentration per ring on a seeded marketplace.",
+        "operationId": "api_graphfraud_demo",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Graphfraud Demo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/fraud/graph": {
+      "get": {
+        "tags": [
+          "proofs"
+        ],
+        "summary": "Fraud rings in a graph database",
+        "description": "Load the marketplace as a property graph (Account + shared-identity nodes) into an\nembedded Kuzu graph database and detect rings by multi-hop Cypher traversal, including\nrings chained across SEVERAL identifiers that a pairwise or GROUP BY approach cannot see.",
+        "operationId": "api_fraud_graph",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Fraud Graph"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/demo": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Verify an agent identity",
+        "description": "A mandate says what an agent may do; an identity says who it is. The agent presents\na signed identity (id, owner, capabilities); a counterparty verifies the signature,\nthe expiry and the required capability before transacting. Forge it and it is refused.",
+        "operationId": "api_identity_demo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Identity Demo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "A2ACheckIn": {
+        "properties": {
+          "intent_credential": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Credential",
+            "description": "A signed intent mandate exactly as returned by /api/a2a/demo (kept as a raw object so its ES256 signature is not disturbed).",
+            "examples": [
+              {
+                "alg": "ES256",
+                "payload": {
+                  "type": "IntentMandate"
+                },
+                "signature": "..."
+              }
+            ]
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Category the agent wants to buy.",
+            "default": "",
+            "examples": [
+              "stock_photos"
+            ]
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Proposed deal price.",
+            "default": 0,
+            "examples": [
+              30
+            ]
+          },
+          "spent": {
+            "type": "number",
+            "title": "Spent",
+            "description": "Amount already spent under this mandate.",
+            "default": 0,
+            "examples": [
+              0
+            ]
+          },
+          "cart_credential": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cart Credential",
+            "description": "An optional signed cart mandate (raw object).",
+            "examples": [
+              null
+            ]
+          }
+        },
+        "type": "object",
+        "title": "A2ACheckIn"
+      },
+      "A2ACheckOut": {
+        "properties": {
+          "verified": {
+            "type": "boolean",
+            "title": "Verified",
+            "description": "Whether the mandate signature verified.",
+            "examples": [
+              true
+            ]
+          },
+          "fits": {
+            "type": "boolean",
+            "title": "Fits",
+            "description": "Whether the deal fits the mandate.",
+            "examples": [
+              true
+            ]
+          },
+          "needs_approval": {
+            "type": "boolean",
+            "title": "Needs Approval",
+            "description": "Whether owner approval is required.",
+            "examples": [
+              false
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language decision.",
+            "examples": [
+              "within the signed mandate"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "verified",
+          "fits",
+          "needs_approval",
+          "reason"
+        ],
+        "title": "A2ACheckOut"
+      },
+      "A2ADemoOut": {
+        "properties": {
+          "valid": {
+            "$ref": "#/components/schemas/Credential",
+            "description": "A validly signed intent mandate."
+          },
+          "tampered": {
+            "$ref": "#/components/schemas/Credential",
+            "description": "The same mandate with the cap raised, not re-signed."
+          },
+          "allowed_categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Categories",
+            "description": "Categories the mandate allows.",
+            "examples": [
+              [
+                "stock_photos",
+                "music_license",
+                "fonts"
+              ]
+            ]
+          },
+          "approval_threshold": {
+            "type": "number",
+            "title": "Approval Threshold",
+            "description": "Auto-approve threshold.",
+            "examples": [
+              50.0
+            ]
+          },
+          "max_per_item": {
+            "type": "number",
+            "title": "Max Per Item",
+            "description": "Per-item cap.",
+            "examples": [
+              100.0
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "tampered",
+          "allowed_categories",
+          "approval_threshold",
+          "max_per_item"
+        ],
+        "title": "A2ADemoOut"
+      },
+      "AdvanceIn": {
+        "properties": {
+          "proven_earnings": {
+            "type": "number",
+            "title": "Proven Earnings",
+            "description": "Proven unpaid earnings to borrow against.",
+            "default": 1000,
+            "examples": [
+              2000
+            ]
+          },
+          "fund": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fund",
+            "description": "Safety-fund balance (defaults to your account's live fund).",
+            "examples": [
+              10000
+            ]
+          },
+          "take": {
+            "type": "boolean",
+            "title": "Take",
+            "description": "Take the advance: the fund pays it out and books it.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount",
+            "description": "Amount to take (defaults to the offer).",
+            "examples": [
+              500
+            ]
+          },
+          "history": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History",
+            "description": "Past payout history, oldest first.",
+            "examples": [
+              [
+                800,
+                1200,
+                900,
+                1100,
+                1000,
+                950
+              ]
+            ]
+          },
+          "creator": {
+            "type": "string",
+            "title": "Creator",
+            "description": "Creator identifier.",
+            "default": "creator",
+            "examples": [
+              "creator-1"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "AdvanceIn"
+      },
+      "AdvanceOut": {
+        "properties": {
+          "eligible": {
+            "type": "boolean",
+            "title": "Eligible",
+            "description": "Whether an advance is offered.",
+            "examples": [
+              true
+            ]
+          },
+          "max_amount": {
+            "type": "number",
+            "title": "Max Amount",
+            "description": "Offered amount.",
+            "examples": [
+              1400.0
+            ]
+          },
+          "pd": {
+            "type": "number",
+            "title": "Pd",
+            "description": "Probability of default, 0 to 1.",
+            "examples": [
+              0.18
+            ]
+          },
+          "fee_rate": {
+            "type": "number",
+            "title": "Fee Rate",
+            "description": "Fee rate on the advance.",
+            "examples": [
+              0.06
+            ]
+          },
+          "binding_cap": {
+            "type": "string",
+            "title": "Binding Cap",
+            "description": "Which cap bound the offer.",
+            "examples": [
+              "concentration"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation.",
+            "examples": [
+              "priced to default risk, capped by the fund"
+            ]
+          },
+          "pd_band": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pd Band",
+            "description": "Conformal interval on the default probability (pd, low, high, coverage).",
+            "examples": [
+              {
+                "coverage": 0.9,
+                "high": 0.33,
+                "low": 0.1,
+                "pd": 0.18
+              }
+            ]
+          },
+          "conservative_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conservative Max",
+            "description": "Offer sized to the upper end of the PD band (lends less when uncertain).",
+            "examples": [
+              1150.0
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "eligible",
+          "max_amount",
+          "pd",
+          "fee_rate",
+          "binding_cap",
+          "reason"
+        ],
+        "title": "AdvanceOut"
+      },
+      "AgentsIn": {
+        "properties": {
+          "ticks": {
+            "type": "integer",
+            "title": "Ticks",
+            "description": "Cycles of agent customers to run (1-3).",
+            "default": 1,
+            "examples": [
+              1
+            ]
+          }
+        },
+        "type": "object",
+        "title": "AgentsIn"
+      },
+      "Allocation": {
+        "properties": {
+          "member": {
+            "type": "string",
+            "title": "Member",
+            "description": "Member name.",
+            "examples": [
+              "Ava"
+            ]
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "description": "Whether the member was included.",
+            "examples": [
+              true
+            ]
+          },
+          "signed": {
+            "type": "boolean",
+            "title": "Signed",
+            "description": "Whether the mandate verified.",
+            "examples": [
+              true
+            ]
+          },
+          "share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share",
+            "description": "Fraction of the position owned.",
+            "examples": [
+              0.6
+            ]
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units",
+            "description": "Units owned.",
+            "examples": [
+              0.408
+            ]
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value",
+            "description": "Dollar value owned.",
+            "examples": [
+              300.0
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Why included or dropped.",
+            "examples": [
+              "authorized by signed mandate"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "member",
+          "ok",
+          "signed",
+          "reason"
+        ],
+        "title": "Allocation"
+      },
+      "BudgetSoundness": {
+        "properties": {
+          "proven": {
+            "type": "boolean",
+            "title": "Proven",
+            "description": "Whether the invariant was proven.",
+            "examples": [
+              true
+            ]
+          },
+          "base_case": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Case",
+            "description": "Whether the base case holds.",
+            "examples": [
+              true
+            ]
+          },
+          "inductive_step": {
+            "type": "string",
+            "title": "Inductive Step",
+            "description": "Z3 result for the step ('unsat' means proven).",
+            "examples": [
+              "unsat"
+            ]
+          },
+          "statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement",
+            "description": "What was proven.",
+            "examples": [
+              "for every sequence of admitted deals, spend stays within budget"
+            ]
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method",
+            "description": "Proof method.",
+            "examples": [
+              "Z3 inductive-invariant proof (unbounded)"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "proven",
+          "inductive_step"
+        ],
+        "title": "BudgetSoundness"
+      },
+      "Constraints": {
+        "properties": {
+          "max_fraction_per_creator": {
+            "type": "number",
+            "title": "Max Fraction Per Creator",
+            "description": "Cap on any one creator's share.",
+            "examples": [
+              0.2
+            ]
+          },
+          "exclude_countries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Exclude Countries",
+            "description": "Country codes to exclude.",
+            "examples": [
+              [
+                "NG"
+              ]
+            ]
+          },
+          "max_risk": {
+            "type": "number",
+            "title": "Max Risk",
+            "description": "Maximum per-creator risk allowed.",
+            "examples": [
+              0.6
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "max_fraction_per_creator",
+          "exclude_countries",
+          "max_risk"
+        ],
+        "title": "Constraints"
+      },
+      "Credential": {
+        "properties": {
+          "payload": {
+            "$ref": "#/components/schemas/MandatePayload",
+            "description": "The signed mandate payload."
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature",
+            "description": "ES256 signature over the payload.",
+            "examples": [
+              "MEUCIQ..."
+            ]
+          },
+          "alg": {
+            "type": "string",
+            "title": "Alg",
+            "description": "Signature algorithm.",
+            "examples": [
+              "ES256"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "payload",
+          "signature",
+          "alg"
+        ],
+        "title": "Credential"
+      },
+      "CriterionResult": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "Criterion name.",
+            "examples": [
+              "delivered"
+            ]
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed",
+            "description": "Whether it passed.",
+            "examples": [
+              true
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "passed"
+        ],
+        "title": "CriterionResult"
+      },
+      "CustomerGraphIn": {
+        "properties": {
+          "need": {
+            "type": "string",
+            "title": "Need",
+            "description": "What the buyer wants, in plain language.",
+            "default": "I need a good microphone for streaming my videos",
+            "examples": [
+              "I need a good microphone for streaming my videos"
+            ]
+          },
+          "budget": {
+            "type": "number",
+            "title": "Budget",
+            "description": "The buyer's signed budget ceiling.",
+            "default": 80,
+            "examples": [
+              80
+            ]
+          },
+          "categories": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categories",
+            "description": "The only product categories the owner's mandate allows (empty = any).",
+            "examples": [
+              [
+                "audio"
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "title": "CustomerGraphIn"
+      },
+      "DisputeIn": {
+        "properties": {
+          "order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Id",
+            "description": "The order the buyer disputes; defaults to your latest sale.",
+            "examples": [
+              "ome0007"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "The dispute status PayPal reports.",
+            "default": "WAITING_FOR_SELLER_RESPONSE",
+            "examples": [
+              "WAITING_FOR_SELLER_RESPONSE"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "DisputeIn"
+      },
+      "ErrorOut": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Why the request failed.",
+            "examples": [
+              "bad request"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorOut"
+      },
+      "EscrowIn": {
+        "properties": {
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Deal amount to hold in escrow.",
+            "default": 200,
+            "examples": [
+              200
+            ]
+          },
+          "cheat": {
+            "type": "boolean",
+            "title": "Cheat",
+            "description": "Deliver nothing and try to get paid, to show the refund.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          }
+        },
+        "type": "object",
+        "title": "EscrowIn"
+      },
+      "EscrowOut": {
+        "properties": {
+          "held": {
+            "$ref": "#/components/schemas/Held",
+            "description": "The authorized hold."
+          },
+          "settled": {
+            "$ref": "#/components/schemas/Settled",
+            "description": "The settlement outcome."
+          },
+          "backend": {
+            "type": "string",
+            "title": "Backend",
+            "description": "'paypal-sandbox' or 'demo'.",
+            "examples": [
+              "paypal-sandbox"
+            ]
+          },
+          "movements": {
+            "items": {
+              "$ref": "#/components/schemas/Movement"
+            },
+            "type": "array",
+            "title": "Movements",
+            "description": "Ledger movements."
+          }
+        },
+        "type": "object",
+        "required": [
+          "held",
+          "settled",
+          "backend",
+          "movements"
+        ],
+        "title": "EscrowOut"
+      },
+      "Fill": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Ticker filled.",
+            "examples": [
+              "SPY"
+            ]
+          },
+          "units": {
+            "type": "number",
+            "title": "Units",
+            "description": "Units bought.",
+            "examples": [
+              0.68
+            ]
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Fill price.",
+            "examples": [
+              735.29
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "units",
+          "price"
+        ],
+        "title": "Fill"
+      },
+      "GroupBuyIn": {
+        "properties": {
+          "item": {
+            "type": "string",
+            "title": "Item",
+            "description": "Item bought in bulk.",
+            "default": "preset pack",
+            "examples": [
+              "preset pack"
+            ]
+          },
+          "unit_price": {
+            "type": "number",
+            "title": "Unit Price",
+            "description": "List price per unit.",
+            "default": 20.0,
+            "examples": [
+              20
+            ]
+          },
+          "members": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GroupBuyMember"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Members",
+            "description": "People buying together."
+          }
+        },
+        "type": "object",
+        "title": "GroupBuyIn"
+      },
+      "GroupBuyLine": {
+        "properties": {
+          "member": {
+            "type": "string",
+            "title": "Member",
+            "description": "Member name.",
+            "examples": [
+              "Ava"
+            ]
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "description": "Whether the member's contribution was accepted.",
+            "examples": [
+              true
+            ]
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty",
+            "description": "Units this member took.",
+            "examples": [
+              2
+            ]
+          },
+          "solo_cost": {
+            "type": "number",
+            "title": "Solo Cost",
+            "description": "Cost buying alone.",
+            "examples": [
+              40.0
+            ]
+          },
+          "pooled_cost": {
+            "type": "number",
+            "title": "Pooled Cost",
+            "description": "Cost at the pooled discount.",
+            "examples": [
+              36.0
+            ]
+          },
+          "saving_shapley": {
+            "type": "number",
+            "title": "Saving Shapley",
+            "description": "Saving attributed by the Shapley value.",
+            "examples": [
+              4.0
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "member",
+          "ok",
+          "qty",
+          "solo_cost",
+          "pooled_cost",
+          "saving_shapley"
+        ],
+        "title": "GroupBuyLine"
+      },
+      "GroupBuyMember": {
+        "properties": {
+          "member": {
+            "type": "string",
+            "title": "Member",
+            "description": "Member name.",
+            "examples": [
+              "Ava"
+            ]
+          },
+          "qty": {
+            "type": "number",
+            "title": "Qty",
+            "description": "Units this member wants.",
+            "default": 1,
+            "examples": [
+              2
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "member"
+        ],
+        "title": "GroupBuyMember"
+      },
+      "GroupBuyOut": {
+        "properties": {
+          "discount_rate": {
+            "type": "number",
+            "title": "Discount Rate",
+            "description": "Unlocked volume-discount rate.",
+            "examples": [
+              0.1
+            ]
+          },
+          "pooled_qty": {
+            "type": "number",
+            "title": "Pooled Qty",
+            "description": "Total units bought together.",
+            "examples": [
+              7
+            ]
+          },
+          "unit_price": {
+            "type": "number",
+            "title": "Unit Price",
+            "description": "List price per unit.",
+            "examples": [
+              20.0
+            ]
+          },
+          "discounted_unit_price": {
+            "type": "number",
+            "title": "Discounted Unit Price",
+            "description": "Discounted price per unit.",
+            "examples": [
+              18.0
+            ]
+          },
+          "total_list": {
+            "type": "number",
+            "title": "Total List",
+            "description": "Total at list price.",
+            "examples": [
+              140.0
+            ]
+          },
+          "total_paid": {
+            "type": "number",
+            "title": "Total Paid",
+            "description": "Total actually paid.",
+            "examples": [
+              126.0
+            ]
+          },
+          "total_saved": {
+            "type": "number",
+            "title": "Total Saved",
+            "description": "Total saving.",
+            "examples": [
+              14.0
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/GroupBuyLine"
+            },
+            "type": "array",
+            "title": "Lines",
+            "description": "Per-member cost and Shapley saving."
+          }
+        },
+        "type": "object",
+        "required": [
+          "discount_rate",
+          "pooled_qty",
+          "unit_price",
+          "discounted_unit_price",
+          "total_list",
+          "total_paid",
+          "total_saved",
+          "lines"
+        ],
+        "title": "GroupBuyOut"
+      },
+      "GuardNecessity": {
+        "properties": {
+          "busts": {
+            "type": "boolean",
+            "title": "Busts",
+            "description": "Whether dropping the guard breaks the budget.",
+            "examples": [
+              true
+            ]
+          },
+          "n_deals": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Deals",
+            "description": "Deals needed to bust the budget.",
+            "examples": [
+              6
+            ]
+          },
+          "prices": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prices",
+            "description": "The busting deal prices.",
+            "examples": [
+              [
+                100,
+                100,
+                100,
+                100,
+                100,
+                0.5
+              ]
+            ]
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total",
+            "description": "Total of the busting deals.",
+            "examples": [
+              500.5
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Explanation.",
+            "examples": [
+              "each deal is within the per-item cap"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "busts"
+        ],
+        "title": "GuardNecessity"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail",
+            "description": "The list of validation errors.",
+            "examples": [
+              [
+                {
+                  "loc": [
+                    "body",
+                    "amount"
+                  ],
+                  "msg": "field required",
+                  "type": "value_error"
+                }
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthOut": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "examples": [
+              true
+            ]
+          },
+          "rails": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Rails",
+            "description": "Which live rails are configured.",
+            "examples": [
+              {
+                "alpaca_paper": true,
+                "channel3": true,
+                "model": true,
+                "paypal_sandbox": true
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "rails"
+        ],
+        "title": "HealthOut"
+      },
+      "Held": {
+        "properties": {
+          "buyer": {
+            "type": "string",
+            "title": "Buyer",
+            "description": "Buyer identifier.",
+            "examples": [
+              "buyer-agent"
+            ]
+          },
+          "seller": {
+            "type": "string",
+            "title": "Seller",
+            "description": "Seller identifier.",
+            "examples": [
+              "seller"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Amount held.",
+            "examples": [
+              200.0
+            ]
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Hold status.",
+            "examples": [
+              "held"
+            ]
+          },
+          "authorization_id": {
+            "type": "string",
+            "title": "Authorization Id",
+            "description": "PayPal authorization id.",
+            "examples": [
+              "62L62405124048331"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language status.",
+            "examples": [
+              "funds authorized and held"
+            ]
+          },
+          "criteria": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Criteria",
+            "description": "Acceptance criteria keys.",
+            "examples": [
+              [
+                "delivered",
+                "tests_passed"
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "buyer",
+          "seller",
+          "amount",
+          "status",
+          "authorization_id",
+          "reason",
+          "criteria"
+        ],
+        "title": "Held"
+      },
+      "IdentityIn": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id",
+            "description": "The agent's id.",
+            "default": "agent-7",
+            "examples": [
+              "agent-7"
+            ]
+          },
+          "owner": {
+            "type": "string",
+            "title": "Owner",
+            "description": "The account that owns the agent.",
+            "default": "ava",
+            "examples": [
+              "ava"
+            ]
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities",
+            "description": "Capabilities the identity is issued with.",
+            "examples": [
+              [
+                "buy",
+                "pool"
+              ]
+            ]
+          },
+          "require": {
+            "type": "string",
+            "title": "Require",
+            "description": "A capability the counterparty requires it to carry.",
+            "default": "buy",
+            "examples": [
+              "buy"
+            ]
+          },
+          "tamper": {
+            "type": "boolean",
+            "title": "Tamper",
+            "description": "Change the owner without re-signing, to show rejection.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          }
+        },
+        "type": "object",
+        "title": "IdentityIn"
+      },
+      "InvestIn": {
+        "properties": {
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Notional to invest across the basket.",
+            "default": 1000,
+            "examples": [
+              1000
+            ]
+          }
+        },
+        "type": "object",
+        "title": "InvestIn"
+      },
+      "InvestOut": {
+        "properties": {
+          "backend": {
+            "type": "string",
+            "title": "Backend",
+            "description": "'alpaca-paper' or a live-price source.",
+            "examples": [
+              "alpaca-paper"
+            ]
+          },
+          "fills": {
+            "items": {
+              "$ref": "#/components/schemas/Fill"
+            },
+            "type": "array",
+            "title": "Fills",
+            "description": "Per-ticker fills."
+          },
+          "cost_basis": {
+            "type": "number",
+            "title": "Cost Basis",
+            "description": "Total cost basis.",
+            "examples": [
+              1000.0
+            ]
+          },
+          "market_value": {
+            "type": "number",
+            "title": "Market Value",
+            "description": "Marked-to-market value.",
+            "examples": [
+              1000.0
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "backend",
+          "fills",
+          "cost_basis",
+          "market_value"
+        ],
+        "title": "InvestOut"
+      },
+      "KnowledgeIn": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "What the agent is about to decide.",
+            "default": "",
+            "examples": [
+              "how much should we lend to a risky borrower"
+            ]
+          },
+          "k": {
+            "type": "integer",
+            "title": "K",
+            "description": "How many principles to retrieve.",
+            "default": 4,
+            "examples": [
+              4
+            ]
+          }
+        },
+        "type": "object",
+        "title": "KnowledgeIn"
+      },
+      "KnowledgeOut": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "examples": [
+              "how much should we lend"
+            ]
+          },
+          "principles": {
+            "items": {
+              "$ref": "#/components/schemas/Principle"
+            },
+            "type": "array",
+            "title": "Principles",
+            "description": "The retrieved grounding."
+          },
+          "available_topics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Available Topics",
+            "description": "Every topic in the base."
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "principles",
+          "available_topics"
+        ],
+        "title": "KnowledgeOut"
+      },
+      "MandatePayload": {
+        "properties": {
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type",
+            "description": "Credential type.",
+            "examples": [
+              "IntentMandate"
+            ]
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner",
+            "description": "Owner name.",
+            "examples": [
+              "creator-1"
+            ]
+          },
+          "max_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Total",
+            "description": "Total budget.",
+            "examples": [
+              500.0
+            ]
+          },
+          "max_per_item": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Per Item",
+            "description": "Per-item cap.",
+            "examples": [
+              100.0
+            ]
+          },
+          "allowed_categories": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Categories",
+            "description": "Allowed categories.",
+            "examples": [
+              [
+                "stock_photos",
+                "music_license",
+                "fonts"
+              ]
+            ]
+          },
+          "approval_threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Threshold",
+            "description": "Auto-approve under this.",
+            "examples": [
+              50.0
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "MandatePayload"
+      },
+      "Movement": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Ledger movement kind.",
+            "examples": [
+              "capture"
+            ]
+          },
+          "ref_type": {
+            "type": "string",
+            "title": "Ref Type",
+            "description": "Referenced object type.",
+            "examples": [
+              "authorization"
+            ]
+          },
+          "ref_id": {
+            "type": "string",
+            "title": "Ref Id",
+            "description": "Referenced object id.",
+            "examples": [
+              "62L62405124048331"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Amount moved.",
+            "examples": [
+              200.0
+            ]
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Movement status.",
+            "examples": [
+              "captured"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "ref_type",
+          "ref_id",
+          "amount",
+          "status"
+        ],
+        "title": "Movement"
+      },
+      "NegotiateIn": {
+        "properties": {
+          "listing": {
+            "type": "string",
+            "title": "Listing",
+            "description": "The marketplace listing your agent negotiates for.",
+            "examples": [
+              "l00018"
+            ]
+          },
+          "max_per_item": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Per Item",
+            "description": "Re-sign your mandate with this per-item cap (your agent counters down to it).",
+            "examples": [
+              20
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "listing"
+        ],
+        "title": "NegotiateIn"
+      },
+      "OperatorGraphIn": {
+        "properties": {
+          "signal": {
+            "type": "string",
+            "title": "Signal",
+            "description": "The cycle's operational signal the agents react to.",
+            "default": "Risk alert: a fraud and chargeback wave is hitting brand-new viral accounts this week.",
+            "examples": [
+              "Risk alert: a fraud and chargeback wave is hitting brand-new viral accounts this week."
+            ]
+          },
+          "debate_rounds": {
+            "type": "integer",
+            "title": "Debate Rounds",
+            "description": "How many bull/bear debate rounds.",
+            "default": 1,
+            "examples": [
+              1
+            ]
+          }
+        },
+        "type": "object",
+        "title": "OperatorGraphIn"
+      },
+      "PerItemNecessity": {
+        "properties": {
+          "needed": {
+            "type": "boolean",
+            "title": "Needed",
+            "description": "Whether the per-item cap is non-redundant.",
+            "examples": [
+              true
+            ]
+          },
+          "example_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example Price",
+            "description": "A deal over the cap but within budget.",
+            "examples": [
+              200.0
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Explanation.",
+            "examples": [
+              "this single deal exceeds the per-item cap yet fits the budget"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "needed"
+        ],
+        "title": "PerItemNecessity"
+      },
+      "PnlIn": {
+        "properties": {
+          "gmv_history": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gmv History",
+            "description": "Recent GMV history to forecast from; a default trend is used if omitted.",
+            "examples": [
+              [
+                42000,
+                45000,
+                43000,
+                47000,
+                49000,
+                48000,
+                52000,
+                54000,
+                53000,
+                57000,
+                59000,
+                61000
+              ]
+            ]
+          },
+          "horizon": {
+            "type": "integer",
+            "title": "Horizon",
+            "description": "Periods to forecast.",
+            "default": 4,
+            "examples": [
+              4
+            ]
+          },
+          "fund": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fund",
+            "description": "Safety-fund balance (defaults to your account's live fund).",
+            "examples": [
+              10000
+            ]
+          }
+        },
+        "type": "object",
+        "title": "PnlIn"
+      },
+      "PolicyIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "Treasury policy in plain English.",
+            "default": "",
+            "examples": [
+              "Pay the longest-waiting creators first, never send more than 20 percent to any one creator, and hold anyone high risk."
+            ]
+          }
+        },
+        "type": "object",
+        "title": "PolicyIn"
+      },
+      "PolicyOut": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "'model' when the live model compiled it, else 'fallback'.",
+            "examples": [
+              "model"
+            ]
+          },
+          "reading": {
+            "type": "string",
+            "title": "Reading",
+            "description": "How the model read the policy.",
+            "examples": [
+              "pay longest-waiting first, cap 20% per creator, hold high risk"
+            ]
+          },
+          "compiled": {
+            "type": "string",
+            "title": "Compiled",
+            "description": "What the solver will enforce, written from the compiled numbers.",
+            "default": "",
+            "examples": [
+              "The solver will cap any one creator at 20% of the batch."
+            ]
+          },
+          "weights": {
+            "$ref": "#/components/schemas/Weights",
+            "description": "Objective weights."
+          },
+          "constraints": {
+            "$ref": "#/components/schemas/Constraints",
+            "description": "Hard constraints."
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations",
+            "description": "Any bounds the policy tried to break.",
+            "examples": [
+              []
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "reading",
+          "weights",
+          "constraints"
+        ],
+        "title": "PolicyOut"
+      },
+      "PoolInvestIn": {
+        "properties": {
+          "asset": {
+            "type": "string",
+            "title": "Asset",
+            "description": "Ticker to co-own.",
+            "default": "SPY",
+            "examples": [
+              "SPY"
+            ]
+          },
+          "members": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PoolInvestMember"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Members",
+            "description": "People pooling into the position."
+          },
+          "forge": {
+            "type": "boolean",
+            "title": "Forge",
+            "description": "Tamper the first member's mandate to show it is excluded.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          }
+        },
+        "type": "object",
+        "title": "PoolInvestIn"
+      },
+      "PoolInvestMember": {
+        "properties": {
+          "member": {
+            "type": "string",
+            "title": "Member",
+            "description": "Member name.",
+            "examples": [
+              "Ava"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Cash this member pools.",
+            "default": 0,
+            "examples": [
+              300
+            ]
+          },
+          "budget": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget",
+            "description": "Signed budget (defaults to amount).",
+            "examples": [
+              300
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "member"
+        ],
+        "title": "PoolInvestMember"
+      },
+      "PoolInvestOut": {
+        "properties": {
+          "asset": {
+            "type": "string",
+            "title": "Asset",
+            "description": "Ticker co-owned.",
+            "examples": [
+              "SPY"
+            ]
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label",
+            "description": "Human label for the pool.",
+            "examples": [
+              "SPY pool"
+            ]
+          },
+          "funded_total": {
+            "type": "number",
+            "title": "Funded Total",
+            "description": "Total cash pooled.",
+            "examples": [
+              500.0
+            ]
+          },
+          "total_units": {
+            "type": "number",
+            "title": "Total Units",
+            "description": "Units bought for the pool.",
+            "examples": [
+              0.68
+            ]
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Fill price per unit.",
+            "examples": [
+              735.29
+            ]
+          },
+          "backend": {
+            "type": "string",
+            "title": "Backend",
+            "description": "'alpaca-paper' or a live-price source.",
+            "examples": [
+              "alpaca-paper"
+            ]
+          },
+          "routed_to_alpaca": {
+            "type": "boolean",
+            "title": "Routed To Alpaca",
+            "description": "Whether a real paper order was placed.",
+            "examples": [
+              true
+            ]
+          },
+          "members": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Members",
+            "description": "Member names in the pool.",
+            "examples": [
+              [
+                "Ava",
+                "Ben",
+                "Chen"
+              ]
+            ]
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            },
+            "type": "array",
+            "title": "Allocations",
+            "description": "Per-member share of the position."
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset",
+          "funded_total",
+          "total_units",
+          "price",
+          "backend",
+          "routed_to_alpaca",
+          "allocations"
+        ],
+        "title": "PoolInvestOut"
+      },
+      "Principle": {
+        "properties": {
+          "topic": {
+            "type": "string",
+            "title": "Topic",
+            "examples": [
+              "expected loss"
+            ]
+          },
+          "statement": {
+            "type": "string",
+            "title": "Statement",
+            "examples": [
+              "Expected Loss = PD x LGD x EAD"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "examples": [
+              "Basel credit-risk framework"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "topic",
+          "statement",
+          "source"
+        ],
+        "title": "Principle"
+      },
+      "Product": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Product id.",
+            "examples": [
+              "abc123"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Product title.",
+            "examples": [
+              "Beamo Ring Light (12\")"
+            ]
+          },
+          "brand": {
+            "type": "string",
+            "title": "Brand",
+            "description": "Brand name.",
+            "examples": [
+              "JOBY"
+            ]
+          },
+          "merchant": {
+            "type": "string",
+            "title": "Merchant",
+            "description": "Merchant domain.",
+            "examples": [
+              "bhphotovideo.com"
+            ]
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Price.",
+            "examples": [
+              24.95
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "description": "Currency code.",
+            "examples": [
+              "USD"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "Buy URL.",
+            "examples": [
+              "https://www.bhphotovideo.com"
+            ]
+          },
+          "image": {
+            "type": "string",
+            "title": "Image",
+            "description": "Image URL, if any.",
+            "examples": [
+              ""
+            ]
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Category slug.",
+            "examples": [
+              "lighting"
+            ]
+          },
+          "affordable": {
+            "type": "boolean",
+            "title": "Affordable",
+            "description": "Whether it fits the stated budget.",
+            "examples": [
+              true
+            ]
+          },
+          "intent_token": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Token",
+            "description": "Single-use token binding this exact item, amount and category; present it to buy."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "brand",
+          "merchant",
+          "price",
+          "currency",
+          "url",
+          "image",
+          "category",
+          "affordable"
+        ],
+        "title": "Product"
+      },
+      "QuoteOut": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Uppercased ticker.",
+            "examples": [
+              "SPY"
+            ]
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Latest price.",
+            "examples": [
+              735.29
+            ]
+          },
+          "backend": {
+            "type": "string",
+            "title": "Backend",
+            "description": "'alpaca-paper' or a live-price source.",
+            "examples": [
+              "alpaca-paper"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "price",
+          "backend"
+        ],
+        "title": "QuoteOut"
+      },
+      "ReceiptsIn": {
+        "properties": {
+          "tamper": {
+            "type": "boolean",
+            "title": "Tamper",
+            "description": "Edit a settled receipt after the fact to show the chain breaks.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ReceiptsIn"
+      },
+      "ReconIn": {
+        "properties": {
+          "inject_discrepancy": {
+            "type": "boolean",
+            "title": "Inject Discrepancy",
+            "description": "Introduce a mismatch to show it is caught.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ReconIn"
+      },
+      "ReservesIn": {
+        "properties": {
+          "lots": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lots",
+            "description": "Safety-fund reserve lots.",
+            "examples": [
+              [
+                12000,
+                3000,
+                500
+              ]
+            ]
+          },
+          "liabilities": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liabilities",
+            "description": "Published liabilities (defaults to what your account's platform owes creators).",
+            "examples": [
+              9000
+            ]
+          },
+          "bits": {
+            "type": "integer",
+            "title": "Bits",
+            "description": "Range-proof width in bits.",
+            "default": 32,
+            "examples": [
+              32
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ReservesIn"
+      },
+      "ReservesOut": {
+        "properties": {
+          "solvent": {
+            "type": "boolean",
+            "title": "Solvent",
+            "description": "Whether solvency verified.",
+            "examples": [
+              true
+            ]
+          },
+          "provable": {
+            "type": "boolean",
+            "title": "Provable",
+            "description": "Whether a proof exists (false if insolvent).",
+            "examples": [
+              true
+            ]
+          },
+          "identity_ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identity Ok",
+            "description": "Whether the homomorphic identity held.",
+            "examples": [
+              true
+            ]
+          },
+          "bits_ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bits Ok",
+            "description": "Whether all bit proofs verified.",
+            "examples": [
+              true
+            ]
+          },
+          "liabilities_bound": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liabilities Bound",
+            "description": "Whether the liability commitment opens to the published liabilities.",
+            "examples": [
+              true
+            ]
+          },
+          "published_liabilities": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published Liabilities",
+            "description": "The public liabilities proven against.",
+            "examples": [
+              9000
+            ]
+          },
+          "range_bits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Range Bits",
+            "description": "Range-proof width.",
+            "examples": [
+              32
+            ]
+          },
+          "lot_commitments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lot Commitments",
+            "description": "Number of hidden reserve lots.",
+            "examples": [
+              3
+            ]
+          },
+          "bit_proofs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bit Proofs",
+            "description": "Number of bit proofs.",
+            "examples": [
+              32
+            ]
+          },
+          "liability_commitment_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liability Commitment Sha256",
+            "description": "Hash of the liability commitment.",
+            "examples": [
+              "492439bf00678053"
+            ]
+          },
+          "reveals": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reveals",
+            "description": "What the proof reveals.",
+            "examples": [
+              "nothing but reserves >= liabilities"
+            ]
+          },
+          "statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement",
+            "description": "What was proven.",
+            "examples": [
+              "reserves - liabilities lies in [0, 2^32) in zero knowledge"
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Why a proof could not be produced, if any.",
+            "examples": [
+              "insolvent: reserves below liabilities"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "solvent",
+          "provable"
+        ],
+        "title": "ReservesOut"
+      },
+      "ScanIn": {
+        "properties": {
+          "apply": {
+            "type": "boolean",
+            "title": "Apply",
+            "description": "Suspend what the engines flag (freezing those creators' earnings).",
+            "default": true,
+            "examples": [
+              true
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ScanIn"
+      },
+      "SettleIn": {
+        "properties": {
+          "escrow_id": {
+            "type": "string",
+            "title": "Escrow Id",
+            "description": "The open hold to settle.",
+            "examples": [
+              "a1b2c3d4e5"
+            ]
+          },
+          "delivered": {
+            "type": "boolean",
+            "title": "Delivered",
+            "description": "True captures to the merchant; false voids the hold.",
+            "examples": [
+              true
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "escrow_id",
+          "delivered"
+        ],
+        "title": "SettleIn"
+      },
+      "Settled": {
+        "properties": {
+          "buyer": {
+            "type": "string",
+            "title": "Buyer",
+            "description": "Buyer identifier.",
+            "examples": [
+              "buyer-agent"
+            ]
+          },
+          "seller": {
+            "type": "string",
+            "title": "Seller",
+            "description": "Seller identifier.",
+            "examples": [
+              "seller"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Amount settled.",
+            "examples": [
+              200.0
+            ]
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "'released' or 'refunded'.",
+            "examples": [
+              "released"
+            ]
+          },
+          "authorization_id": {
+            "type": "string",
+            "title": "Authorization Id",
+            "description": "PayPal authorization id.",
+            "examples": [
+              "62L62405124048331"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language outcome.",
+            "examples": [
+              "all criteria met; captured"
+            ]
+          },
+          "criteria": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Criteria",
+            "description": "Acceptance criteria keys.",
+            "examples": [
+              [
+                "delivered",
+                "tests_passed"
+              ]
+            ]
+          },
+          "criteria_results": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionResult"
+            },
+            "type": "array",
+            "title": "Criteria Results",
+            "description": "Per-criterion outcome."
+          }
+        },
+        "type": "object",
+        "required": [
+          "buyer",
+          "seller",
+          "amount",
+          "status",
+          "authorization_id",
+          "reason",
+          "criteria",
+          "criteria_results"
+        ],
+        "title": "Settled"
+      },
+      "ShopBuyIn": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Product title.",
+            "default": "item",
+            "examples": [
+              "USB condenser microphone"
+            ]
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Product price.",
+            "default": 0,
+            "examples": [
+              99
+            ]
+          },
+          "merchant": {
+            "type": "string",
+            "title": "Merchant",
+            "description": "Merchant domain.",
+            "default": "merchant",
+            "examples": [
+              "bhphotovideo.com"
+            ]
+          },
+          "budget": {
+            "type": "number",
+            "title": "Budget",
+            "description": "Signed spend budget.",
+            "default": 0,
+            "examples": [
+              120
+            ]
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Product category.",
+            "default": "goods",
+            "examples": [
+              "audio"
+            ]
+          },
+          "listing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing",
+            "description": "A marketplace listing id: buying it pays that creator.",
+            "examples": [
+              "l00018"
+            ]
+          },
+          "intent_token": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Token",
+            "description": "The single-use token issued at search; binds the charge to the exact reviewed item/amount/category. A mismatched charge is refused."
+          }
+        },
+        "type": "object",
+        "title": "ShopBuyIn"
+      },
+      "ShopBuyOut": {
+        "properties": {
+          "authorized": {
+            "type": "boolean",
+            "title": "Authorized",
+            "description": "Whether the signed budget authorized the buy.",
+            "examples": [
+              true
+            ]
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Product title.",
+            "examples": [
+              "Beamo Ring Light (12\")"
+            ]
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Price paid.",
+            "examples": [
+              24.95
+            ]
+          },
+          "merchant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merchant",
+            "description": "Merchant paid.",
+            "examples": [
+              "bhphotovideo.com"
+            ]
+          },
+          "budget": {
+            "type": "number",
+            "title": "Budget",
+            "description": "Signed budget.",
+            "default": 0,
+            "examples": [
+              80.0
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language outcome.",
+            "default": "",
+            "examples": [
+              "authorized within the $80 signed budget and paid the merchant via escrow"
+            ]
+          },
+          "backend": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backend",
+            "description": "'paypal-sandbox' or 'demo'.",
+            "examples": [
+              "paypal-sandbox"
+            ]
+          },
+          "held": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Held"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The authorized hold, if the buy went through."
+          },
+          "settled": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Settled"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The settlement, if the buy went through."
+          }
+        },
+        "type": "object",
+        "required": [
+          "authorized",
+          "title",
+          "price"
+        ],
+        "title": "ShopBuyOut"
+      },
+      "ShopSearchIn": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "What to buy, in natural language.",
+            "default": "",
+            "examples": [
+              "microphone for streaming"
+            ]
+          },
+          "budget": {
+            "type": "number",
+            "title": "Budget",
+            "description": "Earnings to spend; flags affordable results.",
+            "default": 0,
+            "examples": [
+              120
+            ]
+          },
+          "demo_injection": {
+            "type": "boolean",
+            "title": "Demo Injection",
+            "description": "Plant a prompt-injection product to show it is quarantined.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ShopSearchIn"
+      },
+      "ShopSearchOut": {
+        "properties": {
+          "backend": {
+            "type": "string",
+            "title": "Backend",
+            "description": "'channel3' live or 'demo-catalog'.",
+            "examples": [
+              "channel3"
+            ]
+          },
+          "live": {
+            "type": "boolean",
+            "title": "Live",
+            "description": "Whether a Channel3 key is configured.",
+            "examples": [
+              true
+            ]
+          },
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "The query searched.",
+            "examples": [
+              "ring light"
+            ]
+          },
+          "budget": {
+            "type": "number",
+            "title": "Budget",
+            "description": "The stated budget.",
+            "examples": [
+              80.0
+            ]
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            },
+            "type": "array",
+            "title": "Products",
+            "description": "Matching products, injection-screened."
+          },
+          "quarantined": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Quarantined",
+            "description": "Products whose text was quarantined for prompt injection."
+          }
+        },
+        "type": "object",
+        "required": [
+          "backend",
+          "live",
+          "query",
+          "budget",
+          "products"
+        ],
+        "title": "ShopSearchOut"
+      },
+      "SignalIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "An operational signal to react to.",
+            "default": "",
+            "examples": [
+              "A hurricane warning just hit the US southeast; expect a demand spike."
+            ]
+          },
+          "current_period": {
+            "type": "integer",
+            "title": "Current Period",
+            "description": "Index of the current period.",
+            "default": 0,
+            "examples": [
+              0
+            ]
+          },
+          "baseline_demand": {
+            "type": "number",
+            "title": "Baseline Demand",
+            "description": "Baseline demand before adjustment.",
+            "default": 1000,
+            "examples": [
+              1000
+            ]
+          },
+          "horizon": {
+            "type": "integer",
+            "title": "Horizon",
+            "description": "Number of periods to forecast.",
+            "default": 6,
+            "examples": [
+              6
+            ]
+          }
+        },
+        "type": "object",
+        "title": "SignalIn"
+      },
+      "SignalOut": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "'model' or 'fallback'.",
+            "examples": [
+              "model"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "description": "Why the adjustment was made.",
+            "examples": [
+              "a demand spike is likely next week"
+            ]
+          },
+          "cited": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cited",
+            "description": "The signal phrase the model cited.",
+            "examples": [
+              "hurricane warning"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence",
+            "description": "Model confidence, 0 to 1.",
+            "examples": [
+              0.7
+            ]
+          },
+          "disagreement": {
+            "type": "number",
+            "title": "Disagreement",
+            "description": "Ensemble disagreement, 0 to 1.",
+            "examples": [
+              0.15
+            ]
+          },
+          "period_deltas": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Period Deltas",
+            "description": "Demand delta per period index.",
+            "examples": [
+              {
+                "1": 120.0,
+                "2": 90.0
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "rationale",
+          "confidence",
+          "disagreement",
+          "period_deltas"
+        ],
+        "title": "SignalOut"
+      },
+      "TaxOut": {
+        "properties": {
+          "form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form",
+            "description": "Reporting form (1099-K / DAC7).",
+            "examples": [
+              "1099-K"
+            ]
+          },
+          "box_1a_gross": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Box 1A Gross",
+            "description": "Gross reportable amount.",
+            "examples": [
+              25000.0
+            ]
+          },
+          "transactions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactions",
+            "description": "Transaction count.",
+            "examples": [
+              250
+            ]
+          },
+          "federal_threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Federal Threshold",
+            "description": "Federal reporting threshold.",
+            "examples": [
+              "$20,000"
+            ]
+          },
+          "reportable_federally": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportable Federally",
+            "description": "Whether it is federally reportable.",
+            "examples": [
+              true
+            ]
+          },
+          "reportable_in_low_threshold_states": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportable In Low Threshold States",
+            "description": "Whether a low-threshold state would report it.",
+            "examples": [
+              true
+            ]
+          },
+          "state_threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State Threshold",
+            "description": "Lowest state threshold.",
+            "examples": [
+              "$600"
+            ]
+          },
+          "net_after_platform_fees": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net After Platform Fees",
+            "description": "Net after platform fees.",
+            "examples": [
+              23750.0
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Any caveat.",
+            "examples": [
+              "backup withholding may apply"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "TaxOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location",
+            "description": "Path to the field that failed validation.",
+            "examples": [
+              [
+                "body",
+                "amount"
+              ]
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable error message.",
+            "examples": [
+              "field required"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type",
+            "description": "Machine-readable error type code.",
+            "examples": [
+              "value_error"
+            ]
+          },
+          "input": {
+            "title": "Input",
+            "description": "The input value that failed validation.",
+            "examples": [
+              "not-a-number"
+            ]
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context",
+            "description": "Extra context about the error.",
+            "examples": [
+              {
+                "limit": 0
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VerifyMandateIn": {
+        "properties": {
+          "max_total": {
+            "type": "number",
+            "title": "Max Total",
+            "description": "Total budget the owner signs.",
+            "default": 500,
+            "examples": [
+              500
+            ]
+          },
+          "max_per_item": {
+            "type": "number",
+            "title": "Max Per Item",
+            "description": "Per-item cap.",
+            "default": 100,
+            "examples": [
+              100
+            ]
+          },
+          "owner": {
+            "type": "string",
+            "title": "Owner",
+            "description": "Mandate owner.",
+            "default": "agent",
+            "examples": [
+              "agent"
+            ]
+          },
+          "forge": {
+            "type": "boolean",
+            "title": "Forge",
+            "description": "Widen the budget without re-signing, to show rejection.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          }
+        },
+        "type": "object",
+        "title": "VerifyMandateIn"
+      },
+      "VerifyMandateOut": {
+        "properties": {
+          "verified_signature": {
+            "type": "boolean",
+            "title": "Verified Signature",
+            "description": "Whether the mandate signature verified.",
+            "examples": [
+              true
+            ]
+          },
+          "result": {
+            "type": "string",
+            "title": "Result",
+            "description": "PROVEN_BOUNDED, NOT_PROVEN or REJECTED.",
+            "examples": [
+              "PROVEN_BOUNDED"
+            ]
+          },
+          "budget_soundness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BudgetSoundness"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The budget-soundness proof."
+          },
+          "guard_necessity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GuardNecessity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The running-total guard counterexample."
+          },
+          "per_item_necessity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerItemNecessity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The per-item guard counterexample."
+          },
+          "verdict_alg": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict Alg",
+            "description": "Algorithm the verdict is signed with.",
+            "examples": [
+              "ES256"
+            ]
+          },
+          "verdict_signed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict Signed",
+            "description": "Whether a signed verdict was emitted.",
+            "examples": [
+              true
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "verified_signature",
+          "result"
+        ],
+        "title": "VerifyMandateOut"
+      },
+      "Weights": {
+        "properties": {
+          "speed": {
+            "type": "number",
+            "title": "Speed",
+            "description": "Weight on paying the longest-waiting first.",
+            "examples": [
+              0.6
+            ]
+          },
+          "tax": {
+            "type": "number",
+            "title": "Tax",
+            "description": "Weight on minimizing tax withheld.",
+            "examples": [
+              0.1
+            ]
+          },
+          "risk": {
+            "type": "number",
+            "title": "Risk",
+            "description": "Weight on avoiding risky creators.",
+            "examples": [
+              0.3
+            ]
+          },
+          "fx": {
+            "type": "number",
+            "title": "Fx",
+            "description": "Weight on minimizing FX cost.",
+            "examples": [
+              0.0
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "speed",
+          "tax",
+          "risk",
+          "fx"
+        ],
+        "title": "Weights"
+      },
+      "X402In": {
+        "properties": {
+          "resource": {
+            "type": "string",
+            "title": "Resource",
+            "description": "The resource the agent wants.",
+            "default": "premium-signal",
+            "examples": [
+              "premium-signal"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Price per request.",
+            "default": 0.25,
+            "examples": [
+              0.25
+            ]
+          },
+          "pay": {
+            "type": "boolean",
+            "title": "Pay",
+            "description": "Whether the agent pays; if false, only the 402 challenge is returned.",
+            "default": true,
+            "examples": [
+              true
+            ]
+          },
+          "tamper": {
+            "type": "boolean",
+            "title": "Tamper",
+            "description": "Pay a different amount than agreed, to show it is refused.",
+            "default": false,
+            "examples": [
+              false
+            ]
+          }
+        },
+        "type": "object",
+        "title": "X402In"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "dashboard",
+      "description": "The rendered page, its data, and health."
+    },
+    {
+      "name": "ai",
+      "description": "Model-driven judgment: policy compiler and signal reader."
+    },
+    {
+      "name": "treasury",
+      "description": "Payout economics: investing, advances, tax, quotes."
+    },
+    {
+      "name": "agent",
+      "description": "Signed owner mandates for autonomous agent spending."
+    },
+    {
+      "name": "pooling",
+      "description": "Co-ownership and group buying under signed budgets."
+    },
+    {
+      "name": "proofs",
+      "description": "Formal (Z3) and zero-knowledge guarantees."
+    },
+    {
+      "name": "commerce",
+      "description": "Buyer side: escrow and real-product purchasing."
+    }
+  ]
+}

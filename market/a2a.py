@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from paypal import Ledger, PayPalClient, capture_order, create_order
+from paypal import Ledger, PayPalClient, capture_order, create_order, sandbox_buyer_source
 
 from .mandates import verify_credential
 from .marketplace import Marketplace, Order
@@ -47,6 +47,39 @@ class Mandate:
                    nonce=p.get("nonce", ""))
 
 
+def check_deal(intent_credential: dict, category: str, price: float, spent: float = 0.0,
+               cart_credential: dict = None) -> dict:
+    """Verify a signed mandate and decide if one proposed deal is allowed, without
+    settling. Returns {verified, fits, needs_approval, reason}. Stateless, so an
+    agent (or an MCP client) can check a deal before it ever reaches PayPal."""
+    ok, payload, reason = verify_credential(intent_credential)
+    if not ok or payload.get("type") != "IntentMandate":
+        return {"verified": False, "fits": False, "needs_approval": False,
+                "reason": f"intent mandate did not verify: {reason}"}
+    md = Mandate.from_payload(payload)
+    price = float(price)
+    if not md.allows(category):
+        return {"verified": True, "fits": False, "needs_approval": False,
+                "reason": f"category '{category}' is not in the mandate"}
+    if price > md.max_per_item + 1e-6:
+        return {"verified": True, "fits": False, "needs_approval": False,
+                "reason": f"{price:.2f} over the per-item cap {md.max_per_item:.2f}"}
+    if spent + price > md.max_total + 1e-6:
+        return {"verified": True, "fits": False, "needs_approval": False,
+                "reason": f"{price:.2f} would breach the total budget {md.max_total:.2f}"}
+    if price > md.approval_threshold:
+        good_cart = False
+        if cart_credential and cart_credential.get("public_key") == intent_credential.get("public_key"):
+            cok, cp, _ = verify_credential(cart_credential)
+            good_cart = bool(cok and cp.get("type") == "CartMandate"
+                             and float(cp.get("amount", 0)) + 1e-6 >= price)
+        if not good_cart:
+            return {"verified": True, "fits": True, "needs_approval": True,
+                    "reason": f"{price:.2f} over the threshold {md.approval_threshold:.2f}; "
+                              "needs a cart mandate the owner signed for this deal"}
+    return {"verified": True, "fits": True, "needs_approval": False, "reason": "approved under the mandate"}
+
+
 @dataclass
 class Deal:
     buyer: str
@@ -67,6 +100,7 @@ class A2ADesk:
     ledger: Ledger
     spent: float = 0.0                     # running total spent under the mandate
     _n: int = field(default=0)
+    payee_for: object = None               # seller id -> PayPal seller email, or None for the platform
 
     def negotiate(self, mandate: Mandate, listing) -> tuple:
         ask = listing.price
@@ -121,11 +155,17 @@ class A2ADesk:
             return Deal(**base, agreed=agreed, status="needs_owner_approval",
                         reason=f"{agreed:.2f} is over the threshold {mandate.approval_threshold:.2f}; "
                                "needs a cart mandate the owner signed for this exact deal")
-        # settle on PayPal Orders (money in), idempotent per deal
+        # settle on PayPal Orders, paid to the selling creator when they have a seller account
         ref = f"a2a-{listing_id}-{self._n}"
         self._n += 1
-        res = create_order(self.client, self.ledger, agreed, reference=ref, kind="order")
-        capture_order(self.client, self.ledger, res.order_id, agreed)
+        payee = self.payee_for(listing.seller) if self.payee_for else None
+        res = create_order(self.client, self.ledger, agreed, reference=ref, kind="order",
+                           payee_email=payee, payment_source=sandbox_buyer_source(self.client))
+        if res.ok and res.status != "completed":
+            res = capture_order(self.client, self.ledger, res.order_id, agreed)
+        if not res.ok:
+            return Deal(**base, agreed=agreed, status="payment_failed",
+                        reason=f"PayPal refused the payment: {res.error}")
         self.spent = round(self.spent + agreed, 2)
         self.market.place_order(Order(id=f"a2a{self._n:04d}", buyer=mandate.owner,
                                       seller=listing.seller, listing=listing_id,

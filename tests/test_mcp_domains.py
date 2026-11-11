@@ -36,4 +36,21 @@ def test_market_server_exposes_tools_and_backs_a_business():
     out = _json(asyncio.run(server.call_tool("back_business", {
         "name": "Lagos Coffee", "kind": "restaurant", "target": 1000.0,
         "amount": 600.0, "creator": "Ava", "monthly_return": 0.02})))
-    assert out["backed"] == 600.0 and abs(out["share"] - 1.0) < 1e-6   # sole backer so far
+    assert out["backed"] == 600.0 and abs(out["share"] - 1.0) < 1e-6
+
+
+def test_trust_server_tax_and_mandate_check_over_mcp():
+    from market.mandates import OwnerKey, issue_intent_mandate
+    server = build_trust_server()
+    names = {t.name for t in asyncio.run(server.list_tools())}
+    assert {"tax_regime", "a2a_check"} <= names
+    us = _json(asyncio.run(server.call_tool("tax_regime",
+               {"country": "US", "gross": 50000, "transactions": 250, "fees": 5000})))
+    assert us["form"] == "US 1099-K" and us["reportable_federally"] is True
+    intent = issue_intent_mandate(OwnerKey(), "b", 500, 100, ("prints",), approval_threshold=1e9)
+    ok = _json(asyncio.run(server.call_tool("a2a_check",
+               {"intent_credential": intent, "category": "prints", "price": 40})))
+    assert ok["verified"] is True and ok["fits"] is True and ok["needs_approval"] is False
+    bad = _json(asyncio.run(server.call_tool("a2a_check",
+                {"intent_credential": intent, "category": "beats", "price": 40})))
+    assert bad["fits"] is False   # sole backer so far

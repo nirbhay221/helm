@@ -69,11 +69,13 @@ class CreatorManager:
         sales = self._good_sales()
         if not sales:
             return []
+        # count weeks back from today, so the newest bucket is a full week and not a partial
+        # one that would read as a collapse in earnings
         buckets: dict = {}
         for o in sales:
-            b = o.day // bucket
+            b = max(0, int(self.now_day) - int(o.day)) // bucket
             buckets[b] = buckets.get(b, 0.0) + o.amount * (1 - self.take_rate)
-        return [round(buckets.get(b, 0.0), 2) for b in range(min(buckets), max(buckets) + 1)]
+        return [round(buckets.get(b, 0.0), 2) for b in range(max(buckets), -1, -1)]
 
     # --- recommendations ----------------------------------------------------
     def _cat_of(self, order) -> str:
@@ -95,13 +97,23 @@ class CreatorManager:
         ahead = [f for f in FESTIVALS if f["day"] >= d]
         return (ahead or FESTIVALS)[0]
 
+    def forecast(self) -> dict:
+        """Where this creator's weekly net earnings are heading, by exponential
+        smoothing with a trend (Holt) over their own history. Lets the recommender
+        look forward, not just at what already sold."""
+        from marketplace.models import holt_winters
+        return holt_winters(self.earnings_series(bucket=7), horizon=4)
+
     def recommendations(self) -> dict:
         # The SIGNALS are facts, computed deterministically. The RECOMMENDATION,
         # the judgment of what to do about them, is the model's and varies run to
         # run. The model never invents a category; it reasons over these inputs.
         mine, hot, fest = self.top_categories(), self.trending(), self.upcoming_festival()
+        fc = self.forecast()
         base = {"your_best": mine, "trending_now": hot, "next_festival": fest["name"],
-                "festival_lifts": fest["categories"]}
+                "festival_lifts": fest["categories"],
+                "earnings_trend": fc["direction"], "projected_next_week_net": fc["next"],
+                "momentum_pct": fc["pct_change"]}
         if self.llm.available:
             try:
                 ai = self._ai_recommend(base)
@@ -111,8 +123,12 @@ class CreatorManager:
             except Exception:
                 pass
         focus = [c for c in fest["categories"] if c in hot] or fest["categories"]
+        trend_line = {"up": f"Your earnings are trending up, about ${fc['next']:,.0f} projected next week. ",
+                      "down": f"Your earnings are softening, about ${fc['next']:,.0f} projected next week, so lean in now. ",
+                      "flat": ""}[fc["direction"]]
         base.update({"suggested_focus": focus, "source": "fallback",
-                     "text": (f"Your strongest categories are {', '.join(mine) or 'not established yet'}. "
+                     "text": (f"{trend_line}"
+                              f"Your strongest categories are {', '.join(mine) or 'not established yet'}. "
                               f"The marketplace is buying {', '.join(hot) or 'little right now'}. "
                               f"{fest['name']} is coming, which lifts {', '.join(fest['categories'])}. "
                               f"Lean into {', '.join(focus)} next.")})
@@ -120,13 +136,20 @@ class CreatorManager:
 
     def _ai_recommend(self, facts: dict) -> dict:
         allowed = set(facts["your_best"]) | set(facts["trending_now"]) | set(facts["festival_lifts"])
+        try:
+            from market.knowledge import ground
+            grounding = "\n\n" + ground("creator earnings forecast sell categories viability advance tax")
+        except Exception:
+            grounding = ""
         msg = self.llm.chat(
             messages=[{"role": "system", "content":
                        "You advise a creator what to list or make next. Reason over the facts: their "
-                       "best-selling categories, what the marketplace is buying now, and the next "
-                       "festival and the categories it lifts. Reply ONLY as JSON: "
+                       "best-selling categories, what the marketplace is buying now, the next festival "
+                       "and the categories it lifts, and their earnings forecast (earnings_trend and "
+                       "projected_next_week_net from exponential smoothing). If the trend is down, urge "
+                       "acting now; if up, suggest scaling the winners. Reply ONLY as JSON: "
                        '{"suggested_focus": ["category", ...], "text": "one or two sentences"}. '
-                       "Use only categories that appear in the facts."},
+                       "Use only categories that appear in the facts." + grounding},
                       {"role": "user", "content": json.dumps(facts)}],
             temperature=0.7, max_tokens=200)
         raw = (msg or {}).get("content") or ""

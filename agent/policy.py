@@ -89,6 +89,41 @@ class PolicyDecision:
     reading: str = ""
     source: str = "model"
     violations: list = field(default_factory=list)
+    compiled: str = ""      # what the solver will actually enforce, written from the numbers
+
+
+def _readback(w, con) -> str:
+    """Plain English generated from the compiled numbers, not from the model's text, so it
+    can never claim a limit the solver does not enforce."""
+    parts = []
+    top = max(("speed", "tax", "risk", "fx"), key=lambda k: getattr(w, k))
+    if getattr(w, top) > 1.2:
+        parts.append({"speed": "favour the longest-waiting creators", "tax": "favour delivering more net",
+                      "risk": "steer money away from risky creators", "fx": "avoid currency costs"}[top])
+    if con.max_fraction_per_creator < 1.0:
+        parts.append(f"cap any one creator at {con.max_fraction_per_creator:.0%} of the batch")
+    if con.exclude_countries:
+        parts.append("pay no one in " + ", ".join(con.exclude_countries))
+    if con.max_risk < 1.0:
+        parts.append(f"hold anyone with risk above {con.max_risk:.2f}")
+    if con.min_priority > 0.0:
+        parts.append(f"pay only creators with priority at least {con.min_priority:.2f}")
+    return ("The solver will " + "; ".join(parts) + ".") if parts else "No hard limits; balanced weights."
+
+
+_EXCLUDE_WORDS = ("exclude", "freeze", "block", "not pay", "no payouts to", "ban")
+
+
+def _contradictions(reading: str, policy_text: str, con) -> list:
+    """Flag a model reading that claims something the compiled constraints do not do."""
+    out = []
+    r, p = (reading or "").lower(), (policy_text or "").lower()
+    if any(k in r for k in _EXCLUDE_WORDS) and "countr" in r and not con.exclude_countries:
+        out.append("the model's reading mentions excluding countries, but none were compiled, so no "
+                   "country is excluded")
+    if ("all countries" in p or "every country" in p) and any(k in p for k in _EXCLUDE_WORDS):
+        out.append("excluding every country would pay no one; the solver needs named countries")
+    return out
 
 
 class PolicyDesk:
@@ -181,5 +216,7 @@ class PolicyDesk:
             exclude_countries=exclude,
             max_risk=max_risk,
             min_priority=_clip01("min_priority", 0.0))
-        return PolicyDecision(weights=w, constraints=con, reading=str(data.get("reading", "")),
-                              source=source, violations=violations)
+        reading = str(data.get("reading", ""))
+        violations += _contradictions(reading, policy_text, con)
+        return PolicyDecision(weights=w, constraints=con, reading=reading,
+                              source=source, violations=violations, compiled=_readback(w, con))

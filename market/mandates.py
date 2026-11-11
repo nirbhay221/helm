@@ -47,17 +47,32 @@ class OwnerKey:
                 "signature": base64.b64encode(sig).decode("ascii")}
 
 
-def verify_credential(credential: dict) -> tuple[bool, dict, str]:
-    """Verify an ES256 credential's signature and expiry. Returns (ok, payload, reason)."""
+def verify_credential(credential: dict, expected_public_key: str | None = None) -> tuple[bool, dict, str]:
+    """Verify an ES256 credential's signature and expiry. Returns (ok, payload, reason).
+
+    Two distinct guarantees, do not conflate them:
+      - INTEGRITY (always checked): the payload was signed by the holder of the key
+        embedded in the credential and has not been altered. This alone catches a
+        tampered mandate, but NOT a mandate an attacker self-signed with their own key.
+      - AUTHORITY (checked only when expected_public_key is given): the embedded key is
+        the owner's known key. Pass the owner's registered public key here to bind the
+        credential to a trusted owner; otherwise a credential signed with any key passes
+        the integrity check. In production the owner key must come from a trusted
+        registry, never from the credential being verified."""
     try:
         payload = credential["payload"]
         sig = base64.b64decode(credential["signature"])
-        pub = serialization.load_pem_public_key(credential["public_key"].encode("utf-8"))
+        pub_pem = credential["public_key"]
+        pub = serialization.load_pem_public_key(pub_pem.encode("utf-8"))
         pub.verify(sig, _canonical(payload), ec.ECDSA(hashes.SHA256()))
     except InvalidSignature:
         return False, {}, "signature does not match (payload was altered or wrong key)"
     except Exception as exc:  # malformed credential
         return False, {}, f"malformed credential: {str(exc)[:80]}"
+    if expected_public_key is not None:
+        import hmac
+        if not hmac.compare_digest("".join(pub_pem.split()), "".join(expected_public_key.split())):
+            return False, payload, "public key is not the trusted owner key (possible self-signed forgery)"
     exp = payload.get("exp")
     if exp is not None and time.time() > float(exp):
         return False, payload, "mandate has expired"

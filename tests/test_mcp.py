@@ -28,22 +28,7 @@ def _call(server, name, args):
 def test_server_exposes_expected_tools():
     server = build_server()
     names = {t.name for t in asyncio.run(server.list_tools())}
-    assert {"paypal_create_payout", "source_suppliers", "interpret_signal"} <= names
-
-
-def test_source_suppliers_tool_returns_optimal_split():
-    server = build_server()
-    out = _json(_call(server, "source_suppliers", {
-        "target_qty": 150,
-        "suppliers": [
-            {"name": "Alpha", "capacity": 200, "tiers": [[0, 9.0]]},
-            {"name": "Beta", "capacity": 200, "tiers": [[0, 8.5], [40, 8.0]]},
-            {"name": "Gamma", "capacity": 120, "tiers": [[50, 7.5]]},
-        ],
-    }))
-    assert out["status"] in ("Optimal", "Feasible")
-    assert out["total_quantity"] >= 150 - 1e-6
-    assert out["saving"] is not None and out["saving"] >= 0
+    assert {"paypal_create_payout", "interpret_signal", "market_price"} <= names
 
 
 def test_payout_tool_runs_in_demo_and_enforces_aup_over_mcp():

@@ -73,8 +73,13 @@ class MoneyOutOperator:
         obs = self.tools.observe()
         self._record_fact(rec, "observe", obs)
         rec.tool_calls.append("observe")
+        try:
+            from market.knowledge import ground
+            grounding = "\n\n" + ground("payout risk posture reserve release advance uncertainty human gate")
+        except Exception:
+            grounding = ""
         user = (f"Cycle {period}. Current state (use these exact creator names):\n"
-                f"{json.dumps(obs)}\n\nInterpret the signal, choose a risk posture, size the "
+                f"{json.dumps(obs)}{grounding}\n\nInterpret the signal, choose a risk posture, size the "
                 f"safe release, then pay the creators you judge low-risk and hold the risky ones. "
                 f"Call pay_creators exactly once.")
         messages = [{"role": "system", "content": SYSTEM_PROMPT},

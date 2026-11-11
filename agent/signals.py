@@ -1,7 +1,7 @@
 """The signal desk: the one job that is genuinely the language model's.
 
-Recent work on LLMs in inventory control is blunt about this. On InventoryBench
-(Baek et al., 2026) a language model asked to choose order quantities is weak:
+Recent work on LLMs in operational planning is blunt about this. On InventoryBench
+(Baek et al., 2026) a language model asked to choose quantities directly is weak:
 it "reads narratives into random demand swings" and barely responds to cost
 structure. A solver alone does better. The combination that actually wins is the
 optimizer informed by the model, not the model guessing numbers. And the thing a
@@ -13,14 +13,14 @@ something turns it into numbers.
 That is this module. The LLM reads a free-text operational signal and proposes a
 structured adjustment to the demand the controller plans against: a set of
 per-period deltas with a rationale and the exact span of the signal it is acting
-on. It never sets an order quantity. The controller re-optimizes against the
+on. It never sets a payout amount. The controller re-optimizes against the
 adjusted forecast and decides as it always does.
 
 The research also names the failure mode (the model inventing a pattern in
-noise), which is why every adjustment this desk proposes is passed to the
-verifier (`ActionVerifier.verify_forecast_adjustment`) before it reaches the
-controller: it is bounded in magnitude and span, and discarded entirely if it
-does not cite the signal. The model informs; it cannot run wild.
+noise), which is why every adjustment this desk proposes is bounded before it
+reaches the controller: it is clamped in magnitude and span, scaled down when a
+panel or repeated samples disagree, and discarded entirely if it does not cite
+the signal. The model informs; it cannot run wild.
 """
 from __future__ import annotations
 
@@ -36,27 +36,29 @@ ADJUST_FORECAST_TOOL = {
         "description": (
             "Translate an operational signal into a change to planned demand. "
             "Only emit deltas the signal actually justifies; emit nothing if the "
-            "signal does not imply a demand change. You never set order quantities."
+            "signal does not imply a sales change. You never set payout amounts."
         ),
         "parameters": {
             "type": "object",
+            # reasoning fields come FIRST: a model writes arguments in schema order, and with the
+            # numbers first it committed to zeros before reasoning its way to "+300 next week"
             "properties": {
+                "cited_signal": {"type": "string", "description": "The exact phrase from the signal being acted on."},
+                "rationale": {"type": "string", "description": "Why the signal implies this change, and how big it is in dollars."},
                 "period_deltas": {
                     "type": "array",
-                    "description": "Per-period additive changes to planned demand (units).",
+                    "description": "Per-period additive changes to planned marketplace sales (GMV, dollars).",
                     "items": {
                         "type": "object",
                         "properties": {
                             "period": {"type": "integer", "description": "Absolute period index the delta applies to."},
-                            "delta": {"type": "number", "description": "Units to add (positive) or remove (negative) from planned demand that period."},
+                            "delta": {"type": "number", "description": "Dollars of sales to add (positive) or remove (negative) from planned GMV that period."},
                         },
                         "required": ["period", "delta"],
                     },
                 },
-                "rationale": {"type": "string", "description": "Why the signal implies this change."},
-                "cited_signal": {"type": "string", "description": "The exact phrase from the signal being acted on."},
             },
-            "required": ["period_deltas", "cited_signal"],
+            "required": ["cited_signal", "rationale", "period_deltas"],
         },
     },
 }
@@ -88,12 +90,22 @@ def _disagreement(totals: list[float]) -> float:
 
 
 _SYSTEM = (
-    "You are the signal desk of an inventory controller. You read one operational "
+    "You are the signal desk of a creator marketplace's treasury. You read one operational "
     "signal and decide how planned demand should change, then call adjust_forecast. "
-    "Rules: act only on what the signal clearly states; quote the exact phrase in "
-    "cited_signal; put deltas on the specific periods the signal implicates; do NOT "
-    "invent a demand change the signal does not support; never choose an order "
-    "quantity. If the signal implies no demand change, return an empty period_deltas."
+    "Rules: quote the exact phrase you act on in cited_signal; put deltas on the "
+    "specific periods the signal implicates; never choose a payout amount.\n"
+    "Magnitude: a signal rarely states an exact number. If it clearly implies a "
+    "DIRECTION (a spike, surge, shortage, drop, cancellation), you MUST still estimate "
+    "a reasonable magnitude relative to the stated baseline and put it on the "
+    "implicated period(s), written in DOLLARS, not as a fraction (a 25 percent spike on "
+    "a $1000 baseline is a delta of 250); a clear qualitative signal is NOT a reason to return "
+    "nothing. Size it to the strength of the wording: a mild/soft signal is roughly "
+    "10-25 percent of baseline, a strong one (major spike, severe shortage) roughly "
+    "40-80 percent, and use the sign of the direction. Only return an empty "
+    "period_deltas when the signal implies NO demand change at all, is irrelevant to "
+    "demand, or is purely an instruction rather than a market signal. Do not fabricate "
+    "a change the signal does not support, but do not refuse a clear one for lack of an "
+    "explicit number."
 )
 
 
@@ -116,6 +128,12 @@ class ForecastAdjustment:
 
     def delta_for(self, period: int) -> float:
         return float(self.period_deltas.get(period, 0.0))
+
+
+def _why(votes, tail: str) -> str:
+    """The model's own reasoning (the first read that gave one), plus how far the reads agreed."""
+    own = next((v.rationale.strip() for v in votes if v.rationale and v.rationale.strip()), "")
+    return (own.rstrip(".") + ". " if own else "") + tail[0].upper() + tail[1:] + "."
 
 
 class SignalDesk:
@@ -141,16 +159,36 @@ class SignalDesk:
     def available(self) -> bool:
         return bool(self.llm and self.llm.available)
 
+    # A signal is untrusted third-party text. No matter what it says (or tries to
+    # inject), it can never move planned demand by more than this multiple of the
+    # baseline. The model proposes; this deterministic clamp disposes.
+    DEMAND_CLAMP = 2.0
+
     def interpret(self, signal_text: str, current_period: int, baseline_demand: float,
                   horizon: int = 12) -> ForecastAdjustment:
-        """Turn one free-text signal into a proposed forecast adjustment.
+        """Turn one free-text signal into a proposed, BOUNDED forecast adjustment.
 
-        With a model panel configured, several models vote and we return their
-        consensus scaled by agreement. With one model, that model decides. With
-        no key, a scripted parser keeps the pipeline running. Either way the
-        result is only a PROPOSAL; the verifier bounds it before the controller
-        ever sees it.
+        The signal text is untrusted: any injected instruction is quarantined before the
+        model reads it, and the final adjustment is clamped to +/- DEMAND_CLAMP x baseline,
+        so a hijacked or hallucinated read can never blow up the forecast. The result is
+        still only a PROPOSAL; the verifier bounds it again before the controller sees it.
         """
+        try:
+            from market.guard import scan_text
+            scan = scan_text(signal_text)
+            if scan["flagged"]:
+                signal_text = scan["redacted"]            # strip the injected instruction spans
+        except Exception:
+            pass
+        adj = self._interpret_core(signal_text, current_period, baseline_demand, horizon)
+        cap = self.DEMAND_CLAMP * max(0.0, float(baseline_demand))
+        if cap > 0:
+            clamped = {p: max(-cap, min(cap, float(d))) for p, d in adj.period_deltas.items()}
+            adj.period_deltas = {p: round(d, 2) for p, d in clamped.items() if abs(d) > 1e-9}
+        return adj
+
+    def _interpret_core(self, signal_text: str, current_period: int, baseline_demand: float,
+                        horizon: int = 12) -> ForecastAdjustment:
         if self.available and len(self.models) > 1:
             try:
                 return self.interpret_panel(signal_text, current_period, baseline_demand, horizon)
@@ -190,8 +228,16 @@ class SignalDesk:
         if not votes:
             raise RuntimeError("no sample responded")
 
-        periods = sorted({p for v in votes for p in v.period_deltas})
-        median_deltas = {p: _median(sorted(v.delta_for(p) for v in votes)) for p in periods}
+        # First a MAJORITY VOTE on the discrete question "is there a change at all?",
+        # so a minority of empty reads cannot median a clear signal down to zero (the
+        # median of [1000, 0, 0] is 0). Only if a majority read a change do we aggregate
+        # the magnitudes, and only over the samples that actually proposed one.
+        active = [v for v in votes if not v.is_empty()]
+        if len(active) * 2 < len(votes):            # majority say no change -> consensus is no change
+            median_deltas = {}
+        else:
+            periods = sorted({p for v in active for p in v.period_deltas})
+            median_deltas = {p: _median(sorted(v.delta_for(p) for v in active)) for p in periods}
         totals = [sum(v.period_deltas.values()) for v in votes]
         disagreement = _disagreement(totals)
         confidence = round(max(0.0, 1.0 - disagreement), 3)
@@ -200,8 +246,7 @@ class SignalDesk:
         cited = next((v.cited_signal for v in votes if v.cited_signal.strip()), "")
         return ForecastAdjustment(
             period_deltas=scaled,
-            rationale=(f"self-consistency over {len(votes)} samples; "
-                       f"disagreement={disagreement:.2f}, confidence={confidence:.2f}"),
+            rationale=_why(votes, f"agreement across {len(votes)} reads {confidence:.0%}"),
             cited_signal=cited,
             source="self-consistency",
             model_votes={f"s{i}": {"deltas": {int(k): round(x, 2) for k, x in v.period_deltas.items()},
@@ -220,7 +265,7 @@ class SignalDesk:
         models' total adjustments, and scale the consensus by confidence
         (1 - disagreement). A unanimous panel acts in full; a panel that cannot
         agree (a vague or misleading signal) shrinks its bet toward nothing. This
-        is the point of the panel: it refuses to bet the inventory on one model's
+        is the point of the panel: it refuses to bet the treasury on one model's
         reading of noise."""
         votes: dict[str, ForecastAdjustment] = {}
         for m in self.models:
@@ -247,8 +292,7 @@ class SignalDesk:
         cited = next((v.cited_signal for v in votes.values() if v.cited_signal.strip()), "")
         return ForecastAdjustment(
             period_deltas=scaled,
-            rationale=(f"panel of {len(votes)} models; disagreement={disagreement:.2f}, "
-                       f"confidence={confidence:.2f}"),
+            rationale=_why(list(votes.values()), f"agreement across {len(votes)} models {confidence:.0%}"),
             cited_signal=cited,
             source="panel",
             model_votes={m: {"deltas": {int(k): round(x, 2) for k, x in v.period_deltas.items()},
@@ -263,7 +307,7 @@ class SignalDesk:
                        temperature: float = 0.0) -> ForecastAdjustment:
         user = (
             f"Current period: {current_period}. Planned demand is about "
-            f"{baseline_demand:.0f} units per period. Planning horizon reaches period "
+            f"${baseline_demand:.0f} of marketplace sales (GMV) per period. Planning horizon reaches period "
             f"{current_period + horizon}.\n\nSignal: \"{signal_text.strip()}\"\n\n"
             "Call adjust_forecast with the demand change this signal implies."
         )
@@ -285,6 +329,11 @@ class SignalDesk:
                 deltas[int(item["period"])] = float(item["delta"])
             except (KeyError, TypeError, ValueError):
                 continue
+        # a read whose every delta is at most 1.0 against a real baseline wrote fractions of
+        # baseline instead of dollars (small models do this); scale it so it votes in the same
+        # units as the other reads instead of being averaged away as noise
+        if deltas and baseline_demand > 10 and all(abs(d) <= 1.0 for d in deltas.values()):
+            deltas = {p: round(d * float(baseline_demand), 2) for p, d in deltas.items()}
         return ForecastAdjustment(
             period_deltas=deltas,
             rationale=str(data.get("rationale", "")),
@@ -330,7 +379,7 @@ class SignalDesk:
             span[period + 1] = delta  # crude two-period spread
         return ForecastAdjustment(
             period_deltas=span,
-            rationale=f"fallback parse: +{delta:.0f} units at period {period}",
+            rationale=f"fallback parse: +${delta:.0f} GMV at period {period}",
             cited_signal=signal_text.strip()[:120],
             source="fallback",
         )

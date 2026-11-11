@@ -81,6 +81,27 @@ class PayPalClient:
         data.setdefault("_status_code", resp.status_code)
         return data
 
+    def post_multipart(self, path: str, input_json: dict, request_id: str | None = None) -> dict:
+        """POST a multipart/form-data body whose `input` part is JSON (the Disputes API shape
+        for provide-evidence and accept-claim). Demo mode synthesizes a labeled response."""
+        request_id = request_id or self.new_request_id()
+        if self.demo:
+            return {"_demo": True, "status": "DEMO_OK", "_request_id": request_id, "_path": path,
+                    "echo": input_json}
+        import json as _json
+
+        import requests
+
+        resp = requests.post(
+            f"{self.base_url}{path}",
+            files={"input": ("input.json", _json.dumps(input_json), "application/json")},
+            headers={"Authorization": f"Bearer {self._access_token()}", "PayPal-Request-Id": request_id},
+            timeout=30,
+        )
+        data = resp.json() if resp.content else {}
+        data.setdefault("_status_code", resp.status_code)
+        return data
+
     def get(self, path: str) -> dict:  # pragma: no cover - exercised only live
         if self.demo:
             return {"_demo": True, "status": "DEMO_OK", "_path": path}

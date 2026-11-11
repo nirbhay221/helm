@@ -10,18 +10,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-DEFAULT_NRA_RATE = 0.30                 # default US non-resident withholding
-# treaty-reduced withholding rates on service/royalty-type income (illustrative)
-TREATY_RATES = {
-    "US": 0.0,                          # domestic: no cross-border withholding
-    "GB": 0.0,
-    "CA": 0.0,
-    "IN": 0.15,
-    "DE": 0.0,
-    "FR": 0.0,
-    "BR": 0.15,
-    "CN": 0.10,
-}
+from marketplace.allocator import DEFAULT_WITHHOLDING, TREATY_WITHHOLDING
+
+DEFAULT_NRA_RATE = DEFAULT_WITHHOLDING  # default US non-resident withholding
+# One treaty table for the whole system: the allocator plans with the same rates Tollgate
+# withholds, so a creator's planned net and paid net can never disagree.
+TREATY_RATES = {**TREATY_WITHHOLDING, "FR": 0.0}
 
 
 @dataclass

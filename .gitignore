@@ -44,3 +44,4 @@ dashboard.html
 
 # Internal research and competitor analysis (not for the public repo)
 research/
+.hypothesis/

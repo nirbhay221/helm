@@ -1,0 +1,1237 @@
+{
+  "info": {
+    "name": "Helm API",
+    "description": "Live API for Helm, an autonomous money layer for a creator marketplace settled on PayPal. Set the base_url variable to the hosted demo (default) or http://127.0.0.1:8000 if you run it locally. Every request calls the running backend; on the hosted demo the PayPal calls hit the real PayPal sandbox, investing routes to Alpaca paper, and the proofs run the real solver.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://184-194-177-73.sslip.io",
+      "type": "string"
+    },
+    {
+      "key": "session",
+      "value": "postman-demo"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/healthz",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "healthz"
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Dashboard data",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/data",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "data"
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Policy compiler (AI)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Pay the longest-waiting creators first, never send more than 20 percent to any one creator, and hold anyone high risk.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/policy",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "policy"
+          ]
+        },
+        "description": "Compiles an English treasury policy into objective weights and hard constraints with the live model."
+      }
+    },
+    {
+      "name": "Signal reader (AI)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"A hurricane warning just hit the US southeast; expect a demand spike next week.\",\n  \"baseline_demand\": 1000,\n  \"horizon\": 6\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/signal",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "signal"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Advance pricing",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"proven_earnings\": 2000,\n  \"fund\": 10000,\n  \"history\": [800, 1200, 900, 1100, 1000, 950]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/advance",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "advance"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Tax regime",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/tax?country=US&gross=25000&transactions=250",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "tax"
+          ],
+          "query": [
+            {
+              "key": "country",
+              "value": "US"
+            },
+            {
+              "key": "gross",
+              "value": "25000"
+            },
+            {
+              "key": "transactions",
+              "value": "250"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Live quote",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/quote?ticker=SPY",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "quote"
+          ],
+          "query": [
+            {
+              "key": "ticker",
+              "value": "SPY"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Invest at live prices (Alpaca paper)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 1000\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/invest",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "invest"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Agent mandate demo (issue)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/a2a/demo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "a2a",
+            "demo"
+          ]
+        },
+        "description": "Returns a signed (valid) and a tampered mandate you can paste into the check request.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Agent mandate check",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"intent_credential\": { \"paste\": \"the 'valid' or 'tampered' object from /api/a2a/demo here\" },\n  \"category\": \"stock_photos\",\n  \"price\": 30,\n  \"spent\": 0\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/a2a/check",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "a2a",
+            "check"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Pool invest (co-own, Alpaca paper)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"asset\": \"SPY\",\n  \"members\": [\n    { \"member\": \"Ava\", \"amount\": 300 },\n    { \"member\": \"Ben\", \"amount\": 150 },\n    { \"member\": \"Chen\", \"amount\": 50 }\n  ],\n  \"forge\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/pool/invest",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "pool",
+            "invest"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Group buy (bulk discount, Shapley split)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"item\": \"preset pack\",\n  \"unit_price\": 20,\n  \"members\": [\n    { \"member\": \"Ava\", \"qty\": 2 },\n    { \"member\": \"Ben\", \"qty\": 2 },\n    { \"member\": \"Chen\", \"qty\": 1 },\n    { \"member\": \"Dia\", \"qty\": 1 },\n    { \"member\": \"Eli\", \"qty\": 1 }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/pool/groupbuy",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "pool",
+            "groupbuy"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Proven safe (Z3)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"max_total\": 500,\n  \"max_per_item\": 100,\n  \"forge\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/verify/mandate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "verify",
+            "mandate"
+          ]
+        },
+        "description": "Set forge=true to see a tampered mandate rejected by the signature before it reaches the prover."
+      }
+    },
+    {
+      "name": "Zero-knowledge reserves",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lots\": [12000, 3000, 500],\n  \"liabilities\": 9000,\n  \"bits\": 32\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/reserves/prove",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "reserves",
+            "prove"
+          ]
+        },
+        "description": "Set liabilities above the lot total to see provable:false (an insolvent fund cannot prove)."
+      }
+    },
+    {
+      "name": "Pay on proof escrow (PayPal sandbox)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 50,\n  \"cheat\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/escrow/demo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "escrow",
+            "demo"
+          ]
+        },
+        "description": "Authorizes and holds via the PayPal sandbox, then captures on proof. Set cheat=true to deliver nothing and see the hold voided and refunded."
+      }
+    },
+    {
+      "name": "Run the multi-agent operator",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/operator/graph",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "operator",
+            "graph"
+          ]
+        },
+        "description": "Run ONE payout cycle through the multi-agent operator graph and return the full trace:\nthe risk analyst's per-creator pay/hold calls, the bull/bear debate, the manager's proposal,\nthe compliance screen, and the deterministic decision. The agents only propose; the solver and\nthe PayPal guardrails dispose (a large batch is held for a human).",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"signal\": \"Risk alert: a fraud and chargeback wave is hitting brand-new viral accounts this week.\",\n  \"debate_rounds\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Run the multi-agent buyer",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/customer/graph",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "customer",
+            "graph"
+          ]
+        },
+        "description": "Run the buyer journey through a LangGraph supervisor that dispatches to worker agents:\nunderstand the need, search real products, quarantine injected listings, select within budget,\nauthorize against the owner-signed mandate, and settle via pay-on-proof escrow. The agents\npropose; cryptography and PayPal dispose, so the buyer cannot pay outside the signed budget.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"need\": \"I need a good microphone for streaming my videos\",\n  \"budget\": 80\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "RL advance-sizing policy",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/rl/advance",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "rl",
+            "advance"
+          ]
+        },
+        "description": "A reinforcement-learning advance-sizer trained OFFLINE on simulated outcomes: it learns,\nper risk estimate, how much of a creator's earnings to advance, maximizing fee minus default\nloss. Returns the learned policy and its held-out net profit versus fixed and rule-of-thumb\nlenders. RL proposes the fraction; the advance engine still applies the caps.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Search real products",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/shop/search",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "shop",
+            "search"
+          ]
+        },
+        "description": "The buyer side: a person spends earnings on a real product. Finds products with Channel3\nwhen a key is set, or a demo catalog otherwise, and flags which fit the stated budget.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"microphone for streaming\",\n  \"budget\": 120,\n  \"demo_injection\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Buy a product within a signed budget",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/shop/buy",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "shop",
+            "buy"
+          ]
+        },
+        "description": "Buy a found product: the person's owner-signed spend mandate authorizes the purchase\n(budget and per-item cap enforced by the signature, not a rule), and pay-on-proof escrow\nsettles it on PayPal. The same account that earns can spend.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"USB condenser microphone\",\n  \"price\": 99,\n  \"merchant\": \"bhphotovideo.com\",\n  \"budget\": 120,\n  \"category\": \"audio\",\n  \"listing\": null\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Predictive platform P&L",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/pnl",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "pnl"
+          ]
+        },
+        "description": "Forecast the platform's profit and loss: expected revenue from the conformal GMV\nforecast minus expected loss (PD x LGD x EAD on the advance book plus chargebacks),\nwith a confidence band, a CECL-style provision, and RAROC. This is how the platform\nmakes money, safely, made quantitative.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"gmv_history\": [\n    42000,\n    45000,\n    43000,\n    47000,\n    49000,\n    48000,\n    52000,\n    54000,\n    53000,\n    57000,\n    59000,\n    61000\n  ],\n  \"horizon\": 4,\n  \"fund\": 10000\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Ground an agent on financial principles",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/knowledge",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "knowledge"
+          ]
+        },
+        "description": "Retrieve the financial principles relevant to a decision, the same grounding the\noperator and manager agents pull (and the MCP financial_knowledge tool serves).",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"how much should we lend to a risky borrower\",\n  \"k\": 4\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Which live rails are configured",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
+        },
+        "description": "Report which real rails are live (not a bare 'ok'): PayPal sandbox, the model,\nAlpaca paper, and Channel3. Lets a judge see at a glance what is really wired.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tamper-evident receipt chain",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/receipts/demo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "receipts",
+            "demo"
+          ]
+        },
+        "description": "Chain a sequence of money actions into hash-linked receipts and verify the chain.\nWith tamper on, a settled receipt is edited after the fact and verification pinpoints\nthe break, proving the log cannot be altered unnoticed.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tamper\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Reconcile against the processor",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/reconcile/demo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "reconcile",
+            "demo"
+          ]
+        },
+        "description": "Match what the platform expected to settle against what the processor actually did,\nflagging missing, mismatched, unexpected and duplicate settlements. Nothing is reported\nas done unless the processor's record agrees.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"inject_discrepancy\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Screen outbound payouts (AML)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/compliance/demo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "compliance",
+            "demo"
+          ]
+        },
+        "description": "Run a sequence of outbound payments through banking-grade screening (sanctions,\nstructuring, velocity, duplicate) and show the decision for each. A clean payment is\nallowed; a sanctioned payee or structuring is blocked; velocity and duplicates are held.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "x402 agentic micropayment",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/x402/demo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "x402",
+            "demo"
+          ]
+        },
+        "description": "Pay-per-request the x402 way, settled on PayPal. Without payment the server returns\nHTTP 402 with the requirements; the agent pays the exact amount and the resource\nunlocks; a tampered amount is refused. This is agent-native, inline micropayment.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resource\": \"premium-signal\",\n  \"amount\": 0.25,\n  \"pay\": true,\n  \"tamper\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Graph-structural fraud scoring",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/graphfraud/demo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "graphfraud",
+            "demo"
+          ]
+        },
+        "description": "Score each inferred fraud ring by its graph structure: a sparse group is organic,\na near-clique is one actor. Reports edge density, mean link probability and degree\nconcentration per ring on a seeded marketplace.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Fraud rings in a graph database",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/fraud/graph",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "fraud",
+            "graph"
+          ]
+        },
+        "description": "Load the marketplace as a property graph (Account + shared-identity nodes) into an\nembedded Kuzu graph database and detect rings by multi-hop Cypher traversal, including\nrings chained across SEVERAL identifiers that a pairwise or GROUP BY approach cannot see.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Verify an agent identity",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/identity/demo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "identity",
+            "demo"
+          ]
+        },
+        "description": "A mandate says what an agent may do; an identity says who it is. The agent presents\na signed identity (id, owner, capabilities); a counterparty verifies the signature,\nthe expiry and the required capability before transacting. Forge it and it is refused.",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent_id\": \"agent-7\",\n  \"owner\": \"ava\",\n  \"capabilities\": [\n    \"buy\",\n    \"pool\"\n  ],\n  \"require\": \"buy\",\n  \"tamper\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Your account's live books",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/account",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "account"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Start your account over",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/account/reset",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "account",
+            "reset"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Confirm or reject delivery on a hold",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/escrow/settle",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "escrow",
+            "settle"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"escrow_id\": \"paste-from-a-buy\",\n  \"delivered\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Your marketplace",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/market",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "market"
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Scan for abuse and rings",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/market/scan",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "market",
+            "scan"
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"apply\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Your creator page",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/creator?brief=true",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "creator"
+          ],
+          "query": [
+            {
+              "key": "brief",
+              "value": "true"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Agent negotiates a creator listing",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/market/negotiate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "market",
+            "negotiate"
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"listing\": \"l00018\",\n  \"max_per_item\": 10\n}"
+        }
+      }
+    },
+    {
+      "name": "Agent customers trade a cycle",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/market/agents",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "market",
+            "agents"
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ticks\": 1\n}"
+        }
+      }
+    },
+    {
+      "name": "Simulate a buyer dispute",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/disputes/simulate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "disputes",
+            "simulate"
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "PayPal webhook receiver",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/paypal/webhook",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "paypal",
+            "webhook"
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Helm-Session",
+            "value": "{{session}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": \"WH-EXAMPLE\",\n  \"event_type\": \"CUSTOMER.DISPUTE.CREATED\",\n  \"resource\": {\n    \"dispute_id\": \"PP-D-EXAMPLE\",\n    \"status\": \"WAITING_FOR_SELLER_RESPONSE\",\n    \"disputed_transactions\": [\n      {\n        \"seller_transaction_id\": \"CAPTURE-ID\"\n      }\n    ]\n  }\n}"
+        }
+      }
+    }
+  ]
+}

@@ -20,21 +20,91 @@ from dataclasses import asdict, dataclass, field
 from statistics import fmean, pstdev
 
 
-def default_probability(history) -> float:
-    """Estimate a creator's probability of default from their own payout history,
-    the thin-file alternative-data approach: steadier, longer income is safer.
-    Driven by income volatility (coefficient of variation) and a thin-file penalty
-    when there are few periods to judge. Bounded to a sane [3%, 60%]."""
+def _heuristic_pd(history) -> float:
+    """The original closed-form score, kept as a fallback when numpy or the fitted
+    model is unavailable. Volatility plus a thin-file penalty, bounded [3%, 60%]."""
     xs = [float(x) for x in (history or []) if x is not None]
     if not xs:
         return 0.50
     mean = fmean(xs)
     if mean <= 0:
         return 0.60
-    cv = (pstdev(xs) / mean) if len(xs) > 1 else 0.5      # income volatility
-    thin = max(0.0, (6 - len(xs)) / 6.0)                   # fewer than 6 periods seen
-    pd = 0.05 + 0.25 * min(1.0, cv) + 0.15 * thin          # base + volatility + thin-file
+    cv = (pstdev(xs) / mean) if len(xs) > 1 else 0.5
+    thin = max(0.0, (6 - len(xs)) / 6.0)
+    pd = 0.05 + 0.25 * min(1.0, cv) + 0.15 * thin
     return round(min(0.60, max(0.03, pd)), 3)
+
+
+def _pd_features(history):
+    """Observable risk features from a payout history, oriented so that a larger
+    value always means more risk: income volatility, a downward trend, a low income
+    floor, weak recent income, and a thin file."""
+    import numpy as np
+    xs = [float(x) for x in (history or []) if x is not None]
+    n = len(xs)
+    if n == 0:
+        return None
+    arr = np.asarray(xs, dtype=float)
+    mean = float(arr.mean())
+    if mean <= 0:
+        return None
+    cv = float(arr.std() / mean) if n > 1 else 0.5
+    slope = float(np.polyfit(np.arange(n), arr, 1)[0] / mean) if n > 1 else 0.0
+    floor = float(arr.min() / mean)
+    recency = float(xs[-1] / mean)
+    thin = max(0.0, (6 - n) / 6.0)
+    # risk-oriented: high cv, negative trend, low floor, low recency, thin file
+    return [cv, -slope, 1.0 - floor, 1.0 - recency, thin]
+
+
+_PD_MODEL = None
+
+
+def _pd_model():
+    """A logistic PD scorecard fit once to a simulated advance book. There are no
+    real defaults to learn from yet, so the training set is generated from a known
+    default-generating process (volatility, trend and file-thinness drive default);
+    the model learns to recover default risk from the OBSERVABLE features above.
+    Swapping in real repay/default outcomes later means changing only this function.
+    Deterministic: fixed seed, fixed iterations."""
+    global _PD_MODEL
+    if _PD_MODEL is not None:
+        return _PD_MODEL
+    import numpy as np
+    from .models import LogisticModel
+    rng = np.random.default_rng(42)
+    X, y = [], []
+    for _ in range(4000):
+        n = int(rng.integers(1, 13))
+        mean = float(rng.uniform(200, 5000))
+        cv_true = float(rng.uniform(0.03, 1.2))
+        trend_true = float(rng.normal(0.0, 0.14))          # per-period growth rate
+        hist = [max(0.0, mean * (1 + trend_true * t) * (1 + rng.normal(0, cv_true)))
+                for t in range(n)]
+        feats = _pd_features(hist)
+        if feats is None:
+            continue
+        thin = max(0.0, (6 - n) / 6.0)
+        z = -2.0 + 3.2 * cv_true - 5.5 * trend_true + 1.4 * thin   # latent default logit
+        default = 1.0 if rng.random() < 1.0 / (1.0 + np.exp(-z)) else 0.0
+        X.append(feats)
+        y.append(default)
+    _PD_MODEL = LogisticModel(l2=1.0, lr=0.3, iters=4000).fit(X, y)
+    return _PD_MODEL
+
+
+def default_probability(history) -> float:
+    """A creator's probability of default, scored by the fitted logistic scorecard
+    over their own payout history (alternative-data, thin-file friendly). Falls back
+    to the closed-form heuristic if the model cannot run. Bounded to a sane [3%, 60%]."""
+    try:
+        feats = _pd_features(history)
+        if feats is None:
+            return 0.50 if not history else 0.60
+        pd = _pd_model().predict_proba(feats)
+        return round(min(0.60, max(0.03, float(pd))), 3)
+    except Exception:
+        return _heuristic_pd(history)
 
 
 @dataclass

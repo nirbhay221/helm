@@ -19,6 +19,7 @@ these results, never from the model's prose.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -126,6 +127,7 @@ class OperatorTools:
             "assessment": adj.rationale or "no quantifiable change",
             "cited": adj.cited_signal,
             "confidence": adj.confidence,
+            "source": getattr(adj, "source", "model"),
             "suggests_caution": bool(implies_risk),
         }
 
@@ -168,7 +170,9 @@ class OperatorTools:
         requested = round(sum(alloc.values()), 2)
         if requested > cap + 1e-6 and requested > 0:
             scale = cap / requested
-            alloc = {k: round(v * scale, 2) for k, v in alloc.items()}
+            # round each share DOWN to the cent: rounding to nearest let the scaled total
+            # overshoot the safe release by a cent or two (found by property testing)
+            alloc = {k: math.floor(v * scale * 100 + 1e-9) / 100 for k, v in alloc.items()}
             overrides.append(f"requested {requested} exceeds safe release {round(cap,2)}; "
                              f"scaled down to fit")
 

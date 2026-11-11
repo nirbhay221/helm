@@ -1,295 +1,297 @@
 # Helm
 
-**An autonomous treasury that steers a business to its forecast, settled on PayPal.**
+[![CI](https://github.com/nirbhay221/helm/actions/workflows/ci.yml/badge.svg)](https://github.com/nirbhay221/helm/actions/workflows/ci.yml)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![PayPal sandbox](https://img.shields.io/badge/PayPal-sandbox-003087.svg)
 
-Helm is a money brain for a business that runs on agents. It takes money in from customers, continuously compares what the plan forecast against what is actually happening, and then acts on its own to close the gap: it decides what to buy and from whom, and it decides who to pay and how much, and it executes every one of those money moves through PayPal. The plan is the target. Helm is the autopilot that holds the business on that target.
+**An autonomous money layer for a creator marketplace, settled on PayPal.**
 
-This repository is the full specification and build plan for Helm. It is written so that a developer can pick it up cold and build it end to end. Read the Overview and Architecture first, then the Build Plan.
+**Live demo (no setup, no login, no keys):** https://184-194-177-73.sslip.io
+Open it and use the **Start here** row: four buttons, each runs a headline capability live
+against the real PayPal sandbox and a live model.
 
----
-
-## 1. The one paragraph version
-
-Most "AI finance" tools look at your numbers and draw you a chart. Helm does the opposite: it is a closed loop that senses the gap between forecast and actual and then moves money by itself to shrink that gap. Think of the way a ship autopilot holds a heading: it reads the current position, compares it to the planned course, and nudges the rudder every few seconds. Helm reads the business position (cash, inventory, demand, open obligations), compares it to the planned course (the forecast or budget), and nudges the two levers a business actually has: buying (pay suppliers to restock or pre-buy) and paying out (release partner commissions and rewards). Every nudge is a real PayPal transaction. The brain decides; the arms execute; PayPal moves the money.
-
----
-
-## 2. The problem
-
-Every operating business runs on a plan: a forecast of demand, revenue, spend, and inventory. Reality never matches the plan. Demand spikes, a supplier is late, a cohort of customers pays slowly, a promotion overperforms. The gap between forecast and actual is called variance, and managing it is a continuous job that today is done by people reading dashboards and then placing orders and payments by hand, usually too late.
-
-Two things make this worse right now:
-
- - Businesses increasingly want to run operations with agents, not staff clicking through portals. But an agent that can place orders and payments needs a controller that knows what to do, not just a chat box.
- - The tooling that exists either forecasts (it tells you the gap) or disburses (it sends money to a list you hand it). Nothing closes the loop: senses the gap, decides the corrective money moves, and executes them.
-
-Helm is that missing closed loop.
+Helm is one person-account with three sides. Creators **earn** and get paid out; anyone
+can **spend** as a buyer through agents boxed in by signed mandates; and the **platform**
+runs the treasury and *proves it is safe*. Teams of AI agents propose the judgment;
+deterministic code and cryptography dispose the money and the limits.
 
 ---
 
-## 3. What Helm does, concretely
+## One account, one set of books
 
-Helm runs a continuous control cycle. Each cycle:
+Your browser gets its own live two-sided marketplace: 120 creators who sell and buy, their
+listings and four months of order history, with two coordinated fraud rings planted in that
+history and never labelled. **You are one of its sellers**, with three listings and your own
+sales. Every tool reads and writes this one marketplace and one set of books, so the features
+act on each other instead of being separate demos (the **Your account** strip at the top):
 
- 1. **Sense.** Pull the current state: cash position, inventory on hand and on order, incoming customer demand and payments, outstanding payout obligations, and the running actuals from the ledger.
- 2. **Compare.** Line the actuals up against the forecast across a forward window (for example the next several weeks). Measure the variance per line (cash, each inventory item, service level, partner liabilities).
- 3. **Decide.** Choose the set of money moves over the forward window that drives the projected variance back toward zero while respecting hard limits (cash floor, budget caps, legal constraints). Commit only the first move now, then re-plan next cycle with fresh data. This is receding horizon control (see Section 5).
- 4. **Act.** Execute the chosen moves through PayPal:
-     - Buying: place an optimal purchase to restock or pre-buy inputs (the Awardsmith arm).
-     - Paying: release partner commissions, rebates, or rewards (the Payout Engine arm).
- 5. **Record and learn.** Write the results back to the ledger as new actuals, update the forecast error model, and start the next cycle.
+- **What the platform owes creators, and your earnings, are computed, not typed in.** Each
+  sale's net (after the 10% platform fee) is a dated lot in a per-creator ledger. It counts
+  as settled, safe to pay, only once its 30-day chargeback window has closed. Returns and
+  chargebacks claw it back, and money already paid out becomes a debt recouped from future
+  sales.
+- **Buy from another creator** (the buyer agent and the shop search your marketplace's listings
+  before outside stores) and the money moves from your earnings to theirs; the platform keeps
+  its fee. Their PayPal seller account is named as the order's payee when one is configured.
+- **Your agent negotiates** with a creator's listing under the mandate your owner key signed,
+  countering down to your per-item cap, and the deal settles on PayPal Orders.
+- **Scan the marketplace** and the abuse and ring engines suspend the planted rings; a
+  suspended creator's earnings freeze, so the operator cannot pay them and buyers cannot buy
+  from them.
+- **Run the operator** and its cohort is you, the creators owed the most, and anyone flagged,
+  each judged from their real record (tenure, sales, returns, chargebacks, ring links). Its
+  payouts pay down the creators' ledger.
+- **A buyer disputes a sale** (PayPal's CUSTOMER.DISPUTE.CREATED webhook, or a labelled
+  simulation of it) and it is charged back to the selling creator, the abuse engines re-run,
+  and the seller's evidence is built from the receipt chain.
+- **Your creator page** shows your earnings, a Holt forecast, what to make next, money moves
+  that need your approval, and your tax statement, all from your own sales.
+- **Take an advance** and it leaves the safety fund: the solvency margin drops, the
+  zero-knowledge proof is produced over the smaller fund, and the P&L prices your real loan.
+  Later payouts to that creator withhold 25% to repay it.
+- **Buy something** and your earnings are held on PayPal (a real sandbox authorization), not
+  spent. You confirm delivery to capture it or report a failure to void it and get the money
+  back. You cannot spend more than you have earned, and the running total spent under your
+  signed mandate carries across buys.
+- The **audit desk** reconciles your own receipts against PayPal's recorded captures, and the
+  tamper demo edits a copy, never your real chain.
 
-The output a human keeps is a live, auditable control journal: for every cycle, the measured variance, the decision Helm made, why it made it, and the real PayPal transaction IDs that prove the money moved.
-
----
-
-## 4. Why Helm is not a dashboard (the thing that makes it worth building)
-
-The entire value rests on one distinction. A dashboard shows you the gap. Helm acts to close it. If Helm ever degrades into "here is a chart of your variance," it has failed and it loses to the forty other finance copilots that already draw that chart.
-
-So the product is defined by autonomy with proof: Helm must be seen to detect a variance, decide a corrective money move, and execute that move on PayPal, all by itself, with the variance then measurably shrinking. The demo is built around exactly this moment (Section 8).
-
----
-
-## 5. The hard technical core
-
-Helm is a controller, and the controller is a real optimization problem, not a prompt chain.
-
-### 5.1 The control loop (receding horizon / model predictive control)
-
-Helm plans over a forward horizon, applies only the first action, then re-plans from the new state next period. This is model predictive control (MPC), also called receding horizon control. It is the standard, well studied way to steer a system under forecast error, and it is used exactly this way for supply chain and inventory control, where demand is treated as an external disturbance and the controller re-solves each step as the forecast updates.
-
-Formally, each cycle Helm solves:
-
- - **State** x_t: cash, inventory levels, on-order quantities, outstanding partner obligations, demand signal.
- - **Forecast / reference trajectory** r over the horizon H: the planned values for each state line.
- - **Decision variables** over the horizon: purchase quantities per input per period, and payout amounts per obligation per period, plus timing of customer payment capture.
- - **Objective:** minimize the weighted sum of absolute deviations between projected state and reference over the horizon (mean absolute deviation, which keeps the program linear rather than quadratic), plus a penalty on action cost and churn.
- - **Constraints:** cash never drops below a floor (Helm holds no float; see Section 6 custody rule), inventory meets a service level, spend stays under budget caps, and every money move is legal under PayPal rules (Section 6).
- - **Apply** only period t's actions, observe reality, re-solve next cycle.
-
-Because the objective uses absolute deviation, the controller is a continuous linear program, which solves fast and reliably, re-solved on a rolling basis. The integer decisions (which supplier, what lot size) are deliberately not solved inside the controller: the controller emits continuous targets ("buy about this much," "pay out about this much") and the integer buying is delegated to Awardsmith (Section 5.2). This hierarchical split, a continuous controller over a separate mixed-integer dispatch, is a standard pattern in supply chain and inventory control, and it keeps the control step robust rather than brittle. The forecast error model (how wrong the plan tends to be, and in which direction) feeds the controller so it can act with appropriate caution. In the first build the forecast is an input (the business plan from the simulator), not a learned model.
-
-### 5.2 The two action solvers (the arms)
-
-The controller decides how much to buy and how much to pay. Turning those targets into the best concrete transaction is itself non trivial:
-
- - **Buying (Awardsmith):** given "acquire quantity Q of input X within budget B," choose the optimal purchase across available supplier quotes. This is the procurement winner determination problem: a mixed integer program with minimum order quantities, tiered volume discounts (piecewise linear), all or nothing bundle offers, supplier capacity, and multi sourcing or diversification limits. It is NP hard in general and solved with branch and bound.
- - **Paying (Payout Engine):** given "distribute pot P to the parties who earned it," compute a split that reflects true contribution and that nobody can inflate by cheating. The reason this is hard is that a naive split by tracked activity is gameable: a party can spin up duplicate identities, inflate activity, or split activity to dodge a cap, and drain the pot from the honest parties. The engine searches a bounded, enumerable set of known manipulations (duplicate identities, inflated activity, activity splitting to dodge a cap, refund timing), scores each with a simple deterministic payoff check, and hardens the split (caps, hold backs, clawbacks, verification gates) until the best manipulation in that set earns nothing. This is the leader and follower (Stackelberg) idea, but implemented as a bounded search with a deterministic judge rather than a fully certified equilibrium, which keeps it robust to build and honest about its scope: it hardens against a stated threat set, not against every conceivable attack. Published results show that a plain contribution split is not manipulation proof on its own, which is why the hardening layer is load bearing rather than decorative. A language agent can propose the attack candidates; the payoff check that decides stays deterministic.
-
-### 5.3 Honesty about when the core is real
-
-The control loop and both solvers are genuine computation only when the problem is genuine:
-
- - The buying arm earns its keep when there are real supplier choices with minimum orders, discounts, or bundles. If there is one supplier and a flat price, buying is trivial and the solver is theater.
- - The paying arm earns its keep when activity can actually be inflated or faked (affiliate, creator, and crowd payouts, where this is rampant). If every contribution is cleanly and un fakeably tracked, a proportional split is correct and the hardening is unnecessary.
- - The controller earns its keep when variance is real and the two levers actually move it. If the business is perfectly predictable, there is nothing to control.
-
-Build and demo Helm on a setting where all three conditions hold.
+Lend too much and the platform can no longer prove it is solvent.
 
 ---
 
-## 6. PayPal surfaces and the hard rules
+## What makes it different
 
-Helm settles everything on PayPal. The design is shaped by what PayPal allows.
-
-### 6.1 Surfaces used
-
- - **Orders v2** for money in (customer payments) and for buying (paying a supplier who accepts PayPal is an ordinary purchase). Supports authorize, capture, void, refund, and partial capture, which the controller uses to time cash.
- - **Payouts (REST)** for paying partners their commissions, rebates, and rewards. Pays by email, can reach recipients who do not yet have an account, auto returns unclaimed funds after a holding period, and accepts large batches.
- - **Agent Toolkit and MCP server** as the agent facing execution layer. The hosted sandbox endpoint is `mcp.sandbox.paypal.com`. The toolkit exposes tools for orders, invoices, refunds, subscriptions, shipment tracking, transaction data, products, and disputes.
- - **Webhooks** to confirm each transaction landed, with idempotent handling so a retried or duplicated event never double acts.
-
-### 6.2 The Payouts gap we fill
-
-PayPal's Agent Toolkit MCP server has tools for taking money in and managing orders, invoices, subscriptions, and disputes, but it has no tool for paying out. Payouts run through the separate Payouts API. Helm ships a Payouts MCP tool that wraps the Payouts REST API as an agent callable tool, with an idempotency key and a human confirmation gate, so the controller can execute disbursements through the same agent interface as everything else. This is a concrete, reusable contribution that closes a real hole in the official toolkit.
-
-### 6.3 The constraints that shape the design (read these before building)
-
- - **No custody.** Helm never holds or pools money. Holding other parties' money turns the operator into a money transmitter, which is illegal without licensing and gets accounts frozen. The pot and the operating cash live in the operator's own PayPal business account. Helm only computes amounts and instructs PayPal to move money directly from the operator to each recipient. This is why the cash floor constraint in the controller matters: Helm spends only money the operator already holds.
- - **No payroll.** PayPal's payout rules do not permit paying employee wages. Helm's money out is therefore limited to supplier purchases (ordinary payments for goods) and partner commissions, rebates, rewards, and incentives (the permitted payout categories). Paying salaries is explicitly out of scope.
- - **Permitted payout purposes only.** The payout rail is restricted to commissions, rebates, rewards, and incentives. The Clearwright check (Section 7) proves every planned money edge maps to a permitted purpose on a permitted rail before anything executes.
- - **Sandbox for the build.** Everything is built and demonstrated in the PayPal sandbox: a sandbox business account funds the moves, sandbox recipients receive them, and the demo shows real sandbox transaction IDs. No real money moves.
-
----
-
-## 7. System architecture
-
-Helm is a council of language agents around a small, reliable deterministic core. The language agents explore: they read messy inputs, propose candidate actions and candidate cheats, and explain decisions. The deterministic core is kept deliberately simple and robust (a linear control program, a bounded procurement solver, and plain policy and arithmetic checks) and it acts as the judge: it decides and verifies, so the money decisions are reproducible and auditable. Determinism is used as the judge, not as a heavyweight proof engine, because the fragile part of this kind of system is always the over-ambitious solver or formal proof, not the simple reliable check.
-
-### 7.1 The brain
-
- - **Helm Core (the controller).** Runs the sense, compare, decide, act cycle of Section 5.1. Holds the state model, the forecast, and the receding horizon optimizer. Emits targets to the arms ("buy this much," "pay out this much") and writes the control journal.
- - **Forecast and variance model.** Maintains the reference trajectory and the forecast error model. Turns raw ledger actuals and demand signals into the variance measurement the controller optimizes against.
- - **Council and orchestration.** Coordinates the agents, routes each cycle through sense, decide, act, and reconciles disagreement between the business objective (hit the forecast) and the constraints (stay within cash, budget, and legal limits) before any action is committed.
-
-### 7.2 The arms
-
- - **Awardsmith (buying arm).** Procurement winner determination solver. Input: a buy target from the controller plus available supplier quotes. Output: the optimal purchase plan, executed as PayPal Orders payments to suppliers.
- - **Payout Engine (paying arm).** Turns a payout target into correct, un gameable, legal, tax handled disbursements. It is composed of five sub parts that run in sequence on the same pot:
-     - **Mete (contribution split).** Computes each party's share of a jointly created pot by true marginal contribution, so credit is not double counted or awarded only to the last touch. Needed when contributions overlap.
-     - **Bulwark (manipulation hardening).** Simulates the most profitable cheat against the split and hardens the schedule (caps, hold backs, clawbacks, verification gates) until cheating earns nothing. This is the un gameable guarantee and the paying arm's money shot.
-     - **Clearwright (legality pre flight).** A deterministic policy check (a rail-permission table, not a theorem prover): every money edge must map to an allowed purpose on an allowed rail, nothing may pool in the operator, and the operator must not act as a transmitter. Returns the exact offending edge and a fix if a plan is illegal. Kept as a simple, reliable rule check rather than an SMT proof, on purpose.
-     - **Tollgate (tax).** For cross border recipients, computes the correct withholding and prepares the filing data. This reuses established tax logic rather than reinventing it.
-     - **Keystone (atomic execution).** Executes the batch so that partial failure never corrupts the books: if some payments fail, it reconciles or rolls back so nothing is stranded or double paid and the totals still balance (money in equals money out plus fees, checked with plain arithmetic, not a formal prover). Idempotency is enforced with a unique sender_batch_id per batch and a PayPal-Request-Id header, and webhook events are de-duplicated on event id, so a retry or a duplicate never double pays. Runs on top of the Payouts MCP tool.
-
-### 7.3 The money in path
-
- - **Orders intake.** Customer payments captured through Orders v2 feed the actuals and the cash position. The controller can authorize and delay capture, or partially capture, to time cash against the forecast.
-
-### 7.4 Data flow summary
-
-Customers pay through Orders, which updates actuals. Helm Core compares actuals to forecast, measures variance, and solves for corrective actions. Buy targets go to Awardsmith, which purchases through Orders. Payout targets go to the Payout Engine, which splits, hardens, checks, taxes, and executes through the Payouts MCP tool. Webhooks confirm each move, which updates actuals, and the loop repeats. Every step is written to the control journal.
+- **Agents that collaborate, not one model in a loop.** The payout operator is a LangGraph
+  of role agents: a signal analyst, a risk analyst, a bull and a bear who debate how
+  aggressive to be, a manager, then a compliance gate. The buyer is a LangGraph supervisor
+  routing worker agents (understand, search, quarantine, select, authorize, settle). Every
+  agent only proposes; the solver, the guardrails and PayPal dispose.
+- **It proves its own solvency in zero knowledge.** The platform proves its hidden reserves
+  cover the *published* liabilities (outstanding advances and pool commitments) without
+  revealing any balance: Pedersen commitments on bn128 plus a bit-decomposition range proof
+  with Chaum-Pedersen OR proofs. The liability commitment is opened and checked against the
+  published figure, so a fund cannot prove against a smaller number, and an insolvent fund
+  cannot produce a proof at all.
+- **It formally proves its agents cannot overspend.** A Z3 SMT proof shows that for *any*
+  sequence of deals, cumulative spend stays inside the owner's signed budget. It is an
+  unbounded inductive-invariant proof, not a bounded check, plus machine-found
+  counterexamples showing each guard is necessary, emitted as an ES256-signed verdict.
+- **Its money invariants are property-tested, not just example-tested.** Hypothesis throws
+  thousands of adversarial inputs (NaN, negative and infinite amounts, unknown payees,
+  replayed tokens, tampered receipts, split payments) at every guardrail. This found a real
+  bug, described below.
+- **Three databases, each for what it is good at.** SQLite for the money ledger, the Kuzu
+  embedded graph database for fraud rings (multi-hop Cypher finds rings whose members share
+  no single identifier), and an embedded vector store for the agents' financial knowledge.
+- **A learned lending policy.** A contextual bandit, trained offline on simulated defaults,
+  sizes creator advances by estimated risk inside the hard caps.
 
 ---
 
-## 8. The demo (what has to be on screen)
+## Measured, not claimed
 
-The build is organized around one undeniable three minute sequence. Build the brain and exactly one arm for the demo; the other arm is shown as a described capability, not built deep.
+Every figure below is produced by code in this repo.
 
-**Core sequence (either arm):** start a simulated business running on plan. Inject a shock (a demand spike, or a supplier delay, or a slow paying cohort). The variance chart opens a visible gap. Helm detects it, decides a corrective move, and executes it on the PayPal sandbox with a real transaction ID appearing on screen. The variance chart then visibly closes. The point the audience must feel: the system did this by itself, and the money actually moved.
-
-**If the paying arm is the demo:** add the manipulation moment. Show a naive split handing a cheater with duplicate identities a large slice. Turn on Bulwark. The cheater's take collapses toward zero while the honest parties' shares rise, and the hardened batch pays out live in sandbox. This before and after is the strongest single beat available.
-
-**If the buying arm is the demo:** show the controller sizing a restock from the variance, Awardsmith selecting the optimal supplier mix under minimum orders and volume discounts (and visibly beating the naive lowest unit price choice on total landed cost), and the purchase settling on sandbox.
-
-Recommendation: lead with the paying arm for the sharper money shot, or the buying arm if the forecast to purchase story is clearer for your chosen business setting. Pick one.
-
----
-
-## 9. How this maps to the judging criteria
-
- - **Technological Implementation.** A real controller (a linear receding horizon control loop) plus a real action solver (procurement winner determination, or bounded manipulation hardening for payouts) plus a genuine PayPal integration that fills a real gap in the official toolkit (the Payouts MCP tool). The deterministic parts are kept simple and reliable on purpose.
- - **Design.** One coherent product with a clear loop and a single clear screen (the control journal and the variance chart), not a bag of features.
- - **Potential Impact.** Autonomous treasury and procurement is a large and strategically active area; the loop applies to any operating business that buys inputs and pays partners.
- - **Innovation.** Nothing in the field closes the loop from forecast variance to executed money moves. Existing tools forecast or disburse, not both.
- - **Presentation.** The money shot (variance opens, Helm acts alone, money moves, variance closes) is visible and concrete in the demo window.
-
-A dashboard built in AG Studio (the control journal and the live variance and decision view) is a natural fit for the AG Grid sponsor prize and should be the primary UI.
-
----
-
-## 10. Build plan
-
-Build in this order. Do not build all arms. Build the brain and one arm deep, make the demo land, then widen. Keep every deterministic piece small and reliable.
-
-### Phase 0: foundation
- - Repo scaffold, environment, PayPal sandbox app with Orders and Payouts enabled. Enable Payouts on the sandbox business account on day one, because enablement can take time. Confirm in sandbox that partial capture and Payouts batches actually work before depending on them.
- - A synthetic business simulator that produces a forecast (the business plan), a stream of actuals, and injectable shocks (demand spike, supplier delay, slow paying cohort). This is the data source for everything; make it realistic in its aggregate distribution, not flat and not single sample. In the first build the forecast is an input from the simulator, not a learned model.
-
-### Phase 1: the brain
- - Implement Helm Core: the state model, the variance measurement (actual against the forecast input), and the receding horizon controller as a continuous linear program (objective is mean absolute deviation, so it stays linear and solves fast), with the cash floor, budget, and service level constraints. The controller emits continuous targets; it does not make integer buying choices itself.
- - Implement the control journal (per cycle: variance, decision, rationale, transaction references).
-
-### Phase 2: the PayPal execution layer
- - Build this before the arm, because the arm executes through it. Orders v2 intake for money in and for supplier payment, and the Payouts MCP tool wrapping the Payouts REST API, with a unique sender_batch_id per batch, a PayPal-Request-Id idempotency header, and a human confirmation gate. Add the idempotent webhook handler (de-duplicate on event id and payout_batch_id).
-
-### Phase 3: one arm
- - If paying: implement Mete (contribution split), then Bulwark (a bounded search over an enumerable cheat set plus the hardening pass, with a deterministic payoff check), then Clearwright (the deterministic rail-permission check), then Keystone (arithmetic conservation and reconciliation) on top of the Payouts MCP tool from Phase 2. Add Tollgate last; it is reuse, not core.
- - If buying: implement Awardsmith (the winner determination MILP) and wire its purchases through Orders.
-
-### Phase 4: the loop and the demo
- - Close the loop: shock, sense, decide, act on sandbox, variance closes. In the sandbox demo the human confirmation gate is auto-approved or set to a threshold so the autonomy is visible; the gate is a production safety feature, not a demo click. Build the single demo screen. Rehearse the three minute sequence until the autonomy and the money movement are both unmistakable.
-
-### Phase 5: widen (only if time)
- - Add the second arm as a shown capability. Add Tollgate if paying. Add scenario variety.
+- **Property testing found a real money bug.** When the agents proposed more than the safe
+  release, the operator scaled each share and rounded it to the nearest cent, so the total
+  could exceed the cap. A brute-force check of 200,000 cases found it in about 14% of scaled
+  batches, by up to 2 cents. Shares now round down, and a regression test reproduces the
+  failure on the old code (paid 3108.13 against a 3108.12 cap) and passes on the fix.
+- **The learned advance policy finds the break-even from data.** Expected profit turns
+  negative above a default probability of spread / loss-given-default = 0.12 / 0.9, about
+  13%. The bandit learned to lend in full up to the 10-15% risk bucket and nothing above it.
+  Net profit per creator over 120,000 simulated rounds: learned **30.70**, rule of thumb
+  7.51, always lend 25% **-3.77**, always lend the maximum **-15.07**.
+- **The agents stay on the model under load.** Hosted models rate-limit. The model client
+  retries with the provider's suggested wait and then moves across a chain of models, each
+  metered separately. Four back-to-back operator cycles all ran on the model in 11 to 14
+  seconds each; before the change, a burst dropped every cycle to the deterministic fallback.
+  The UI names each model that answered, and says so plainly when a fallback ran.
+- **The AI is evaluated live.** A golden eval runs the real model and asserts properties of
+  its output: it reads policy intent, excludes the right country, gets a signal's direction,
+  ignores irrelevant text, does not obey an injected instruction, and stays bounded on a
+  conflicting policy (7 of 7 passing on the live model).
+- **Both agent journeys are tested end to end on the live model.** `tests/test_e2e_live.py`
+  drives the operator and the buyer through the API and checks three levels: every agent
+  step ran on the model (a silent fallback anywhere fails the test and names the step and
+  why), the graph took the expected route, and the end state is right. The flagged creator
+  is held, a held creator is never paid, the buyer gets a laptop rather than a laptop stand,
+  a purchase outside the owner's categories is refused, and the account's books move by
+  exactly the amounts decided. With the marketplace in place it also checks that suspended
+  ring members are held and never paid, that the buyer prefers a fitting creator listing and
+  the sale credits that creator, and that a dispute claws back from the seller.
+- **A PayPal call that is refused is reported as refused.** Every order, authorization,
+  capture, void and refund is booked only when PayPal accepted it, with PayPal's own issue
+  code otherwise. This caught holds that had looked successful: an unapproved order cannot be
+  authorized (ORDER_NOT_APPROVED). Sandbox holds now carry PayPal's test card as the buyer's
+  approval and return real authorizations.
+- **The buyer's mandate is the owner's, not the agent's.** The owner signs the intent mandate
+  before any agent runs (the AP2 order). It is verified against the owner's registered key,
+  and its category limit is checked against the listing's own category, so an agent cannot
+  relabel a product to get it past the limit.
+- **Proof costs.** The zero-knowledge solvency proof with 32 bit proofs takes about 1.4 s; the
+  Z3 budget proof returns PROVEN_BOUNDED with a 6-deal counterexample when the running-total
+  guard is removed.
 
 ---
 
-## 11. Recommended stack
+## The three sides (what you can do in the live console)
 
- - Agent orchestration: a graph based multi agent framework (a stateful graph of nodes with a shared state object) for the council and the sense, decide, act cycle. Language agents explore and explain; the deterministic core judges.
- - Solvers, kept small and reliable: a linear program solver for the controller (OR-Tools, PuLP, or similar); OR-Tools CP-SAT or an MILP solver for Awardsmith and for Bulwark's bounded cheat search. No SMT or theorem prover in the core: Clearwright is a deterministic rail-permission rule check and Keystone's conservation is plain arithmetic, on purpose.
- - Model: a hosted frontier LLM accessed through Amazon Bedrock, selected by configuration (model-agnostic; the repository names no specific model). The LLM runs the exploration and explanation agents, never the money decision, which stays deterministic.
- - Infrastructure (AWS, recommended; do not disturb any pre-existing cloud resources): AWS Step Functions for the deterministic control-cycle orchestration, EventBridge Scheduler to fire each cycle, API Gateway plus Lambda for PayPal webhook ingestion, DynamoDB for state, the ledger, and the control journal, and the agent and solver layer on Lambda or Fargate. This mirrors AWS's own serverless agentic pattern (Step Functions as the deterministic layer, Bedrock as the decision layer, EventBridge as the trigger).
- - Backend: Python for the solver and agent layer. A thin API for the UI.
- - PayPal: the PayPal server SDK plus direct REST for Payouts, wrapped as the MCP tool, with sender_batch_id and PayPal-Request-Id idempotency. Sandbox throughout.
- - UI: a dashboard (AG Studio recommended for sponsor fit) showing the control journal and the live variance and decision view.
- - Configuration and keys: all keys (PayPal sandbox client id and secret, model or Bedrock credentials) come from environment variables or a secrets manager, never committed. Existing keys from the local project environments can be reused for development; the .gitignore already excludes env files.
- - Webhooks: an idempotent handler keyed on event id and a request id on every write.
+**Earn (you are a seller).** Write a treasury policy in plain English and watch the model
+compile it into objective weights and hard constraints; read an operational signal into a
+bounded forecast adjustment; price an advance against proven earnings (risk-priced, with a
+conformal uncertainty band so an uncertain estimate lends less) or let the learned policy
+size it; see a US 1099-K / EU DAC7 tax regime; invest earnings at live market prices on
+Alpaca paper.
+
+**Spend (you are a buyer).** Run the multi-agent buyer end to end; verify an owner-signed
+ES256 mandate (a forged or tampered one is refused by the signature); carry an **agent
+identity** passport; **pool** with others to co-own a position or clear a volume discount
+split by the Shapley value; **spend earnings** on a real product (found via Channel3,
+screened for prompt injection, bound to a single-use intent token); settle with
+**pay-on-proof escrow** (PayPal authorizes and holds, code releases on proof or voids); or
+pay per request with **x402** agentic micropayments.
+
+**Platform (it runs and proves the money).** Run the multi-agent operator; the **Platform
+P&L** (expected revenue, loss, RAROC, provision, fund coverage); **agent grounding** (hybrid
+semantic and keyword retrieval over a sourced knowledge base, also served over MCP); the
+**Z3** mandate proof; the **zero-knowledge** reserves proof; the graph-database **fraud
+ring** finder; and an **audit and reconcile** desk (tamper-evident hash-chained receipts,
+reconciliation against PayPal's record, and sanctions / structuring / velocity / duplicate
+screening on every payout).
 
 ---
 
-## 12. Suggested repository structure
+## How the agents work
 
+**Operator (money out).** One cycle is a LangGraph: `signal_analyst -> risk_analyst -> bull
+-> bear -> (debate again or decide) -> manager -> compliance_gate -> dispose`. Each agent
+gets the financial principles relevant to its decision retrieved into its prompt (expected
+loss, CECL provisioning, large-exposure limits, RAROC, segregation of duties), and the cycle
+records which principles it applied. The manager proposes amounts and a risk multiplier; the
+cash controller sizes the safe release from a forecast with an uncertainty buffer; the
+dispose step clamps every proposal to what is owed and what is safe, and Payouts holds large
+batches for a human.
+
+**Buyer (money in).** A supervisor routes worker agents and can loop back to search again
+(bounded). Listings are screened for prompt injection before the model sees them; the
+choice must fit the owner's signed mandate; settlement is a PayPal authorization that is
+captured only on proof.
+
+**Grounding.** The knowledge base cites named standards (Basel BCBS 283, FASB ASC 326, IRS
+1099-K, EU DAC7, OWASP LLM01, Shapley 1953). Retrieval is hybrid: ONNX sentence embeddings
+(bge-small-en-v1.5, CPU only) blended with keyword overlap, because pure embeddings picked
+the wrong principle on financial paraphrases in our tests. A deterministic hashing embedder
+is the fallback.
+
+---
+
+## The design: the agent proposes, deterministic code and crypto dispose
+
+- **Model-driven** (varies run to run): compiling an English policy, deciding who to pay
+  and who to hold, the debate, reading signals, the buyer's understanding and choice, the
+  per-creator recommendations.
+- **Deterministic / cryptographic** (exact, every time): the allocation solver, the cash
+  controller, expected-loss and advance caps, the conformal intervals, the tax thresholds,
+  compliance screening, the ES256 mandate and identity signatures, the hash-chained
+  receipts, and the Z3 and zero-knowledge proofs.
+
+This attacks the two documented causes of financial-agent error (missing domain knowledge,
+numerical mistakes): knowledge through retrieval, numbers through deterministic tools.
+
+---
+
+## PayPal + AI
+
+PayPal: Orders v2 (money in and agent purchases, with the selling creator as the payee),
+Payouts (money out, idempotent batches, a human approval gate, cross-border withholding), the
+full authorize / capture / void lifecycle for escrow, Customer Disputes (the dispute webhook
+charges back the seller; evidence goes to provide-evidence while the dispute is
+WAITING_FOR_SELLER_RESPONSE), and webhook signature verification with event dedupe. With
+`HELM_PAYPAL_MULTIPARTY=1` (an approved PayPal partner), orders also carry the platform fee and
+DELAYED disbursement, released per seller by a referenced payout. A Payouts tool
+is exposed over MCP. Everything runs on the PayPal sandbox; no real money moves.
+
+AI: any OpenAI-compatible model (vendor-neutral; the live demo uses gpt-oss-120b with a
+fallback chain) drives the operator and buyer graphs, policy compiler, signal desk and
+per-creator manager, grounded in the knowledge base and constrained to propose, never to
+move money.
+
+Sponsor tools used: **AG Grid** (the data grids), **Postman** (a full API collection),
+**Channel3** (buyer-side product search), and **APIMatic** (a generated Python SDK from the
+documented OpenAPI spec).
+
+---
+
+## What is real and what is simulated
+
+Real: the PayPal sandbox calls, live market prices and Alpaca paper orders, Channel3 product
+search, the model calls, the solvers, the Z3 and zero-knowledge proofs, the graph and vector
+databases, the fraud and abuse engines, and every signature.
+
+Simulated, and labelled as such: the creator population and the marketplace's history are
+generated, not real users; a creator is paid as the PayPal payee only when
+`HELM_SELLER_PAYEE_EMAILS` maps them to a sandbox seller account, otherwise money settles to the
+platform account and the UI says so; a plain sandbox app refuses Multiparty's platform fee and
+delayed disbursement (PLATFORM_FEES_NOT_SUPPORTED, DELAYED_DISBURSEMENT_NOT_SUPPORTED), so those
+are off unless enabled; the dispute button simulates the webhook (the real receiver is
+`/api/paypal/webhook`); the advance book and safety fund are a simulated loan book
+(lending is regulated in production); the learned advance policy is trained on simulated
+defaults. The ZK proof binds the liabilities to the published figure, but like any
+proof-of-reserves it cannot by itself prove that the committed reserve lots exist at a bank;
+that needs an attested balance feed.
+
+---
+
+## Testing it (judges start here)
+
+**A. The hosted demo, zero setup.** Open https://184-194-177-73.sslip.io and use the Start
+here buttons. Then try: Platform -> Zero-knowledge reserves (set liabilities above the lots
+to see it become unprovable); Platform -> Proven safe (Z3) (tick "forge" to see a tampered
+mandate rejected); Spend -> Pay on proof (tick "cheat" to see the hold voided); Spend ->
+Spend earnings (tick "plant a prompt-injection listing" and "tamper"). Available through
+the judging period.
+
+**B. Run it yourself.**
+
+```bash
+pip install -r requirements.txt
+python -m pytest -q            # unit, property-based and proof tests, no credentials needed
+uvicorn ui.app:app            # the dashboard at http://127.0.0.1:8000
+python -m mcp_server          # payouts MCP server (also: market, trust)
 ```
-helm/
-  README.md                  this document
-  LICENSE
-  simulator/                 synthetic business: forecast, actuals, injectable shocks
-  helm_core/                 the controller: state, forecast/variance, receding horizon optimizer, control journal
-  arms/
-    awardsmith/              procurement winner determination solver + Orders execution
-    payout_engine/
-      mete/                  contribution split
-      bulwark/               attacker simulation + hardening loop
-      clearwright/           legality pre flight (deterministic policy check)
-      tollgate/              cross border withholding (reuse)
-      keystone/              atomic batch execution + reconciliation
-  paypal/
-    mcp_payouts_tool/        the Payouts MCP tool (idempotent, human gated)
-    orders/                  Orders v2 intake and supplier payment
-    webhooks/                idempotent webhook handler
-  council/                   agent orchestration (sense, decide, act)
-  ui/                        control journal + variance dashboard
-  tests/                     solver correctness, loop behavior, sandbox integration
-  infra/                     AWS infrastructure as code (Step Functions, EventBridge Scheduler, API Gateway, Lambda, DynamoDB, Bedrock)
-  docs/                      deeper notes as they accrue
-```
+
+With no credentials the app runs end to end in a clearly labelled demo mode, and the live
+AI eval skips itself. To exercise the real rails, `cp .env.example .env`, set `DEMO_MODE=0`
+plus your PayPal sandbox, model, Alpaca and Channel3 keys, then `python scripts/smoke_all.py`
+and `python -m pytest tests/test_ai_golden.py`. Keys are read from the environment only and
+never committed.
+
+**Or exercise the API directly.** Import `docs/helm.postman_collection.json` into Postman
+(every endpoint with example bodies, pointed at the live demo). A typed Python client SDK
+generated from the OpenAPI spec with APIMatic is in `sdk/python/`; the spec is
+`docs/openapi.json`.
 
 ---
 
-## 13. Honest risks and open questions
+## Layout
 
-Carry these openly. They are the real decision points.
+- `agent/` the model layer: the operator graph, policy compiler, signal desk, and the
+  resilient model client (retry, model chain, honest model reporting).
+- `marketplace/` deterministic finance: the allocation LP, cash controller, conformal
+  intervals, predictive P&L, risk-priced advances and the learned advance policy, economics,
+  forecasting, investing, reconciliation, tamper-evident receipts, and the zero-knowledge
+  reserves proof.
+- `market/` the marketplace: the buyer graph, agentic customers, two-sided abuse, the Kuzu
+  fraud-ring graph, signed mandates and agent identity, a2a commerce, pooling, product search
+  and the injection/intent guard, x402, escrow, the Z3 verifier, compliance screening, the
+  vector store and the financial knowledge base.
+- `arms/payout_engine/` the un-gameable split and atomic, idempotent execution.
+- `paypal/` Orders, Payouts, authorizations, webhooks, the ledger, and the Payouts MCP tool.
+- `mcp_server/` three domain MCP servers: payouts, market, trust.
+- `ui/` the dashboard (start-here tour, three-lane live console, AG Grid, Chart.js).
+- `tests/` unit, property-based (Hypothesis), proof, and live AI golden tests; CI runs on
+  every push.
 
- - **The core must act, not report.** The single largest risk is that the controller gets shown as a chart and reads as another finance copilot. The demo must show autonomous action moving money. Protect this above all.
- - **The solvers must be load bearing.** If the buying setting has no real supplier choice, or the paying setting has un fakeable tracking, or the business has no real variance, the computation is theater. Choose a setting where all three bite (Section 5.3).
- - **Keep the determinism simple and reliable.** Earlier projects showed the fragile part is always the over-ambitious solver or formal proof, not the simple check. Helm's deterministic core is a linear control program plus plain policy and arithmetic checks, with language agents doing the exploration; it does not depend on a certified equilibrium or an SMT proof. If any piece seems to need one of those to work, cut it down until it does not.
- - **Big vendors are circling.** Autonomous treasury and procurement agents are an active push from large enterprise vendors in 2026. Helm's defensible edge is the closed loop from variance to executed PayPal money moves plus the un gameable payout, not generic "AI for finance." Keep the framing on the loop and the autonomy.
- - **Field adjacency.** There is a cluster of cashflow and CFO copilot entries in the hackathon that only visualize numbers. Helm must not be mistaken for one; the autonomy and the money movement are the separators.
- - **Legal line.** No payroll, no custody. If any flow pools money in the operator or pays wages, it breaks the rules. Clearwright must enforce this and the demo must not cross it.
- - **Scope.** The full autonomous finance department is too much. Build the brain and one arm. Resist widening until the demo lands.
- - **Verify in sandbox early.** Confirm on day one that the sandbox supports partial capture, Payouts batches, and the MCP endpoints you depend on, and that Payouts is enabled on the account.
-
----
-
-## 14. Competitive landscape (why this is differentiated)
-
-The hackathon field is heavily concentrated in money in and buyer protection: agent spending guardrails and mandates, invoice chasers, refund and dispute desks, escrow and release gates, shopping and checkout agents, and reconciliation copilots. The money out side is comparatively empty, and a closed loop controller that both decides and executes money moves is absent. Among finance focused entries, the common pattern is a dashboard that reports numbers. Helm is differentiated on two axes at once: it is money out and operational (not another buyer side guardrail), and it is a closed loop that acts (not a dashboard that reports).
-
----
-
-## 15. Extended levers and optional modules
-
-Helm's loop has two core levers in the first build (buy and pay). The business money problem has more levers and more decision aids, and three of the earlier candidates plug in as genuine extensions. They are documented here as roadmap and optional modules, not part of the first build. The rule holds: a thing having a real role is not a reason to build it now. Build the brain and one core arm first.
-
- - **Mint (a third lever: pricing, the inflow side).** Helm can respond to variance not only by changing what it buys and pays, but by changing what it charges. Mint designs the pricing and subscription structure (tiers, packaging, dynamic adjustment), executed through Orders and Subscriptions, so price becomes a control input the controller can move when demand drifts from forecast. Honest caveats: pricing optimization is a mature, well funded external category (Pricefx shipped pricing agents in 2025, Zilliant shipped a pricing MCP server, Vendavo and PROS compete), so Helm should incorporate or wrap pricing logic as a lever rather than try to out build a dedicated pricing platform, and the optimizer needs willingness-to-pay data that is usually synthetic in a demo. The novelty is pricing as one lever inside a closed loop, not a standalone pricing engine.
-
- - **Candor (a decision aid: resolve calls the controller cannot compute).** The controller decides cleanly when inputs are measurable. Some decisions have no objective ground truth (is this supplier's quality acceptable, which qualitative option is better, was a contribution legitimate). Candor is a peer-prediction mechanism (Bayesian Truth Serum and its robust and multi-task variants) that elicits an honest answer to an unmeasurable question by rewarding reports that are surprisingly common and that accurately predict others, then feeds that answer back to the controller as an input. Honest caveats: peer prediction needs a large enough panel to be incentive compatible and is empirically underproven at scale, and a near neighbor already exists in the wild (a crypto, on-chain peer-prediction settlement for subjective agent work), so Candor's distinct value here is as an internal resolver inside the controller on fiat PayPal rails, not a standalone settlement product. This is the least proven of the three.
-
- - **Seignior (an optional arm: govern a customer loyalty currency).** If the business runs a points or rewards program, that program is a currency Helm can manage: earn rates, expiry, and a points-to-cash redemption rate, redeemed through PayPal Payouts. Seignior sets a redemption policy that caps the outstanding points liability and keeps spend on budget. Honest caveats: this applies only to businesses that run a points program, it is a large self-contained subsystem, and loyalty liability is an audited accounting area (points are a performance obligation under ASC 606, and breakage estimates need historical cohort data and audit-ready documentation, not model output alone), so any policy must be defensible to finance, not just optimal.
-
----
-
-## 16. Considered and set aside
-
-Recorded so the full decision trail is in one place and these are not re-proposed:
-
- - **Groundswell (fiat quadratic funding for public goods).** No clean fit inside a for-profit business steering to a forecast. Quadratic funding allocates a sponsor pool to community projects by breadth of support, which does not plug into the buy, pay, and price loop. Set aside unless the business specifically runs community or grant allocation.
- - **Cadence (compile a contract into a PayPal billing lifecycle).** Set aside because recurring billing is a solved commercial category (Stripe Billing, Chargebee, Zuora, and contract-to-billing tools such as Stigg and Tabs), so the headline claim does not survive the incumbent test.
- - **Industry seams searched and closed.** Health, agriculture, government and public sector, mobility and travel, and retail and consumer were each searched and closed: in each, the clean money rails are either held by funded incumbents or blocked by custody and regulation (payroll, insurance claims, and government disbursement are off limits), leaving no maker where a PayPal rail is the natural money leg.
-
----
-
-## 17. Roadmap
-
- - In scope for the first build: the brain, one arm, the Payouts MCP tool, the closed loop, and the single demo screen.
- - Near term: the second arm, Tollgate, richer forecast error modeling, and scenario variety.
- - Later: multiple simultaneous inputs and partners, learned forecast models, and a library of control policies for different business types.
-
----
-
-## 18. License
-
-See LICENSE. Released under the MIT License.
+34 live endpoints, deployed on an isolated AWS instance. No real money moves anywhere.

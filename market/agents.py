@@ -157,16 +157,27 @@ class AgentMarket:
     """A marketplace driven by customer agents deciding each cycle."""
 
     def __init__(self, llm: LLMClient | None = None, n_agents: int = 6, seed: int = 7,
-                 reflect_every: int = 2) -> None:
+                 reflect_every: int = 2, market: Marketplace | None = None, day: int = 0,
+                 agent_ids: list | None = None) -> None:
         import numpy as np
         self.rng = np.random.default_rng(seed)
-        self.m = Marketplace()
+        self.m = market if market is not None else Marketplace()
+        self.day = int(day)
         self.llm = llm or LLMClient()
         self.reflect_every = max(1, int(reflect_every))
         self.agents: list[CustomerAgent] = []
-        self._lid = 0
-        self._oid = 0
         self.log: list[dict] = []
+        self._lid = len(self.m.listings)
+        self._oid = len(self.m.orders)
+        if market is not None:
+            # live mode: existing creators in the account's marketplace become the agents
+            ids = list(agent_ids or [])[:n_agents]
+            for i, aid in enumerate(ids):
+                persona, behavior = PERSONAS[i % len(PERSONAS)]
+                self.agents.append(CustomerAgent(account=self.m.accounts[aid], persona=persona,
+                                                 behavior=behavior,
+                                                 balance=float(self.rng.integers(300, 900)), llm=self.llm))
+            return
         countries = ["US", "IN", "BR", "GB", "NG"]
         firsts = ["Ava", "Aarav", "Davi", "Olivia", "Zainab", "Noah", "Mia", "Arjun"]
         for i in range(n_agents):
@@ -180,7 +191,7 @@ class AgentMarket:
                             str(self.rng.choice(_CATS)))
 
     def _list_item(self, seller, title, price, category):
-        lid = f"l{self._lid:04d}"
+        lid = f"l{self._lid:04d}" if not self.day else f"lag{self._lid:05d}"
         self._lid += 1
         self.m.list_item(Listing(id=lid, seller=seller, title=title, price=price, category=category))
         return lid
@@ -201,9 +212,17 @@ class AgentMarket:
             listing = self.m.listings.get(lst) if lst else None
             if listing is None or listing.seller == agent.account.id or listing.price > agent.balance:
                 listing = cand[int(self.rng.integers(0, len(cand)))]
-            o = self.m.place_order(Order(id=f"o{self._oid:05d}", buyer=agent.account.id,
+            cand_ok = [l for l in cand if self.m.accounts.get(l.seller) is None
+                       or self.m.accounts[l.seller].status == "active"]
+            if listing.seller in self.m.accounts and self.m.accounts[listing.seller].status != "active":
+                if not cand_ok:
+                    return f"{agent.account.name} could not buy (sellers suspended)"
+                listing = cand_ok[int(self.rng.integers(0, len(cand_ok)))]
+            o = self.m.place_order(Order(id=f"oag{self._oid:05d}" if self.day else f"o{self._oid:05d}",
+                                         buyer=agent.account.id,
                                          seller=listing.seller, listing=listing.id,
-                                         amount=listing.price, day=len(self.log), status="fulfilled"))
+                                         amount=listing.price, day=self.day or len(self.log),
+                                         status="fulfilled"))
             self._oid += 1
             agent.balance -= listing.price
             seller = next((ag for ag in self.agents if ag.account.id == listing.seller), None)

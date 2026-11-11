@@ -1,5 +1,6 @@
 # Helm runtime, pinned for reproducible deploys.
-# The deployed dashboard runs entirely in demo mode and needs no secrets.
+# With no secrets the app runs in a labeled demo mode; with sandbox keys set
+# (DEMO_MODE=0) it uses the real PayPal sandbox, a live model, and Alpaca paper.
 
 # Deterministic spine: optimization + numerics
 ortools==9.15.6755
@@ -16,5 +17,21 @@ uvicorn==0.54.0
 # MCP server (exposes Helm's payout / sourcing / signal tools over the protocol)
 mcp==2.3.0
 
+# Multi-agent orchestration (the operator and buyer run as LangGraph graphs)
+langgraph==1.2.16
+langchain-core==1.6.12
+
+# Embedded graph database (fraud rings as a property graph, multi-hop Cypher; no server)
+kuzu==0.11.3
+
+# Semantic retrieval for agent grounding (ONNX sentence embeddings on CPU, no torch).
+# Optional: without it the vector store falls back to a deterministic hashing embedder.
+fastembed==0.9.0
+
+# Provable-safety and zero-knowledge layer
+z3-solver==5.3.3.0
+py_ecc==8.0.0
+
 # Dev only (not needed to serve the app)
 pytest==9.2.0
+hypothesis==6.140.0

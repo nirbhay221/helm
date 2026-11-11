@@ -1,0 +1,150 @@
+"""Distribution-free prediction intervals via split conformal prediction.
+
+The forecaster and the default scorecard both emitted point estimates (or a naive
+residual band). Point estimates are dangerous for money: they let the system lend
+or release as if it were certain. Split conformal prediction wraps any point
+predictor in an interval with a *finite-sample marginal coverage guarantee* and no
+distributional assumption: hold out a calibration set, score the nonconformity
+(absolute error) on it, and the (1-alpha) conformal quantile is the half-width that
+covers the next point with probability at least 1-alpha.
+
+We use it two ways:
+  - demand forecasting: calibrated bands that widen honestly under noise, so the
+    controller holds more reserve when the forecast is genuinely less certain;
+  - default risk: a conformal band on the probability of default, so an advance is
+    sized DOWN when the estimate is uncertain, not only when it is high.
+
+Grounded in split conformal prediction (Vovk; Lei et al. "Distribution-Free
+Predictive Inference"), applied to lending the way the loan-approval and
+VaR conformal literature does. Pure-python, numpy-optional, so it runs on the box.
+"""
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field
+
+
+def conformal_quantile(scores, alpha: float) -> float:
+    """The split-conformal quantile of nonconformity scores at level alpha.
+
+    Uses the finite-sample correction: the ceil((n+1)(1-alpha))/n empirical quantile,
+    which is what gives the >= 1-alpha marginal coverage guarantee. Returns +inf when
+    the calibration set is too small to guarantee coverage (honest: no claim made)."""
+    s = sorted(float(x) for x in scores)
+    n = len(s)
+    if n == 0:
+        return float("inf")
+    rank = math.ceil((n + 1) * (1.0 - alpha))
+    if rank > n:
+        return float("inf")          # not enough calibration points for this alpha
+    return s[rank - 1]
+
+
+@dataclass
+class ConformalForecaster:
+    """Wraps a mean/sigma forecaster (the ETS one) with calibrated intervals.
+
+    Splits the history into a training part and a calibration part, fits the base
+    forecaster on training, measures one-step nonconformity on calibration, and uses
+    the conformal quantile to set the band half-width. The band still grows with the
+    horizon (sqrt-time, matching error accumulation), but its scale is calibrated to
+    realized errors rather than assumed Gaussian."""
+    alpha: float = 0.1               # 90% coverage
+    cal_frac: float = 0.3            # last 30% of history held out for calibration
+    q: float = 0.0
+    covered_note: str = ""
+
+    def fit(self, series) -> "ConformalForecaster":
+        from .forecast import ETSForecaster
+        ys = [float(x) for x in series]
+        n = len(ys)
+        if n < 6:
+            # too short to split; fall back to the residual std as a rough band
+            f = ETSForecaster().fit(ys)
+            self.q = f.resid_std if f.resid_std > 0 else (abs(ys[-1]) * 0.1 if ys else 0.0)
+            self.covered_note = "short series: uncalibrated residual band"
+            return self
+        n_cal = max(2, int(round(n * self.cal_frac)))
+        train, cal = ys[:n - n_cal], ys[n - n_cal:]
+        base = ETSForecaster().fit(train)
+        # one-step-ahead nonconformity across the calibration tail
+        scores = []
+        lvl, trd = base.level, base.trend
+        a, b, phi = base.alpha, base.beta, base.phi
+        for y in cal:
+            pred = lvl + phi * trd
+            scores.append(abs(y - pred))
+            new_lvl = a * y + (1 - a) * (lvl + phi * trd)
+            trd = b * (new_lvl - lvl) + (1 - b) * phi * trd
+            lvl = new_lvl
+        self.q = conformal_quantile(scores, self.alpha)
+        if not math.isfinite(self.q):
+            # too few calibration points for this coverage level: fall back to a
+            # residual-std band and say so, rather than claiming an infinite interval.
+            from statistics import pstdev
+            self.q = pstdev(scores) if len(scores) > 1 else (scores[-1] if scores else 0.0)
+            self.covered_note = (f"insufficient calibration ({len(scores)} pts) for "
+                                 f"{int((1 - self.alpha) * 100)}% coverage; residual-std band")
+        else:
+            self.covered_note = (f"calibrated on {len(scores)} points, target "
+                                 f"{int((1 - self.alpha) * 100)}% coverage")
+        return self
+
+    def forecast(self, series, horizon: int):
+        """Return dicts per step: {mean, low, high, half_width}. Refits the base on the
+        full series for the point forecast, scales the conformal band by sqrt(step)."""
+        from .forecast import ETSForecaster
+        if self.q == 0.0 and not self.covered_note:
+            self.fit(series)
+        means, _ = ETSForecaster().fit([float(x) for x in series]).forecast(horizon)
+        out = []
+        for i, m in enumerate(means, start=1):
+            hw = self.q * math.sqrt(i) if math.isfinite(self.q) else float("inf")
+            lo = max(0.0, m - hw) if math.isfinite(hw) else 0.0
+            hi = m + hw if math.isfinite(hw) else float("inf")
+            out.append({"step": i, "mean": round(m, 2),
+                        "low": round(lo, 2), "high": round(hi, 2) if math.isfinite(hi) else None,
+                        "half_width": round(hw, 2) if math.isfinite(hw) else None})
+        return out
+
+
+def conformal_pd_band(history, alpha: float = 0.1) -> dict:
+    """A conformal band on a creator's probability of default.
+
+    The PD scorecard is fit to a simulated book with known outcomes, so we can hold
+    out a calibration slice, score |predicted_pd - outcome| on it, and use the
+    conformal quantile as the band half-width. A wider band means the estimate is
+    less trustworthy, which the advance engine uses to lend more conservatively.
+    Returns {pd, low, high, half_width, coverage}."""
+    from .advance import _pd_features, default_probability
+    pd_point = default_probability(history)
+    try:
+        import numpy as np
+        from .models import LogisticModel
+        rng = np.random.default_rng(7)
+        Xc, yc = [], []
+        for _ in range(600):                         # a fresh calibration book, same process
+            k = int(rng.integers(1, 13))
+            mean = float(rng.uniform(200, 5000))
+            cvt = float(rng.uniform(0.03, 1.2))
+            trt = float(rng.normal(0.0, 0.14))
+            hist = [max(0.0, mean * (1 + trt * t) * (1 + rng.normal(0, cvt))) for t in range(k)]
+            feats = _pd_features(hist)
+            if feats is None:
+                continue
+            thin = max(0.0, (6 - k) / 6.0)
+            z = -2.0 + 3.2 * cvt - 5.5 * trt + 1.4 * thin
+            outcome = 1.0 if rng.random() < 1.0 / (1.0 + np.exp(-z)) else 0.0
+            Xc.append(feats)
+            yc.append(outcome)
+        from .advance import _pd_model
+        model = _pd_model()
+        scores = [abs(float(model.predict_proba(x)) - y) for x, y in zip(Xc, yc)]
+        hw = conformal_quantile(scores, alpha)
+        hw = min(0.5, hw) if math.isfinite(hw) else 0.5
+    except Exception:
+        hw = 0.15                                    # honest default band when numpy is unavailable
+    low = round(max(0.0, pd_point - hw), 3)
+    high = round(min(1.0, pd_point + hw), 3)
+    return {"pd": pd_point, "low": low, "high": high, "half_width": round(hw, 3),
+            "coverage": round(1.0 - alpha, 2)}

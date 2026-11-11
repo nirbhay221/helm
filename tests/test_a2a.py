@@ -74,3 +74,22 @@ def test_total_budget_cap_blocks_the_second_buy():
     desk = _desk()
     assert desk.buy(intent, "cheap").status == "settled"
     assert desk.buy(intent, "mid").status == "blocked"
+
+
+def test_credential_authority_binding_pins_the_owner_key():
+    """Integrity alone is not authority: a credential self-signed with a different key
+    verifies for integrity, but is rejected when the trusted owner key is pinned."""
+    from market.mandates import OwnerKey, issue_intent_mandate, verify_credential
+    owner = OwnerKey()
+    cred = issue_intent_mandate(owner, "ava", max_total=500, max_per_item=100,
+                                allowed_categories=["stocks"])
+    owner_pub = cred["public_key"]
+    # integrity ok, and authority ok when pinned to the real owner key
+    assert verify_credential(cred)[0] is True
+    assert verify_credential(cred, expected_public_key=owner_pub)[0] is True
+    # an attacker self-signs a forged high-budget mandate with THEIR OWN key
+    forged = issue_intent_mandate(OwnerKey(), "ava", max_total=1_000_000, max_per_item=1_000_000,
+                                  allowed_categories=["stocks"])
+    assert verify_credential(forged)[0] is True                       # passes integrity (self-consistent)
+    ok, _, reason = verify_credential(forged, expected_public_key=owner_pub)
+    assert ok is False and "owner key" in reason                      # rejected once authority is pinned
