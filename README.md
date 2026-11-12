@@ -6,12 +6,13 @@
 
 **The money layer for a creator marketplace, run by AI agents and settled on PayPal.**
 
-AI agents shop for buyers, pay creators and catch fraud rings. Every dollar they touch moves through
-PayPal, and deterministic code and cryptography keep each one inside rules the agents cannot break.
+AI agents shop for buyers, check deliveries, pay creators, invest their earnings and catch fraud
+rings. Every dollar they touch moves through PayPal, and deterministic code and cryptography keep
+each one inside rules the agents cannot break.
 
 - **Control room (start here):** https://184-194-177-73.sslip.io/live
 - **Full console (every tool):** https://184-194-177-73.sslip.io
-- **Video (under 3 minutes):** linked from the Devpost entry
+- **Devpost entry and video (under 3 minutes):** https://devpost.com/software/helm-making-things-should-pay-on-time-and-fairly
 - **API:** `docs/openapi.json`, a Postman collection in `docs/`, and a generated Python SDK in `sdk/python/`
 
 No login, no keys and no setup are needed. Everything runs on the PayPal sandbox, so no real money moves.
@@ -43,12 +44,14 @@ Open https://184-194-177-73.sslip.io/live. Pick a role on the left; the big pane
 that role works with.
 
 1. **Buyer.**
-   - In **Shop**, browse every creator's items, with their sales and return rates.
+   - In **Shop**, browse every creator's items, with their sales, return rates and a seller trust
+     score (the low end of the 95% range on orders that were not returned or disputed, so a seller
+     with few sales starts low and earns it).
    - Tick *real stores* and search to add Channel3 products.
    - Press **Buy now** on one: PayPal holds the money, and it waits in *Needs your approval*.
    - Press **Ask my agent** on another (or **Send my buyer agent**): watch the buyer agents search,
-     quarantine a listing that hides a hijack, pick inside your signed budget and place a PayPal
-     hold.
+     quarantine a listing that hides a hijack, pick the item that fits, weighing price against
+     seller trust, inside your signed budget, and place a PayPal hold.
    - Each hold shows what the seller delivered (files, sizes, SHA-256) and the AI delivery
      inspector's verdict. **Open it** to log your access, then **Accept** (a PayPal capture) or
      **Reject** (a void). Do nothing and a matching delivery auto-releases when the inspection
@@ -57,7 +60,15 @@ that role works with.
    - In **My shop**, see your listings, what each sold and your recent sales. Click a price to
      change it.
    - **List it** to put up something new; it becomes a PayPal Catalog product.
-   - **Brief me** gets your AI manager's read of your sales.
+   - **Brief me** gets your AI manager's read of your sales and your best money option.
+   - **Get paid early** offers an advance priced from your own sales; the less certain your next six
+     months, the less it lends.
+   - **Invest with my club**: you and three community members (simulated) invest in ten real
+     companies. Each member's AI agent reads live prices and Alpaca news through the market MCP
+     server, picks alone, then sees the others' picks and may revise. A manager agent blends the
+     picks by money, and code enforces the rules (listed companies only, none above 35%, each
+     signed mandate, and none of a person's money in a company they ruled out) before Alpaca paper
+     orders go out.
 3. **Operator.**
    - In **Accounts**, the review queue ranks all 121 accounts by risk from their own record. Click
      one for the evidence.
@@ -211,6 +222,16 @@ https://184-194-177-73.sslip.io has three lanes of tools that read and write the
   - The manager sets a risk multiplier.
   - The dispose step caps every proposal to what is owed and what is safe, and Payouts holds large
     batches for a human.
+- **Investment club.**
+  - The flow is `club_research (MCP) -> club_reflect -> four member agents in parallel ->
+    club_discuss -> the members again (round 2) -> club_manager -> club_dispose -> broker`.
+  - Research spawns the market MCP server as its own process and calls `market_snapshot` and
+    `market_news` over stdio; reflect compares each agent's past picks with today's prices.
+  - Round 1 is independent; in round 2 each agent sees the others and changes only when another
+    reason is better for its own member, because LLM crowds that see each other first herd.
+  - The manager blends the picks by how much each person put in; dispose (code) drops off-list
+    tickers, caps each company at 35%, checks every signed mandate and removes each person's
+    refused companies from their own share.
 - **AI customers.**
   - Six marketplace members, each a model with a persona, memory and periodic reflection (after
     Generative Agents).
@@ -223,7 +244,8 @@ https://184-194-177-73.sslip.io has three lanes of tools that read and write the
 **What is model-driven and what is not**
 
 - *Model-driven:* compiling a policy, pay or hold, the debate, reading signals, the buyer's
-  understanding and choice, and the customers' decisions.
+  understanding and choice, the delivery inspection, the club members' picks and the club
+  manager's blend, and the customers' decisions.
 - *Deterministic or cryptographic:* the allocation solver, the cash controller, caps, conformal
   intervals, tax thresholds, compliance screening, signatures, hash-chained receipts, and the Z3
   and zero-knowledge proofs.
@@ -249,7 +271,8 @@ Every call is booked only when PayPal accepts it.
 ## AI
 
 Any OpenAI-compatible model works. The live demo runs OpenAI gpt-5-nano with gpt-5-mini as the
-fallback, streamed token by token. The model client retries with the provider's suggested wait and
+fallback, streamed token by token. gpt-5-mini also runs the delivery inspector and the investment
+club's member and manager agents. The model client retries with the provider's suggested wait and
 falls through the chain, and the UI names which model answered.
 
 ## Sponsor tools
@@ -293,7 +316,7 @@ falls through the chain, and the UI names which model answered.
 - every PayPal sandbox call;
 - every model call;
 - Channel3 product search;
-- live market prices and Alpaca paper orders;
+- live market prices, Alpaca news and Alpaca paper orders;
 - the solvers, the Z3 and zero-knowledge proofs, and the graph and vector databases;
 - the fraud and abuse engines, and every signature.
 
@@ -305,6 +328,8 @@ falls through the chain, and the UI names which model answered.
   paid on PayPal.
 - **The sellers' deliveries.** The files a seller delivers are generated manifests, because the sellers
   are simulated. The hash, the AI inspection, the access log and the PayPal capture are real.
+- **The other three investment club members.** Their goals and money are simulated; their AI
+  agents, the market data and the paper orders are real.
 - **The dispute button.** It simulates the webhook; the real receiver is `/api/paypal/webhook`.
 - **The advance book and the safety fund.** Lending is regulated in production.
 - **Payees.** A creator is the PayPal payee only when `HELM_SELLER_PAYEE_EMAILS` maps them to a
