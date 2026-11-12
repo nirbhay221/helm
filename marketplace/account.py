@@ -40,6 +40,9 @@ from .receipts import ReceiptChain
 ME = "me"                       # the visitor's own seller account id
 NOW_DAY = 120                   # "today" in the marketplace's day clock
 WINDOW = 30                     # chargeback window: earnings younger than this are still at risk
+# words that carry no product meaning, so "a stand for my desk" never matches "Short-form ..."
+_STOP = {"the", "and", "for", "with", "you", "your", "need", "want", "some", "that", "this", "from", "into",
+         "good", "best", "new", "get", "buy", "please", "something", "thing", "things", "any", "can", "one"}
 TAKE_RATE = 0.10                # the platform's cut of every sale
 FUND_COVER = 1.6                # the safety fund starts at this multiple of what is owed
 MAX_ACCOUNTS = 300
@@ -202,6 +205,17 @@ class Account:
     def _deposit(self, amount: float) -> None:
         self.reserve_lots.append(round(float(amount), 2))
 
+    def invest_earnings(self, amount: float) -> float:
+        """Move part of your unpaid earnings out to the broker. Returns what moved: never more
+        than you have, never a negative amount."""
+        amt = round(min(max(0.0, float(amount)), self.my_earnings), 2)
+        if amt <= 0:
+            return 0.0
+        paid = self.cledger.pay(ME, amt, NOW_DAY)
+        self._draw(paid)                         # the cash leaves the platform for the broker
+        self.log("invest", ME, paid, f"moved ${paid:,.2f} of your earnings to investments")
+        return round(paid, 2)
+
     def log(self, action: str, ref: str, amount: float, text: str, meta: Optional[dict] = None) -> None:
         self.receipts.append(action, ref, amount, meta or {})
         self.events.append({"t": round(time.time(), 1), "action": action, "amount": round(amount, 2),
@@ -215,23 +229,30 @@ class Account:
 
     def search_listings(self, query: str = "", max_price: Optional[float] = None, limit: int = 6) -> list:
         """Active creators' listings matching the query, as product dicts the buyer can choose."""
-        words = [w for w in str(query or "").lower().split() if len(w) > 2]
+        import re as _re
+        words = [w for w in _re.findall(r"[a-z0-9]+", str(query or "").lower()) if len(w) > 2 and w not in _STOP]
         out = []
         for l in self.market.listings.values():
             if l.seller == ME or self.frozen(l.seller):
                 continue
             if max_price and l.price > max_price:
                 continue
-            text = f"{l.title} {l.category}".lower()
-            hits = sum(1 for w in words if w in text or w.rstrip("s") in text)
+            toks = set(_re.findall(r"[a-z0-9]+", f"{l.title} {l.category}".lower()))
+            toks |= {t.rstrip("s") for t in toks}
+            hits = sum(1 for w in words if w in toks or w.rstrip("s") in toks)
             if words and not hits:
                 continue
             out.append((hits, -self.market.seller_stats(l.seller)["rate"], l))
         out.sort(key=lambda t: (t[0], t[1]), reverse=True)
-        return [{"id": l.id, "title": l.title, "brand": self.name_of(l.seller), "merchant": self.name_of(l.seller),
-                 "seller": l.seller, "listing": l.id, "price": l.price, "currency": "USD", "url": "",
-                 "image": "", "category": l.category, "source": "marketplace",
-                 "payee": self.payee_for(l.seller) or "platform account"} for _, _, l in out[:limit]]
+        res = []
+        for _, _, l in out[:limit]:
+            st = self.market.seller_stats(l.seller)
+            res.append({"id": l.id, "title": l.title, "brand": self.name_of(l.seller), "merchant": self.name_of(l.seller),
+                        "seller": l.seller, "listing": l.id, "price": l.price, "currency": "USD", "url": "",
+                        "image": "", "category": l.category, "source": "marketplace",
+                        "payee": self.payee_for(l.seller) or "platform account",
+                        "trust": st["trust"], "seller_sales": st["orders"], "return_rate": st["rate"]})
+        return res
 
     def record_sale(self, buyer: str, listing_id: str, amount: float) -> dict:
         """A completed marketplace sale: the order lands in the market and the seller's net
@@ -263,8 +284,9 @@ class Account:
         return {"status": "charged_back", "order_id": o.id, "seller": o.seller, "clawed": net,
                 "recoup_due": self.cledger.recoup_due(o.seller)}
 
-    def scan(self, apply: bool = True) -> dict:
-        """Run the abuse and ring engines on THIS market; suspended creators' earnings freeze."""
+    def scan(self, apply: bool = True, only=None) -> dict:
+        """Run the abuse and ring engines on THIS market; suspended creators' earnings freeze.
+        With `only`, act on just those accounts (a dispute reviews its own parties, not the market)."""
         from market.abuse import AbuseEngine
         from market.linkage import LinkageEngine
         verdicts = AbuseEngine().scan(self.market)
@@ -272,13 +294,13 @@ class Account:
         suspended = []
         if apply:
             for v in verdicts:
-                if v.action == "suspend" and v.account_id != ME:
+                if v.action == "suspend" and v.account_id != ME and (only is None or v.account_id in only):
                     self.market.suspend(v.account_id, v.reason)
                     suspended.append(v.account_id)
             for r in rings:
                 if r.action == "suspend_ring":
                     for x in r.members:
-                        if x != ME and not self.frozen(x):
+                        if x != ME and not self.frozen(x) and (only is None or x in only):
                             self.market.suspend(x, f"member of ring {r.id}: {r.reason}")
                             suspended.append(x)
         frozen = {s: self.cledger.total_unpaid(s) for s in self.sellers() if self.frozen(s)}
@@ -337,7 +359,7 @@ class Account:
         self.mandate = issue_intent_mandate(self.owner_key, owner=ME, max_total=float(max_total),
                                             max_per_item=float(max_per_item or max_total),
                                             allowed_categories=list(categories or []))
-        self.mandate_spent = round(self.held_spend(), 2)
+        self.mandate_spent = 0.0          # the signed limit caps what the AGENT spends from here on
         return self.mandate
 
     def mandate_for(self, budget: Optional[float]) -> dict:
@@ -363,9 +385,12 @@ class Account:
                            f"${price:,.2f} is more than you have earned")
         return True, "ok"
 
-    def hold_purchase(self, title: str, price: float, merchant: str, client, listing: Optional[str] = None) -> dict:
+    def hold_purchase(self, title: str, price: float, merchant: str, client, listing: Optional[str] = None,
+                      by_agent: bool = True) -> dict:
         """Hold the buyer's own earnings in a PayPal authorization until delivery is confirmed.
-        A marketplace listing names its creator as the PayPal payee when they have a seller account."""
+        A marketplace listing names its creator as the PayPal payee when they have a seller account.
+        Only a purchase the agent makes counts against the agent's signed limit; one the owner makes
+        by hand (Buy now) does not."""
         from market.escrow import Criterion, Escrow
         seller = None
         if listing and listing in self.market.listings:
@@ -382,18 +407,25 @@ class Account:
             return {"status": held["status"], "reason": held["reason"]}
         eid = uuid.uuid4().hex[:10]
         self.escrows[eid] = {"escrow": e, "title": title, "merchant": merchant, "price": e.amount,
-                             "listing": listing if seller else None, "seller": seller}
-        self.mandate_spent = round(self.mandate_spent + e.amount, 2)
+                             "listing": listing if seller else None, "seller": seller, "by_agent": bool(by_agent)}
+        if by_agent:
+            self.mandate_spent = round(self.mandate_spent + e.amount, 2)
         self.log("authorize", e.authorization_id or eid, e.amount,
                  f"held ${e.amount:,.2f} of your earnings for {title} ({merchant}) until delivery")
+        # the seller delivers through the platform and the buyer's AI inspector checks it
+        from market.delivery import deliver_and_inspect
+        proof = deliver_and_inspect(self, eid)
         return {"status": "held", "escrow_id": eid, "authorization_id": e.authorization_id,
                 "amount": e.amount, "seller": seller, "payee": e.payee_email or "platform account",
-                "reason": "held on PayPal until you confirm delivery"}
+                "delivery": proof["delivery"], "inspection": proof["inspection"],
+                "reason": "held on PayPal until the delivery is confirmed"}
 
     def settle_purchase(self, eid: str, delivered: bool, client) -> dict:
         item = self.escrows.get(eid)
         if not item:
             return {"status": "unknown", "reason": "no open hold with that id"}
+        if delivered and not item.get("delivery"):
+            return {"status": "held", "reason": "the seller has not delivered anything yet", "escrow_id": eid}
         e = item["escrow"]
         out = e.settle({"delivered": True} if delivered else {}, client, self.get_ledger())
         if out["status"] == "released":
@@ -415,8 +447,9 @@ class Account:
                 self.log("capture", e.authorization_id or eid, e.amount,
                          f"delivery confirmed: captured ${e.amount:,.2f} to {item['merchant']}")
         elif out["status"] == "refunded":
-            self.escrows.pop(eid, None)
-            self.mandate_spent = round(max(0.0, self.mandate_spent - e.amount), 2)
+            gone = self.escrows.pop(eid, None) or {}
+            if gone.get("by_agent", True):
+                self.mandate_spent = round(max(0.0, self.mandate_spent - e.amount), 2)
             self.log("void", e.authorization_id or eid, e.amount,
                      f"not delivered: voided the hold, ${e.amount:,.2f} back in your earnings")
         return {**out, "escrow_id": eid}
@@ -443,6 +476,7 @@ class Account:
                 "take_rate": TAKE_RATE, "day": NOW_DAY, "chargeback_window_days": WINDOW}
 
     def snapshot(self) -> dict:
+        from market.delivery import hold_view
         v = self.receipts.verify()
         margin = round(self.reserves() - self.liabilities(), 2)
         return {"reserves": self.reserves(), "liabilities": self.liabilities(), "margin": margin,
@@ -453,7 +487,8 @@ class Account:
                 "advances": [{"creator": l.creator, "principal": l.principal, "outstanding": l.outstanding}
                              for l in self.engine.loans.values()],
                 "open_holds": [{"escrow_id": k, "title": v2["title"], "merchant": v2["merchant"],
-                                "amount": v2["price"], "payee": v2["escrow"].payee_email or "platform account"}
+                                "amount": v2["price"], "payee": v2["escrow"].payee_email or "platform account",
+                                **hold_view(v2)}
                                for k, v2 in self.escrows.items()],
                 "receipts": len(self.receipts.receipts), "chain_intact": bool(v.get("intact")),
                 "events": list(reversed(self.events[-8:]))}

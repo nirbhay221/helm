@@ -74,12 +74,20 @@ class CustomerAgent:
     reflection: str = ""                            # a periodic higher-level lesson
 
     def decide(self, m: Marketplace, rng) -> dict:
+        """The model chooses. If it does not answer, the customer sits this turn out and says so: a
+        failed call is never quietly replaced by a random action. Only with no model key at all (offline
+        tests) does a persona-weighted stand-in act, and it is labelled as simulated."""
         if self.llm.available:
             try:
-                return self._decide_llm(m)
-            except Exception:
-                pass
-        return self._decide_fallback(m, rng)
+                act = self._decide_llm(m)
+                act["driver"] = "llm"
+                return act
+            except Exception as exc:
+                return {"action": "hold", "driver": "error",
+                        "reason": f"the model did not answer ({type(exc).__name__}), so I sat this turn out"}
+        act = self._decide_fallback(m, rng)
+        act["driver"] = "sim"
+        return act
 
     def remember(self, event: str, cap: int = 8) -> None:
         self.memory.append(event)
@@ -116,8 +124,21 @@ class CustomerAgent:
 
     def _state(self, m: Marketplace) -> dict:
         mine = [l.id for l in m.listings.values() if l.seller == self.account.id]
-        others = [{"id": l.id, "title": l.title, "price": l.price}
-                  for l in list(m.listings.values()) if l.seller != self.account.id][:8]
+        # what this member sees on the storefront: the newest drops first (so a creator who just
+        # listed something is seen), then a fresh sample of what it can afford
+        gone = getattr(m, "_round_bought", set())     # bought by another member earlier this round
+        pool = [l for l in m.listings.values() if l.seller != self.account.id and l.price <= self.balance
+                and l.id not in gone
+                and (m.accounts.get(l.seller) is None or m.accounts[l.seller].status == "active")]
+        # a fresh listing by the person using the console ("me") is always on the shelf
+        mine_new = [l for l in pool if l.seller == "me" and l.id.startswith("me")][-1:]
+        newest = mine_new + [l for l in pool[-6:] if l not in mine_new][-(4 - len(mine_new)):]
+        rest = [l for l in pool if l not in newest]
+        import random as _r
+        sample = _r.sample(rest, min(6, len(rest))) if rest else []
+        newest = _r.sample(newest, len(newest))
+        others = [{"id": l.id, "title": l.title, "price": l.price, "category": l.category,
+                   "new": l in newest} for l in newest + sample]
         my_buys = [{"order": o.id, "listing": o.listing}
                    for o in m.orders_as_buyer(self.account.id) if o.status == "fulfilled"][-5:]
         return {"you": self.account.name, "balance": round(self.balance, 2),
@@ -127,7 +148,10 @@ class CustomerAgent:
     def _decide_llm(self, m: Marketplace) -> dict:
         sysmsg = (f"You are {self.account.name}, a member of a creator marketplace. {self.behavior} "
                   "Use your recent_memory and your_reflection to learn from what happened, then choose "
-                  "exactly one action for this cycle by calling choose_action. Act in character.")
+                  "exactly one action for this cycle by calling choose_action. Act in character. "
+                  "Items marked new were just listed; buyers notice new drops first. Holding is a "
+                  "wasted turn. Buying is how the market moves, so if a buyable item fits your "
+                  "persona, buy it, and pass its exact id as listing_id.")
         user = "Your state:\n" + json.dumps(self._state(m)) + "\n\nChoose one action."
         msg = self.llm.chat(
             messages=[{"role": "system", "content": sysmsg}, {"role": "user", "content": user}],
@@ -202,7 +226,8 @@ class AgentMarket:
             self._list_item(agent.account.id, str(act.get("title", "item"))[:40],
                             max(5.0, min(120.0, float(act.get("price", 20) or 20))),
                             act.get("category") if act.get("category") in _CATS else "prints")
-            return f"{agent.account.name} listed an item"
+            title = str(act.get("title", "item"))[:40]
+            return f"{agent.account.name} listed {title} at ${max(5.0, min(120.0, float(act.get('price', 20) or 20))):.2f}"
         if a == "buy":
             cand = [l for l in self.m.listings.values()
                     if l.seller != agent.account.id and l.price <= agent.balance]
@@ -224,11 +249,12 @@ class AgentMarket:
                                          amount=listing.price, day=self.day or len(self.log),
                                          status="fulfilled"))
             self._oid += 1
+            self.m.__dict__.setdefault("_round_bought", set()).add(listing.id)
             agent.balance -= listing.price
             seller = next((ag for ag in self.agents if ag.account.id == listing.seller), None)
             if seller:
                 seller.balance += listing.price
-            return f"{agent.account.name} bought {listing.title} for {listing.price}"
+            return f"{agent.account.name} bought {listing.title} for ${listing.price:.2f}"
         if a == "return":
             mine = [o for o in self.m.orders_as_buyer(agent.account.id) if o.status == "fulfilled"]
             if not mine:
@@ -244,18 +270,25 @@ class AgentMarket:
         return f"{agent.account.name} held"
 
     def tick(self) -> list[dict]:
+        self.m.__dict__["_round_bought"] = set()
         order = list(range(len(self.agents)))
         self.rng.shuffle(order)
         events = []
         for i in order:
             agent = self.agents[i]
-            act = agent.decide(self.m, self.rng)
-            outcome = self._execute(agent, act)
+            from agent import tap
+            with tap.node("cust:" + agent.account.id):
+                tap.emit("actor_start", id=agent.account.id, name=agent.account.name, persona=agent.persona)
+                act = agent.decide(self.m, self.rng)
+                outcome = self._execute(agent, act)
+                tap.emit("actor", id=agent.account.id, name=agent.account.name, persona=agent.persona,
+                         action=act.get("action", "hold"), reason=str(act.get("reason", ""))[:240], outcome=outcome,
+                         driver=act.get("driver", "llm"))
             agent.remember(f"t{len(self.log)}: {act.get('action', 'hold')} -> {outcome}")
             ev = {"agent": agent.account.name, "persona": agent.persona,
                   "action": act.get("action", "hold"), "reason": act.get("reason", ""),
                   "outcome": outcome, "balance": round(agent.balance, 2),
-                  "reflection": agent.reflection}
+                  "reflection": agent.reflection, "driver": act.get("driver", "llm")}
             events.append(ev)
         if (len(self.log) + 1) % self.reflect_every == 0:   # periodic reflection pass
             for a in self.agents:

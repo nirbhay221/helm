@@ -109,7 +109,7 @@ class OperatorGraphIn(BaseModel):
     signal: str = Field("Risk alert: a fraud and chargeback wave is hitting brand-new viral accounts this week.",
                         description="The cycle's operational signal the agents react to.",
                         examples=["Risk alert: a fraud and chargeback wave is hitting brand-new viral accounts this week."])
-    debate_rounds: int = Field(1, description="How many bull/bear debate rounds.", examples=[1])
+    debate_rounds: int = Field(2, description="Most bull/bear debate rounds; another round runs only while they disagree.", examples=[2])
 
 
 class InvestIn(BaseModel):
@@ -225,6 +225,10 @@ class Constraints(BaseModel):
     max_fraction_per_creator: float = Field(..., description="Cap on any one creator's share.", examples=[0.2])
     exclude_countries: List[str] = Field(..., description="Country codes to exclude.", examples=[["NG"]])
     max_risk: float = Field(..., description="Maximum per-creator risk allowed.", examples=[0.6])
+    min_priority: float = Field(0.0, description="Only pay creators at least this urgent.", examples=[0.0])
+    max_amount_per_creator: float = Field(0.0, description="Dollar cap per creator (0 = none).", examples=[500])
+    prioritize_countries: List[str] = Field(default_factory=list, description="Countries paid first.",
+                                            examples=[["BR"]])
 
 
 class PolicyOut(BaseModel):
@@ -238,6 +242,7 @@ class PolicyOut(BaseModel):
     constraints: Constraints = Field(..., description="Hard constraints.")
     violations: List[str] = Field(default_factory=list, description="Any bounds the policy tried to break.",
                                   examples=[[]])
+    model_config = {"extra": "allow"}
 
 
 class SignalOut(BaseModel):
@@ -250,6 +255,7 @@ class SignalOut(BaseModel):
     disagreement: float = Field(..., description="Ensemble disagreement, 0 to 1.", examples=[0.15])
     period_deltas: Dict[str, float] = Field(..., description="Demand delta per period index.",
                                             examples=[{"1": 120.0, "2": 90.0}])
+    model_config = {"extra": "allow"}
 
 
 class QuoteOut(BaseModel):
@@ -269,6 +275,7 @@ class InvestOut(BaseModel):
     fills: List[Fill] = Field(..., description="Per-ticker fills.")
     cost_basis: float = Field(..., description="Total cost basis.", examples=[1000.0])
     market_value: float = Field(..., description="Marked-to-market value.", examples=[1000.0])
+    model_config = {"extra": "allow"}
 
 
 class AdvanceOut(BaseModel):
@@ -285,6 +292,7 @@ class AdvanceOut(BaseModel):
     conservative_max: Optional[float] = Field(
         None, description="Offer sized to the upper end of the PD band (lends less when uncertain).",
         examples=[1150.0])
+    model_config = {"extra": "allow"}
 
 
 class TaxOut(BaseModel):
@@ -515,6 +523,7 @@ class ShopBuyOut(BaseModel):
     backend: Optional[str] = Field(None, description="'paypal-sandbox' or 'demo'.", examples=["paypal-sandbox"])
     held: Optional[Held] = Field(None, description="The authorized hold, if the buy went through.")
     settled: Optional[Settled] = Field(None, description="The settlement, if the buy went through.")
+    model_config = {"extra": "allow"}
 
 
 # ===========================================================================
@@ -574,7 +583,10 @@ def api_policy(body: PolicyIn) -> JSONResponse:
                                 "risk": d.weights.risk, "fx": d.weights.fx},
                     "constraints": {"max_fraction_per_creator": d.constraints.max_fraction_per_creator,
                                     "exclude_countries": list(d.constraints.exclude_countries),
-                                    "max_risk": d.constraints.max_risk},
+                                    "max_risk": d.constraints.max_risk,
+                                    "min_priority": d.constraints.min_priority,
+                                    "max_amount_per_creator": d.constraints.max_amount_per_creator,
+                                    "prioritize_countries": list(d.constraints.prioritize_countries)},
                     "violations": d.violations})
     except Exception as exc:
         return _err(exc)
@@ -683,7 +695,7 @@ def api_operator_graph(body: OperatorGraphIn, request: Request) -> JSONResponse:
     try:
         acct = _acct(request)
         with acct.lock:
-            graph, llm, ids = _build_operator_graph(int(payload.get("debate_rounds", 1)), acct)
+            graph, llm, ids = _build_operator_graph(int(payload.get("debate_rounds", 2)), acct)
         st = graph.step(str(payload.get("signal", "")))
         booked = []
         if (st.get("decision") or {}).get("status") == "completed":
@@ -700,10 +712,11 @@ def api_operator_graph(body: OperatorGraphIn, request: Request) -> JSONResponse:
                         "argument": d["argument"]} for d in st.get("debate", [])],
             "risk_multiplier": st.get("risk_multiplier"),
             "proposal": st.get("proposal", []),
+            "defaulted_to_settled": st.get("defaulted", []),
             "compliance": st.get("compliance", []),
             "grounding": st.get("grounding", []),
             "decision": {k: st.get("decision", {}).get(k) for k in
-                         ("status", "paid_total", "paid", "cash_after", "reserve_ok_after",
+                         ("status", "message", "paid_total", "paid", "cash_after", "reserve_ok_after",
                           "guardrail_overrides", "safe_release_total", "proposed_total")},
             "booked_to_account": booked,
             "account": acct.snapshot(),
@@ -832,6 +845,12 @@ def api_creator(request: Request, brief: bool = Query(False, description="Also w
         from marketplace.account import ME, NOW_DAY, TAKE_RATE
         acct = _acct(request)
         llm = LLMClient()
+        live_offer = None
+        if brief:
+            # the same offer Get paid early would make right now, without taking it
+            import json as _j
+            r = api_advance(AdvanceIn(take=False), request)
+            live_offer = _j.loads(r.body) if r.status_code < 400 else None
         with acct.lock:
             mgr = CreatorManager(acct.market, ME, llm=llm, now_day=NOW_DAY, take_rate=TAKE_RATE)
             out = {"creator": _creator_row(acct, ME), "earnings": mgr.earnings(),
@@ -840,7 +859,7 @@ def api_creator(request: Request, brief: bool = Query(False, description="Also w
                    "proposals": mgr.proposals(acct.fund(), acct.engine),
                    "tax": asdict(mgr.tax_statement())}
             if brief:
-                out["briefing"] = mgr.briefing(acct.fund(), acct.engine)
+                out["briefing"] = mgr.briefing(acct.fund(), acct.engine, advance=live_offer)
             out["account"] = acct.snapshot()
         return _ok(out)
     except Exception as exc:
@@ -912,14 +931,24 @@ def api_market_agents(body: AgentsIn, request: Request) -> JSONResponse:
             active_ring = [x for x in ring if not acct.frozen(x)]
             ids = honest[:4] + (active_ring[:1] or honest[4:5]) + (active_ring[-1:] or honest[5:6])
             before = {o.id: o.status for o in acct.market.orders}
-            am = AgentMarket(market=acct.market, day=NOW_DAY, agent_ids=ids)
+            import time as _time
+            am = AgentMarket(market=acct.market, day=NOW_DAY, agent_ids=ids,
+                             seed=len(acct.market.orders) * 7919 + int(_time.time()) % 100000)
+            mem = acct.__dict__.setdefault("agent_memory", {})
+            for ag in am.agents:                      # each customer remembers its earlier rounds
+                if ag.account.id in mem:
+                    ag.memory, ag.reflection, ag.balance = mem[ag.account.id]
             am.run(max(1, min(3, int(body.ticks))))
-            sold, returned = [], []
+            for ag in am.agents:
+                mem[ag.account.id] = (list(ag.memory), ag.reflection, ag.balance)
+            sold, returned, to_pay = [], [], []
             for o in acct.market.orders:
                 net = round(o.amount * (1 - TAKE_RATE), 2)
                 if o.id not in before and o.status == "fulfilled":
                     acct.cledger.accrue(o.seller, net, NOW_DAY)
                     sold.append(o.id)
+                    if acct.payee_for(o.seller):
+                        to_pay.append((o.id, o.seller, o.amount, acct.payee_for(o.seller)))
                 elif o.id not in before and o.status == "returned":
                     sold.append(o.id)                     # bought and returned in the same run: nets to zero
                 elif before.get(o.id) == "fulfilled" and o.status == "returned":
@@ -928,8 +957,24 @@ def api_market_agents(body: AgentsIn, request: Request) -> JSONResponse:
             if sold or returned:
                 acct.log("market", f"agents-{len(acct.market.orders)}", 0.0,
                          f"agent customers: {len(sold)} sales, {len(returned)} returns")
+            ledger = acct.get_ledger()
+        # a sale to a creator with a sandbox seller account is paid for real: the customer's card
+        # pays a PayPal order whose payee is that creator (outside the lock: it is a network call)
+        paid = []
+        from paypal import PayPalClient
+        from paypal.orders import create_order, sandbox_buyer_source
+        client = PayPalClient()
+        src = sandbox_buyer_source(client)
+        for oid, seller, amount, payee in to_pay[:3]:
+            if not src:
+                break
+            r = create_order(client, ledger, amount, intent="CAPTURE", reference=oid, payee_email=payee,
+                             payment_source=src)
+            paid.append({"order": oid, "seller": seller, "amount": amount, "payee": payee,
+                         "paypal_order": r.order_id, "status": r.status})
+        with acct.lock:
             return _ok({"model": am.llm.model if am.llm.available else "deterministic fallback",
-                        "ticks": am.log, "sales": len(sold), "returns": len(returned),
+                        "ticks": am.log, "sales": len(sold), "returns": len(returned), "paid_on_paypal": paid,
                         "account": acct.snapshot()})
     except Exception as exc:
         return _err(exc)
@@ -1085,15 +1130,27 @@ def api_quote(ticker: str = Query("SPY", description="Ticker symbol to quote.", 
 
 @app.post("/api/invest", tags=["treasury"], summary="Invest at live prices",
           response_model=InvestOut, responses={400: {"model": ErrorOut}})
-def api_invest(body: InvestIn) -> JSONResponse:
-    """Invest a notional amount across the basket at live prices."""
+def api_invest(body: InvestIn, request: Request) -> JSONResponse:
+    """Invest part of your earnings across the basket at live prices. The amount must be positive
+    and no more than your unpaid earnings; what is invested comes off those earnings."""
     payload = body.model_dump()
     try:
+        amount = float(payload.get("amount", 1000))
+        if not amount > 0:
+            return _err("amount must be more than $0")
+        acct = _acct(request)
+        with acct.lock:
+            have = acct.my_earnings
+            if amount > have + 1e-6:
+                return _err(f"you have ${have:,.2f} of earnings to invest, not ${amount:,.2f}")
         from marketplace.invest import PaperBroker, Portfolio
         pf = Portfolio(PaperBroker())
-        fills = pf.invest(float(payload.get("amount", 1000)))
+        fills = pf.invest(amount)
+        with acct.lock:
+            moved = acct.invest_earnings(pf.cost_basis())
         return _ok({"backend": pf.broker.backend, "fills": fills,
-                    "cost_basis": pf.cost_basis(), "market_value": pf.market_value()})
+                    "cost_basis": pf.cost_basis(), "market_value": pf.market_value(),
+                    "from_earnings": moved, "account": acct.snapshot()})
     except Exception as exc:
         return _err(exc)
 
@@ -1108,20 +1165,35 @@ def api_advance(body: AdvanceIn, request: Request) -> JSONResponse:
     try:
         from marketplace.advance import AdvanceEngine, SafetyFund
         acct = _acct(request)
-        creator = str(payload.get("creator", "creator"))
         live = payload.get("fund") is None
         fund = acct.fund() if live else SafetyFund(float(payload["fund"]))
         engine = acct.engine if live else AdvanceEngine()
-        o = engine.offer(creator, float(payload.get("proven_earnings", 1000)), fund,
-                         earnings_history=payload.get("history"))
-        out = {"eligible": o.eligible, "max_amount": o.max_amount, "pd": o.pd,
-               "fee_rate": o.fee_rate, "binding_cap": o.binding_cap, "reason": o.reason}
+        claimed = float(payload.get("proven_earnings", 1000))
         hist = payload.get("history")
+        if live:
+            # Against the real fund, the lender reads the creator's own sales ledger (as PayPal
+            # Working Capital and Shopify Capital do), never a number the borrower types in.
+            from marketplace.account import ME, NOW_DAY
+            from market.manager import CreatorManager
+            creator = ME
+            with acct.lock:
+                proven = round(max(0.0, acct.my_earnings), 2)
+                hist = CreatorManager(acct.market, ME, now_day=NOW_DAY).earnings_series()
+        else:
+            creator = str(payload.get("creator", "creator"))
+            proven = claimed
+        o = engine.offer(creator, proven, fund, earnings_history=hist)
+        out = {"eligible": o.eligible, "max_amount": o.max_amount, "pd": o.pd,
+               "fee_rate": o.fee_rate, "binding_cap": o.binding_cap, "reason": o.reason,
+               "proven_earnings": proven}
+        if live and abs(claimed - proven) > 0.01 and "proven_earnings" in body.model_fields_set:
+            out["reason"] += (f" Priced on your verified unpaid earnings (${proven:,.2f}) from the "
+                              f"sales ledger, not the ${claimed:,.2f} entered.")
         if hist:
-            # propagate uncertainty: a conformal band on PD, and a conservative cap that
+            # propagate uncertainty: a band on PD from the creator's own history, and a conservative cap that
             # lends to the UPPER end of the band (less when the estimate is less certain).
-            from marketplace.conformal import conformal_pd_band
-            band = conformal_pd_band(hist)
+            from marketplace.conformal import pd_uncertainty_band
+            band = pd_uncertainty_band(hist)
             out["pd_band"] = band
             if o.pd < 1.0:
                 out["conservative_max"] = round(o.max_amount * (1.0 - band["high"]) / (1.0 - o.pd), 2)
@@ -1139,8 +1211,7 @@ def api_advance(body: AdvanceIn, request: Request) -> JSONResponse:
                     out["taken"] = {"status": "rejected",
                                     "reason": "requested $%.2f is above the safe offer $%.2f" % (amt, out["offer"])}
                 else:
-                    out["taken"] = acct.take_advance(creator, amt, float(payload.get("proven_earnings", 1000)),
-                                                     payload.get("history"))
+                    out["taken"] = acct.take_advance(creator, amt, proven, hist)
         if live:
             out["account"] = acct.snapshot()
         return _ok(out)
@@ -1150,14 +1221,28 @@ def api_advance(body: AdvanceIn, request: Request) -> JSONResponse:
 
 @app.get("/api/tax", tags=["treasury"], summary="Tax regime",
          response_model=TaxOut, responses={400: {"model": ErrorOut}})
-def api_tax(country: str = Query("US", description="Two-letter country code.", examples=["US"]),
+def api_tax(request: Request, country: str = Query("US", description="Two-letter country code.", examples=["US"]),
             gross: float = Query(0.0, description="Gross for the year.", examples=[25000]),
             transactions: int = Query(0, description="Transaction count.", examples=[250]),
             fees: float = Query(0.0, description="Platform fees withheld.", examples=[0])) -> JSONResponse:
-    """A creator's reporting regime (US 1099-K thresholds or EU DAC7)."""
+    """A creator's reporting regime (US 1099-K thresholds or EU DAC7). With no figures given, it
+    reads your own sales for the year from the marketplace ledger."""
     try:
         from marketplace.tax import regime_for
-        return _ok(regime_for(country, float(gross), int(transactions), float(fees)))
+        source = "entered"
+        if gross <= 0 and transactions <= 0:
+            from marketplace.account import ME, TAKE_RATE
+            acct = _acct(request)
+            with acct.lock:
+                sales = [o for o in acct.market.orders_as_seller(ME)
+                         if o.status not in ("returned", "charged_back")]
+            gross = round(sum(o.amount for o in sales), 2)
+            transactions = len(sales)
+            fees = round(gross * TAKE_RATE, 2)
+            source = "your marketplace sales this year"
+        out = regime_for(country, float(gross), int(transactions), float(fees))
+        out["figures_from"] = source
+        return _ok(out)
     except Exception as exc:
         return _err(exc)
 
@@ -1406,6 +1491,9 @@ def api_shop_buy(body: ShopBuyIn, request: Request) -> JSONResponse:
         merchant = str(payload.get("merchant", "merchant")) or "merchant"
         budget = float(payload.get("budget", 0))
         category = str(payload.get("category", "goods")) or "goods"
+        if not price > 0:
+            return _ok({"authorized": False, "title": title, "price": price, "budget": budget,
+                        "reason": "a purchase needs a price above $0"})
         # if a review token is presented, the charge must match what was reviewed
         token = payload.get("intent_token")
         if token:
@@ -1437,18 +1525,27 @@ def api_shop_buy(body: ShopBuyIn, request: Request) -> JSONResponse:
                             "reason": "your signed budget of $%.0f ($%.2f already spent under it) does not "
                                       "cover %s at $%.2f" % (budget, acct.mandate_spent, title, price),
                             "account": acct.snapshot()})
+            from market.guard import high_risk_item
+            risky = high_risk_item(title, category)
+            if risky:
+                return _ok({"authorized": False, "needs_approval": True, "title": title, "price": price,
+                            "budget": budget, "account": acct.snapshot(),
+                            "reason": f"needs your approval: {risky}, so it is not bought automatically"})
             ok, why = acct.can_spend(price)
             if not ok:
                 return _ok({"authorized": False, "title": title, "price": price, "budget": budget,
                             "reason": why, "account": acct.snapshot()})
             held = acct.hold_purchase(title, price, merchant, client, listing=listing)
             snap = acct.snapshot()
-        return _ok({"authorized": held.get("status") == "held", "title": title, "price": price,
+        is_held = held.get("status") == "held"
+        return _ok({"authorized": is_held, "title": title, "price": price,
                     "merchant": merchant, "budget": budget, "held": held,
                     "settled": {"status": held.get("status")}, "escrow_id": held.get("escrow_id"),
                     "backend": "demo" if client.demo else "paypal-sandbox", "account": snap,
-                    "reason": "authorized within the $%.0f signed budget; your earnings are held on PayPal "
-                              "until you confirm delivery" % budget})
+                    "reason": ("authorized within the $%.0f signed budget; your earnings are held on PayPal "
+                               "until you confirm delivery" % budget) if is_held else
+                              ("PayPal did not place the hold: " + str(held.get("reason") or held.get("error")
+                                                                       or held.get("status")))})
     except Exception as exc:
         return _err(exc)
 
@@ -1496,7 +1593,7 @@ def api_pnl(body: PnlIn, request: Request) -> JSONResponse:
     makes money, safely, made quantitative."""
     payload = body.model_dump()
     try:
-        from marketplace.advance import default_probability
+        from marketplace.advance import MAX_FEE, default_probability
         from marketplace.conformal import ConformalForecaster
         from marketplace.economics import UnitEconomics
         from marketplace.pnl import LoanExposure, PlatformPnL
@@ -1514,8 +1611,7 @@ def api_pnl(body: PnlIn, request: Request) -> JSONResponse:
             book = []
             for ln in eng.loans.values():
                 fr = (ln.fee / ln.principal) if ln.principal else eng.fee_rate
-                pdv = min(0.6, max(0.0, (fr - eng.fee_rate) / eng.pd_fee_premium))
-                book.append(LoanExposure(ln.creator, pd=pdv, ead=ln.outstanding, fee_rate=fr))
+                book.append(LoanExposure(ln.creator, pd=ln.pd, ead=ln.outstanding, fee_rate=fr))
             book_source = "your account's advance book"
         else:
             books = [("steady", [1000, 1050, 980, 1020, 1010, 1000], 800.0),
@@ -1525,8 +1621,9 @@ def api_pnl(body: PnlIn, request: Request) -> JSONResponse:
             for name, h, ead in books:
                 pdv = default_probability(h)
                 # priced exactly as the advance engine prices it: base fee + premium x PD
-                book.append(LoanExposure(name, pd=pdv, ead=ead,
-                                         fee_rate=eng.fee_rate + eng.pd_fee_premium * pdv))
+                if eng.fee_for(pdv) > MAX_FEE:
+                    continue                     # the lender declines this one, so it is not in the book
+                book.append(LoanExposure(name, pd=pdv, ead=ead, fee_rate=eng.fee_for(pdv)))
             book_source = "a representative book (take an advance to see your own)"
         econ = UnitEconomics(creators=5000)
         out = PlatformPnL(econ=econ).forecast(steps, book, fund_balance=fund)
@@ -1672,11 +1769,15 @@ def api_compliance_demo() -> JSONResponse:
 
 class X402In(BaseModel):
     resource: str = Field("premium-signal", description="The resource the agent wants.", examples=["premium-signal"])
-    amount: float = Field(0.25, description="Price per request.", examples=[0.25])
+    amount: float = Field(0.25, description="The most the agent will pay per request; the server sets the actual price.", examples=[0.25])
     pay: bool = Field(True, description="Whether the agent pays; if false, only the 402 challenge is returned.",
                       examples=[True])
     tamper: bool = Field(False, description="Pay a different amount than agreed, to show it is refused.",
                          examples=[False])
+
+
+# what each paid resource costs, set by the server (x402: the 402 response carries the price)
+X402_PRICES = {"premium-signal": 0.25, "market-report": 1.50, "fraud-score": 0.05}
 
 
 @app.post("/api/x402/demo", tags=["commerce"], summary="x402 agentic micropayment",
@@ -1690,12 +1791,23 @@ def api_x402_demo(body: X402In) -> JSONResponse:
         from market.x402 import requirements, settle
         from paypal import Ledger, PayPalClient
         resource = str(payload.get("resource", "premium-signal"))
-        amount = float(payload.get("amount", 0.25))
-        reqs, challenge = requirements(resource, amount)
+        # As in x402, the SERVER sets the price in its 402 requirements; the agent only decides
+        # whether to pay it. The amount the caller sends is the agent's own ceiling, never the price.
+        price = X402_PRICES.get(resource)
+        if price is None:
+            return _ok({"status": 404, "granted": False,
+                        "reason": f"no paid resource named '{resource}'",
+                        "resources": X402_PRICES})
+        agent_max = float(payload.get("amount", price))
+        reqs, challenge = requirements(resource, price)
         if not bool(payload.get("pay", True)):
             return _ok({"status": 402, "granted": False, "requirements": reqs,
                         "note": "HTTP 402 Payment Required: the agent must pay to access this resource"})
-        charge = amount * 10 if bool(payload.get("tamper", False)) else amount
+        if price > agent_max + 1e-9:
+            return _ok({"status": 402, "granted": False, "requirements": reqs,
+                        "reason": f"the server asks ${price:.2f} but the agent's ceiling is "
+                                  f"${max(agent_max, 0):.2f}, so it does not pay"})
+        charge = price * 10 if bool(payload.get("tamper", False)) else price
         out = settle(challenge, resource, charge, PayPalClient(), Ledger(":memory:"))
         out["requirements"] = reqs
         return _ok(out)
@@ -1722,15 +1834,24 @@ def api_graphfraud_demo() -> JSONResponse:
 
 @app.get("/api/fraud/graph", tags=["proofs"], summary="Fraud rings in a graph database",
          response_model=Dict[str, Any], responses={400: {"model": ErrorOut}})
-def api_fraud_graph() -> JSONResponse:
-    """Load the marketplace as a property graph (Account + shared-identity nodes) into an
-    embedded Kuzu graph database and detect rings by multi-hop Cypher traversal, including
-    rings chained across SEVERAL identifiers that a pairwise or GROUP BY approach cannot see."""
+def api_fraud_graph(request: Request) -> JSONResponse:
+    """Load YOUR session's marketplace as a property graph (Account + shared-identity nodes) into
+    an embedded Kuzu graph database and detect rings by multi-hop Cypher traversal, including
+    rings chained across SEVERAL identifiers that a pairwise or GROUP BY approach cannot see.
+    Each account carries its real bad-order rate (returns and chargebacks over its orders)."""
     try:
+        from types import SimpleNamespace
+
         from market.fraud_graph import FraudGraph
-        from market.marketplace import generate_marketplace
-        m = generate_marketplace(120, 7)
-        out = FraudGraph().detect(list(m.accounts.values()))
+        acct = _acct(request)
+        with acct.lock:
+            m = acct.market
+            nodes = []
+            for a in m.accounts.values():
+                orders = m.orders_as_buyer(a.id) + m.orders_as_seller(a.id)
+                bad = sum(1 for o in orders if o.status in ("returned", "charged_back"))
+                nodes.append(SimpleNamespace(**{**vars(a), "bad_rate": round(bad / len(orders), 3) if orders else 0.0}))
+        out = FraudGraph().detect(nodes)
         out["rings"] = out["rings"][:12]
         return _ok(out)
     except Exception as exc:
@@ -1774,6 +1895,413 @@ def api_identity_demo(body: IdentityIn) -> JSONResponse:
 
 # Document FastAPI's auto-generated validation-error schemas too, so the spec has a
 # description and example on every property (nothing left under-documented).
+class ActIn(BaseModel):
+    action: str = Field(..., description="What you do: buy, confirm, reject, my_page, advance, dispute, "
+                        "customers, scan, payday or prove.", examples=["buy"])
+    params: Dict[str, Any] = Field(default_factory=dict, description="The action's inputs (need, budget, "
+                                   "attack, escrow_id, amount, signal).", examples=[{"need": "a trap beat pack", "budget": 80}])
+
+
+# action -> (who acts, what the control room calls it)
+_ACTIONS = {
+    "buy": ("buyer", "Your buyer agent shops"),
+    "confirm": ("buyer", "You confirm the delivery"),
+    "reject": ("buyer", "You report the delivery failed"),
+    "open_delivery": ("buyer", "You open what the seller delivered"),
+    "auto_release": ("buyer", "The inspection window ends"),
+    "my_page": ("creator", "Your creator manager reviews your business"),
+    "advance": ("creator", "You take an advance on your earnings"),
+    "dispute": ("creator", "A buyer disputes one of your sales"),
+    "customers": ("market", "AI customers trade on the marketplace"),
+    "scan": ("operator", "The fraud engines scan the marketplace"),
+    "payday": ("operator", "Payday: the operator agents decide who gets paid"),
+    "prove": ("operator", "Prove the safety fund covers every creator"),
+    "sell": ("creator", "You list something for sale"),
+    "buy_listing": ("buyer", "You buy from a creator yourself"),
+    "buy_store": ("buyer", "You buy from a real store yourself"),
+    "reprice": ("creator", "You change a price"),
+    "delist": ("creator", "You take a listing down"),
+    "freeze": ("operator", "You freeze an account for review"),
+    "unfreeze": ("operator", "You clear an account after review"),
+    "club": ("creator", "Your investment club decides together"),
+}
+
+
+def _act_call(fn, *args):
+    import json as _j
+    r = fn(*args)
+    out = _j.loads(r.body)
+    if r.status_code >= 400:
+        raise RuntimeError(out.get("error") or "the step failed")
+    return out
+
+
+def _first(x, n: int):
+    """The first n items of a list, or of a dict's values; anything else is returned as is."""
+    if isinstance(x, dict):
+        x = x.get("items") or x.get("proposals") or list(x.values())
+    return list(x)[:n] if isinstance(x, (list, tuple)) else x
+
+
+_SELL_CATS = ("prints", "presets", "beats", "ebooks", "merch", "templates")
+
+
+def _club(p: dict, request: Request) -> dict:
+    """Your investment club invests together: you and three community members, each through your own
+    AI agent (market data over the MCP server, independent picks, then one revision after seeing the
+    others), a manager AI merges, code caps it, and the broker buys real companies (Alpaca paper with
+    keys). Your share comes off your earnings; the community members' money is simulated."""
+    from agent.llm import LLMClient
+    from market.club import COMMUNITY, InvestmentClub
+    from market.mandates import OwnerKey, issue_intent_mandate
+    from marketplace.invest import PaperBroker
+    acct = _acct(request)
+    with acct.lock:
+        mem = getattr(acct, "club_memory", None)
+        if mem is None:
+            mem = acct.club_memory = {"keys": {}}
+        have = round(acct.my_earnings, 2)
+    amount = max(0.0, float(p.get("amount") or 200))
+    note = str(p.get("note") or "").strip()[:400] or "I'm a creator. I want to grow my earnings, not gamble them."
+    members = [{"name": "You", "amount": amount, "note": note, "available": have}] + [dict(m) for m in COMMUNITY]
+    for m in members:                       # each member signs their own limit for stocks with their own key
+        key = acct.owner_key if m["name"] == "You" else mem["keys"].setdefault(m["name"], OwnerKey())
+        m["mandate"] = issue_intent_mandate(key, owner=m["name"], max_total=m["amount"], max_per_item=m["amount"],
+                                            allowed_categories=["stocks"])
+    llm = LLMClient()
+    st = InvestmentClub(members, llm=llm, broker=PaperBroker(), memory=mem).run()
+    ex = st.get("execution") or {}
+    you = next((s for s in ex.get("shares", []) if s["member"] == "You"), {})
+    moved = 0.0
+    if you.get("invested"):
+        with acct.lock:
+            moved = acct.invest_earnings(you["invested"])
+    return {"plan": st.get("plan"), "disposed": st.get("disposed"), "execution": ex, "from_your_earnings": moved,
+            "rounds_so_far": mem.get("rounds"), "model": ", ".join(dict.fromkeys(llm.used_models)) or llm.model}
+
+
+def _sell(p: dict, request: Request) -> dict:
+    """List an item as You: it becomes a PayPal Catalog product (a real sandbox call) and a live
+    listing in your marketplace that the buyer agents and the AI customers can buy."""
+    from agent import tap
+    from market.marketplace import Listing
+    from marketplace.account import ME
+    from paypal import PayPalClient
+    title = " ".join(str(p.get("title") or "").split())[:60] or "New drop"
+    try:
+        price = round(max(1.0, min(500.0, float(p.get("price") or 25))), 2)
+    except (TypeError, ValueError):
+        price = 25.0
+    cat = p.get("category") if p.get("category") in _SELL_CATS else "presets"
+    pp = PayPalClient().post("/v1/catalogs/products", {
+        "name": title, "description": f"{cat} sold by a creator on Helm", "type": "DIGITAL", "category": "SOFTWARE"})
+    product = pp.get("id") if int(pp.get("_status_code", 201) or 201) < 400 else None
+    acct = _acct(request)
+    with acct.lock:
+        n = len(acct.market.listings)
+        while f"me{n:05d}" in acct.market.listings:
+            n += 1
+        lid = f"me{n:05d}"
+        acct.market.list_item(Listing(id=lid, seller=ME, title=title, price=price, category=cat))
+        acct.log("market", lid, price, f"you listed {title} at ${price:.2f}",
+                 {"paypal_product": product} if product else None)
+        mine = sum(1 for l in acct.market.listings.values() if l.seller == ME)
+    tap.emit("listing", node="", id=lid, seller=ME, title=title, price=price, category=cat,
+             paypal_product=product, demo=bool(pp.get("_demo")))
+    return {"listing": lid, "title": title, "price": price, "category": cat, "paypal_product": product,
+            "your_listings": mine}
+
+
+def _direct(act: str, p: dict, request: Request) -> dict:
+    """The person acts without an agent: buy from the catalog (the money is still held on PayPal
+    until they confirm delivery), reprice or delist their own listing, or freeze and clear an
+    account from the review queue."""
+    from agent import tap
+    from marketplace.account import ME
+    from paypal import PayPalClient
+    acct = _acct(request)
+    if act in ("buy_listing", "buy_store"):
+        with acct.lock:
+            if act == "buy_listing":
+                l = acct.market.listings.get(str(p.get("listing") or ""))
+                if l is None:
+                    raise ValueError("that listing is no longer for sale")
+                if l.seller == ME:
+                    raise ValueError("that is your own listing")
+                title, price, merchant, listing = l.title, l.price, acct.name_of(l.seller), l.id
+            else:
+                prod = (acct.__dict__.get("store_cache") or {}).get(str(p.get("product") or ""))
+                if not prod:
+                    raise ValueError("search the stores again: that result has expired")
+                title, price, merchant, listing = prod.get("title"), float(prod.get("price") or 0), prod.get("merchant") or "store", None
+            ok, why = acct.can_spend(price)
+            if not ok:
+                raise ValueError(why)
+        held = acct.hold_purchase(title, price, merchant, PayPalClient(), listing=listing, by_agent=False)
+        if held.get("status") != "held":
+            raise ValueError(held.get("reason") or "PayPal did not hold the money")
+        tap.emit("direct", node="", what="bought", title=title, price=price, merchant=merchant,
+                 seller=held.get("seller"), escrow_id=held.get("escrow_id"))
+        return {"title": title, "price": price, "merchant": merchant, **held}
+    with acct.lock:
+        if act in ("reprice", "delist"):
+            l = acct.market.listings.get(str(p.get("listing") or ""))
+            if l is None or l.seller != ME:
+                raise ValueError("you can only change your own listings")
+            if act == "reprice":
+                old = l.price
+                l.price = round(max(1.0, min(500.0, float(p.get("price") or l.price))), 2)
+                acct.log("market", l.id, l.price, f"you repriced {l.title} from ${old:.2f} to ${l.price:.2f}")
+                tap.emit("direct", node="", what="repriced", title=l.title, price=l.price, old=old, seller=ME)
+                return {"listing": l.id, "title": l.title, "price": l.price, "old": old}
+            acct.__dict__.setdefault("delisted", {})[l.id] = acct.market.listings.pop(l.id)
+            acct.log("market", l.id, 0.0, f"you took {l.title} down")
+            tap.emit("direct", node="", what="delisted", title=l.title, price=l.price, seller=ME)
+            return {"listing": l.id, "title": l.title}
+        a = acct.market.accounts.get(str(p.get("account") or ""))
+        if a is None or a.id == ME:
+            raise ValueError("pick another account")
+        if act == "freeze":
+            acct.market.suspend(a.id, str(p.get("reason") or "frozen by the operator for review")[:120])
+        else:
+            a.status = "active"
+            a.suspend_reason = ""
+        owed = round(acct.cledger.total_unpaid(a.id), 2)
+        acct.log("operator", a.id, owed, f"{'froze' if act == 'freeze' else 'cleared'} {a.name}")
+        tap.emit("direct", node="", what="frozen" if act == "freeze" else "cleared", title=a.name, account=a.id,
+                 price=owed)
+        return {"account": a.id, "name": a.name, "status": a.status, "owed": owed}
+
+
+def _run_action(act: str, p: dict, request: Request) -> dict:
+    from agent import tap
+    if act == "buy":
+        from market import shopping
+        budget = float(p.get("budget") or 80)
+        if p.get("for_price"):
+            # "Ask my agent" on one item: the signed budget is cumulative, so it must cover what
+            # is already spent under it plus this item, with a little room for a better pick
+            budget = float(int(_acct(request).mandate_spent + float(p["for_price"]) * 1.15) + 1)
+        tok = shopping.LIVE_ATTACK.set(bool(p.get("attack")))
+        try:
+            out = _act_call(api_customer_graph,
+                            CustomerGraphIn(need=str(p.get("need") or "a trap beat pack for my next video"),
+                                            budget=budget), request)
+        finally:
+            shopping.LIVE_ATTACK.reset(tok)
+        return {"choice": out.get("choice"), "settlement": out.get("settlement"), "quarantined": out.get("quarantined"),
+                "authorization": out.get("authorization"), "model": out.get("model")}
+    if act == "open_delivery":
+        from agent import tap
+        from market.delivery import record_access
+        acct = _acct(request)
+        eid = str(p.get("escrow_id") or "")
+        with acct.lock:
+            item = acct.escrows.get(eid)
+            rec = record_access(acct, eid, request.client.host if request.client else "")
+            d = item["delivery"]
+        tap.emit("direct", node="", what="opened", title=item["title"], price=item["price"], merchant=item["merchant"],
+                 files=[f["name"] for f in d.get("files", [])][:6], tracking=d.get("tracking"), ip=rec["ip"])
+        return {"escrow_id": eid, "access": rec}
+    if act == "auto_release":
+        from market.delivery import auto_release_ok
+        acct = _acct(request)
+        eid = str(p.get("escrow_id") or "")
+        with acct.lock:
+            item = acct.escrows.get(eid)
+            if not item:
+                raise ValueError("that hold is already settled")
+            ok, why = auto_release_ok(item)
+        if not ok:
+            raise ValueError(why)
+        out = _act_call(api_escrow_settle, SettleIn(escrow_id=eid, delivered=True), request)
+        return {**(out if isinstance(out, dict) else {}), "auto": True, "why": why}
+    if act in ("confirm", "reject"):
+        out = _act_call(api_escrow_settle, SettleIn(escrow_id=str(p.get("escrow_id") or ""),
+                                                    delivered=act == "confirm"), request)
+        return {k: out.get(k) for k in ("status", "sale", "title", "reason", "capture_id")}
+    if act == "my_page":
+        out = _act_call(api_creator, request, True)
+        return {"briefing": out.get("briefing"), "earnings": out.get("earnings"), "forecast": out.get("forecast"),
+                "recommendations": out.get("recommendations"), "proposals": _first(out.get("proposals"), 3)}
+    if act == "advance":
+        out = _act_call(api_advance, AdvanceIn(take=bool(p.get("take", True)),
+                                               amount=float(p["amount"]) if p.get("amount") else None), request)
+        return {k: out.get(k) for k in ("eligible", "offer", "max_amount", "pd", "pd_band", "fee_rate", "binding_cap", "reason",
+                                        "proven_earnings", "taken")}
+    if act == "dispute":
+        out = _act_call(api_disputes_simulate, DisputeIn(), request)
+        return {"chargeback": out.get("chargeback"), "seller": out.get("seller"), "status": out.get("status"),
+                "reason": out.get("reason"),
+                "evidence": ((out.get("evidence") or {}).get("evidences") or [{}])[0].get("notes")}
+    if act == "customers":
+        out = _act_call(api_market_agents, AgentsIn(ticks=1), request)
+        return {"model": out.get("model"), "sales": out.get("sales"), "returns": out.get("returns"),
+                "paid_on_paypal": out.get("paid_on_paypal")}
+    if act == "scan":
+        out = _act_call(api_market_scan, ScanIn(apply=True), request)
+        acct = _acct(request)
+        with acct.lock:
+            rings = [{**g, "names": [acct.name_of(x) for x in g.get("members", [])]} for g in out.get("rings", [])]
+        flagged = [v for v in out.get("verdicts", []) if v.get("action") != "allow"]
+        tap.emit("scan", node="", rings=rings, verdicts=flagged[:12], suspended=out.get("suspended"),
+                 frozen=out.get("frozen_earnings"))
+        return {"rings": len(rings), "suspended": len(out.get("suspended") or []), "frozen": out.get("frozen_earnings")}
+    if act == "payday":
+        out = _act_call(api_operator_graph, OperatorGraphIn(signal=str(p.get("signal") or OperatorGraphIn().signal),
+                                                            debate_rounds=2), request)
+        return {"decision": out.get("decision"), "booked": out.get("booked_to_account"), "model": out.get("model")}
+    if act == "sell":
+        return _sell(p, request)
+    if act == "club":
+        return _club(p, request)
+    if act in ("buy_listing", "buy_store", "reprice", "delist", "freeze", "unfreeze"):
+        return _direct(act, p, request)
+    if act == "prove":
+        out = _act_call(api_reserves_prove, ReservesIn(), request)
+        return {"verified": bool(out.get("solvent") and out.get("provable", True)), "statement": out.get("statement"),
+                "bit_proofs": out.get("bit_proofs"), "reveals": out.get("reveals"), "reason": out.get("reason")}
+    raise ValueError(f"unknown action {act}")
+
+
+@app.post("/api/live/act", tags=["ai"], summary="Do something in the control room")
+def api_live_act(body: ActIn, request: Request) -> JSONResponse:
+    """Act as a buyer, a creator or the operator. The action runs the real agent graphs in the
+    background; every agent step, model token, PayPal call and guardrail it produces streams to
+    your open control-room tabs through /api/live/stream. Returns the run id at once."""
+    import threading
+    import time as _t
+    import uuid
+
+    from agent import tap
+    from .live_hub import HUB, books, network
+    act = (body.action or "").strip().lower()
+    if act not in _ACTIONS:
+        return _err(ValueError(f"unknown action '{act}'"))
+    sid = request.headers.get("x-helm-session") or ""
+    if act == "customers" and HUB.busy(sid):
+        return _ok({"skipped": "another action is running"})
+    run = uuid.uuid4().hex[:8]
+    role, label = _ACTIONS[act]
+    params = dict(body.params or {})
+
+    def worker():
+        HUB.mark(sid, 1)
+        toks = tap.attach(lambda ev: HUB.publish(sid, {**ev, "run": run}))
+        t0 = _t.time()
+        try:
+            acct = _acct(request)
+            with acct.lock:
+                before = {o.id: o.status for o in acct.market.orders}
+            tap.emit("run_start", node="", action=act, role=role, label=label, params=params)
+            out = _run_action(act, params, request)
+            tap.emit("result", node="", action=act, role=role, out=out)
+            with acct.lock:
+                changed = [{"id": o.id, "buyer": o.buyer, "seller": o.seller, "amount": o.amount, "status": o.status,
+                            "new": o.id not in before}
+                           for o in acct.market.orders if before.get(o.id) != o.status]
+                snap = acct.snapshot()
+                net = network(acct)
+            if changed:
+                tap.emit("orders", node="", orders=changed[-40:])
+            tap.emit("books", node="", account=books(snap))
+            tap.emit("network", node="", graph=net)
+        except Exception as exc:
+            tap.emit("error", node="", error=str(exc)[:240])
+        finally:
+            tap.emit("run_end", node="", action=act, role=role, label=label, ms=int((_t.time() - t0) * 1000))
+            tap.detach(toks)
+            HUB.mark(sid, -1)
+
+    threading.Thread(target=worker, daemon=True).start()
+    return _ok({"run": run, "action": act, "role": role, "label": label})
+
+
+@app.get("/api/live/catalog", tags=["ai"], summary="Browse what is for sale: creators on Helm, and real stores")
+def api_live_catalog(request: Request, q: str = Query("", description="What you are looking for."),
+                     category: str = Query("", description="presets, beats, prints, ebooks, merch or templates."),
+                     max_price: Optional[float] = Query(None, description="Highest price to show."),
+                     stores: bool = Query(False, description="Also search real stores through Channel3.")) -> JSONResponse:
+    """The buyer's catalog. Creator listings come from your marketplace (with each seller's sales
+    and return rate); real-store products come from Channel3 when `stores` is set and you searched."""
+    try:
+        from .live_views import catalog, stores as store_search
+        acct = _acct(request)
+        with acct.lock:
+            items = catalog(acct, q, category, max_price)
+            spendable = acct.my_earnings
+        out = {"creators": items, "spendable": spendable}
+        if stores:
+            out["stores"] = store_search(acct, q, max_price)
+        return _ok(out)
+    except Exception as exc:
+        return _err(exc)
+
+
+@app.get("/api/live/myshop", tags=["ai"], summary="Your shop: listings, what each sold, recent sales")
+def api_live_myshop(request: Request) -> JSONResponse:
+    try:
+        from .live_views import my_shop
+        acct = _acct(request)
+        with acct.lock:
+            return _ok(my_shop(acct))
+    except Exception as exc:
+        return _err(exc)
+
+
+@app.get("/api/live/accounts", tags=["ai"], summary="Every account ranked by risk, with the evidence")
+def api_live_accounts(request: Request) -> JSONResponse:
+    """The operator's review queue: each account's sales, purchases, return rates, money owed,
+    shared device, card or IP, and a risk score, riskiest first."""
+    try:
+        from .live_views import accounts
+        acct = _acct(request)
+        with acct.lock:
+            return _ok({"accounts": accounts(acct)})
+    except Exception as exc:
+        return _err(exc)
+
+
+@app.get("/api/live/stream", tags=["ai"], summary="The control room's live event stream (server-sent events)")
+def api_live_stream(sid: str = Query("", description="Your session id (the same one the page sends as X-Helm-Session).")):
+    """Everything happening in your session, as it happens: the current books and marketplace map on
+    connect, then every agent step, model token, PayPal call, guardrail, order and balance change."""
+    import json as _j
+    import queue
+
+    from fastapi.responses import StreamingResponse
+
+    from marketplace.account import STORE
+    from .live_hub import HUB, books, network
+    q, past = HUB.subscribe(sid)
+    acct = STORE.get(sid or None)
+    with acct.lock:
+        hello = {"kind": "hello", "account": books(acct.snapshot()), "graph": network(acct),
+                 "busy": HUB.busy(sid), "history": past[-300:]}
+
+    def gen():
+        try:
+            yield "retry: 3000\ndata: " + _j.dumps(hello, default=str) + "\n\n"
+            while True:
+                try:
+                    ev = q.get(timeout=15)
+                except queue.Empty:
+                    yield ": keep-alive\n\n"
+                    continue
+                yield "data: " + _j.dumps(ev, default=str) + "\n\n"
+        finally:
+            HUB.unsubscribe(sid, q)
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/live", response_class=HTMLResponse, tags=["dashboard"], summary="The control room: act and watch every agent live")
+def live_page() -> HTMLResponse:
+    from .live_page import LIVE_HTML
+    return HTMLResponse(LIVE_HTML)
+
+
 def _document_validation_schemas() -> None:
     schema = app.openapi()
     comps = schema.get("components", {}).get("schemas", {})

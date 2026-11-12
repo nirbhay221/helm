@@ -717,7 +717,7 @@
           "treasury"
         ],
         "summary": "Invest at live prices",
-        "description": "Invest a notional amount across the basket at live prices.",
+        "description": "Invest part of your earnings across the basket at live prices. The amount must be positive\nand no more than your unpaid earnings; what is invested comes off those earnings.",
         "operationId": "api_invest",
         "requestBody": {
           "content": {
@@ -821,7 +821,7 @@
           "treasury"
         ],
         "summary": "Tax regime",
-        "description": "A creator's reporting regime (US 1099-K thresholds or EU DAC7).",
+        "description": "A creator's reporting regime (US 1099-K thresholds or EU DAC7). With no figures given, it\nreads your own sales for the year from the marketplace ledger.",
         "operationId": "api_tax",
         "parameters": [
           {
@@ -1741,7 +1741,7 @@
           "proofs"
         ],
         "summary": "Fraud rings in a graph database",
-        "description": "Load the marketplace as a property graph (Account + shared-identity nodes) into an\nembedded Kuzu graph database and detect rings by multi-hop Cypher traversal, including\nrings chained across SEVERAL identifiers that a pairwise or GROUP BY approach cannot see.",
+        "description": "Load YOUR session's marketplace as a property graph (Account + shared-identity nodes) into\nan embedded Kuzu graph database and detect rings by multi-hop Cypher traversal, including\nrings chained across SEVERAL identifiers that a pairwise or GROUP BY approach cannot see.\nEach account carries its real bad-order rate (returns and chargebacks over its orders).",
         "operationId": "api_fraud_graph",
         "responses": {
           "200": {
@@ -2168,6 +2168,7 @@
             ]
           }
         },
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "eligible",
@@ -2383,6 +2384,37 @@
             "description": "Maximum per-creator risk allowed.",
             "examples": [
               0.6
+            ]
+          },
+          "min_priority": {
+            "type": "number",
+            "title": "Min Priority",
+            "description": "Only pay creators at least this urgent.",
+            "default": 0.0,
+            "examples": [
+              0.0
+            ]
+          },
+          "max_amount_per_creator": {
+            "type": "number",
+            "title": "Max Amount Per Creator",
+            "description": "Dollar cap per creator (0 = none).",
+            "default": 0.0,
+            "examples": [
+              500
+            ]
+          },
+          "prioritize_countries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Prioritize Countries",
+            "description": "Countries paid first.",
+            "examples": [
+              [
+                "BR"
+              ]
             ]
           }
         },
@@ -3173,6 +3205,7 @@
             ]
           }
         },
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "backend",
@@ -3623,6 +3656,7 @@
             ]
           }
         },
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "source",
@@ -4567,6 +4601,7 @@
             "description": "The settlement, if the buy went through."
           }
         },
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "authorized",
@@ -4776,6 +4811,7 @@
             ]
           }
         },
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "source",
@@ -5182,7 +5218,7 @@
           "amount": {
             "type": "number",
             "title": "Amount",
-            "description": "Price per request.",
+            "description": "The most the agent will pay per request; the server sets the actual price.",
             "default": 0.25,
             "examples": [
               0.25

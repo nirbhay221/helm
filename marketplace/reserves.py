@@ -133,6 +133,13 @@ def prove_solvency(reserve_lots: list[float], liabilities: float, bits: int = DE
     Raises ValueError if the fund is actually insolvent (no sound proof exists)."""
     lots = [int(round(float(x) * CENTS)) for x in reserve_lots]
     L = int(round(float(liabilities) * CENTS))
+    # A negative lot or negative liabilities is the known way to fake proof of reserves: it
+    # quietly shrinks what must be covered (the flaw found in exchange Merkle-sum-tree proofs).
+    # Reserves and liabilities are amounts held and owed, so neither can be below zero.
+    if any(v < 0 for v in lots):
+        raise ValueError("a reserve lot is negative; a negative lot would hide a shortfall, so no proof is made")
+    if L < 0:
+        raise ValueError("liabilities cannot be negative")
     R = sum(lots)
     d = R - L
     if d < 0:

@@ -75,7 +75,7 @@ def apply_dispute(acct, event: dict, client=None) -> dict:
     if etype == "CUSTOMER.DISPUTE.CREATED":
         cb = acct.chargeback(order_id, f"PayPal dispute {did}: {r.get('reason', 'disputed')}")
         out["chargeback"] = cb
-        scan = acct.scan(apply=True)
+        scan = acct.scan(apply=True, only={o.seller, o.buyer})     # review the parties, not the market
         out["seller_suspended"] = o.seller in scan["suspended"] or acct.frozen(o.seller)
         out["frozen_earnings"] = scan["frozen_earnings"]
         ev = evidence_for(acct, order_id)

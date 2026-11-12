@@ -52,6 +52,9 @@ _INJECTION_PATTERNS = [
     r"</?(system|instructions?|im_start|im_end)>",
     r"<\|.*?\|>",
     r"#{2,}\s*(system|instruction|prompt)",
+    r"(^|\n)\s*(system|assistant|developer)\s*:",                       # fake role header
+    r"ignore\s+(all|every|any|your|the)\s+(\w+\s+)?(rules?|guardrails?|limits?|instructions?|budget|polic(y|ies)|caps?|checks?)",
+    r"\bsend\s+(the\s+)?(whole|entire|all\s+the|all)\s+(fund|treasury|balance|reserve)",
 ]
 _RX = [re.compile(p, re.IGNORECASE) for p in _INJECTION_PATTERNS]
 
@@ -104,7 +107,40 @@ def scan_text(text: str) -> dict:
     redacted = s
     for rx in _RX:
         redacted = rx.sub("[quarantined]", redacted)
+    if hits:
+        try:
+            from agent import tap
+            tap.emit("guard", what="prompt injection quarantined", sample=s[:90], words=matched_phrases(s))
+        except Exception:
+            pass
     return {"flagged": bool(hits), "reasons": sorted(set(hits)), "redacted": redacted[:500]}
+
+
+
+def matched_phrases(text: str, limit: int = 3) -> list:
+    """The words in the text that tripped the injection scan, for a human to read."""
+    low = _normalize(str(text or ""))[0]
+    out = []
+    for rx in _RX:
+        m = rx.search(low)
+        if m and m.group(0).strip() not in out:
+            out.append(m.group(0).strip())
+    out = [p for p in out if not any(p != q and p in q for q in out)]
+    return out[:limit]
+
+_HIGH_RISK = re.compile(
+    r"\b(gift\s*-?\s*cards?(?!\s*(holders?|boxe?s?|envelopes?|sleeves?|cases?|organi[sz]ers?|wallets?))|e-?gift|prepaid\s+(debit\s+|visa\s+|master\w*\s+)?cards?|reloadable|"
+    r"store\s+credit|money\s+orders?|wire\s+transfers?|bitcoin|btc|ethereum|crypto\w*|usdt|"
+    r"steam\s+(wallet|card)|itunes\s+card|google\s+play\s+card|vanilla\s+(visa|card))\b", re.I)
+
+
+def high_risk_item(title: str, category: str = "") -> str:
+    """Why an item is a stored-value or cash-like good (gift cards, prepaid cards, crypto, money
+    transfers), or '' if it is not. These are the goods scammers make victims and hijacked agents
+    buy, because they cash out instantly and cannot be charged back, so fraud guidance puts them
+    behind a step-up approval from the owner instead of autonomous purchase."""
+    m = _HIGH_RISK.search(f"{title or ''} {category or ''}")
+    return f"'{m.group(0)}' is a cash-like item that cannot be clawed back" if m else ""
 
 
 def quarantine_products(products) -> tuple:

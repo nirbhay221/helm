@@ -76,6 +76,12 @@ class LLMClient:
         return max(0.0, min(hint + 0.1, self.max_wait))
 
     def _post(self, payload: dict):
+        from agent import tap
+        if tap.active() and payload.get("tools"):
+            try:
+                return self._post_streamed(payload)
+            except Exception:
+                pass                                   # any streaming hiccup: the plain call below
         import requests
         return requests.post(
             f"{self.base_url}/chat/completions",
@@ -89,6 +95,59 @@ class LLMClient:
             data=json.dumps(payload),
             timeout=self.timeout,
         )
+
+    def _post_streamed(self, payload: dict):
+        """The same call, streamed, so the live view can show an agent writing its answer token by
+        token. Returns an object shaped like the plain response, so chat() is unchanged."""
+        import requests
+        from agent import tap
+        body = dict(payload, stream=True, stream_options={"include_usage": True})
+        resp = requests.post(
+            f"{self.base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json",
+                     "HTTP-Referer": "https://github.com/helm", "X-Title": "Helm"},
+            data=json.dumps(body), timeout=self.timeout, stream=True)
+        if resp.status_code != 200:
+            return resp
+        fn_name = ((payload.get("tools") or [{}])[0].get("function") or {}).get("name")
+        tap.emit("model_start", model=payload.get("model"), tool=fn_name)
+        content, calls, model, usage = [], {}, payload.get("model"), None
+        buf, last = [], time.time()
+        for raw in resp.iter_lines(decode_unicode=True):
+            if not raw or not raw.startswith("data:"):
+                continue
+            chunk = raw[5:].strip()
+            if chunk == "[DONE]":
+                break
+            try:
+                d = json.loads(chunk)
+            except ValueError:
+                continue
+            model = d.get("model") or model
+            usage = d.get("usage") or usage
+            for ch in d.get("choices") or []:
+                delta = ch.get("delta") or {}
+                if delta.get("content"):
+                    content.append(delta["content"])
+                    buf.append(delta["content"])
+                for tc in delta.get("tool_calls") or []:
+                    slot = calls.setdefault(tc.get("index", 0), {"id": None, "type": "function",
+                                                                "function": {"name": "", "arguments": ""}})
+                    slot["id"] = tc.get("id") or slot["id"]
+                    f = tc.get("function") or {}
+                    slot["function"]["name"] += f.get("name") or ""
+                    if f.get("arguments"):
+                        slot["function"]["arguments"] += f["arguments"]
+                        buf.append(f["arguments"])
+            if buf and (time.time() - last > 0.06 or sum(map(len, buf)) > 48):
+                tap.emit("token", text="".join(buf))
+                buf, last = [], time.time()
+        if buf:
+            tap.emit("token", text="".join(buf))
+        msg = {"role": "assistant", "content": "".join(content) or None,
+               "tool_calls": [calls[i] for i in sorted(calls)] or None}
+        tap.emit("model_end", model=model, tokens=(usage or {}).get("total_tokens"))
+        return _Streamed({"model": model, "choices": [{"message": msg}], "usage": usage})
 
     def chat(
         self,
@@ -155,3 +214,19 @@ class LLMClient:
                 self.used_models.append(self.last_model)
                 return data["choices"][0]["message"]
         raise last_err or RuntimeError("LLM call failed")
+
+
+class _Streamed:
+    """A finished streamed reply, shaped like a requests response for chat()."""
+    status_code = 200
+    headers: dict = {}
+
+    def __init__(self, data: dict):
+        self._data = data
+        self.text = json.dumps(data)[:2000]
+
+    def json(self):
+        return self._data
+
+    def raise_for_status(self):
+        return None

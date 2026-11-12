@@ -18,7 +18,7 @@ try:
     with open(os.path.join(os.path.dirname(__file__), "world_map.svg"), encoding="utf-8") as _f:
         _WORLD_SVG = _f.read()
 except Exception:
-    _WORLD_SVG = "<div style='color:#8b9bb0;padding:40px;text-align:center'>world map unavailable</div>"
+    _WORLD_SVG = "<div style='color:#64748b;padding:40px;text-align:center'>world map unavailable</div>"
 
 _TEMPLATE = """<!doctype html>
 <html lang="en">
@@ -31,98 +31,108 @@ _TEMPLATE = """<!doctype html>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <script src="__CHART_JS__"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ag-grid/35.3.0/ag-grid-community.min.js"></script>
+<script>try{if(localStorage.getItem("helm-theme")==="dark")document.documentElement.dataset.theme="dark";}catch(e){}</script>
 <style>
+  :root[data-theme=dark] { color-scheme:dark; --bg:#0b0f17; --panel:#131a27; --line:#243045; --ink:#e8ecf3; --ink2:#c4ccd9; --muted:#94a0b4;
+    --accent:#8b95ff; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --target:#66728a; --ov:226,232,240; --onaccent:#0b0f17; --tipbg:#182131;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 2px 10px rgba(0,0,0,.35); }
+  .themebtn { background:var(--panel); border:1px solid var(--line); color:var(--ink2); border-radius:999px; padding:7px 13px; font-size:13px;
+    font-weight:500; cursor:pointer; white-space:nowrap; } .themebtn:hover { border-color:var(--accent); color:var(--accent); }
+  :root[data-theme=dark] input, :root[data-theme=dark] textarea, :root[data-theme=dark] select { background:#0f1521; color:var(--ink); border-color:var(--line); }
   :root {
-    --bg:#0a0e14; --panel:#121824; --line:rgba(255,255,255,.07); --ink:#eef3fa; --muted:#8b9bb0;
-    --accent:#5b9dff; --good:#3ddc97; --warn:#f6c454; --bad:#ff6b6b; --target:#9aa7b5;
-    --shadow:0 12px 32px rgba(0,0,0,.32); --radius:16px;
+    --bg:#f4f6fa; --panel:#ffffff; --line:#e5e9f0; --ink:#0f172a; --muted:#64748b;
+    --accent:#4f46e5; --good:#047857; --warn:#b45309; --bad:#dc2626; --target:#94a3b8;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 2px 8px rgba(50,50,93,.08); --radius:16px;
+    --ov:15,23,42; --onaccent:#ffffff; --tipbg:#f8fafc; --ink2:#334155; color-scheme:light;
   }
   * { box-sizing:border-box; }
   body { margin:0; color:var(--ink); font-family:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     font-size:15px; line-height:1.55; letter-spacing:-.1px; -webkit-font-smoothing:antialiased;
-    background:radial-gradient(900px 480px at 10% -8%, rgba(91,157,255,.14), transparent 55%),
-               radial-gradient(760px 520px at 100% -2%, rgba(61,220,151,.06), transparent 52%), var(--bg); }
+    background:radial-gradient(900px 480px at 10% -8%, rgba(79,70,229,.06), transparent 55%),
+               radial-gradient(760px 520px at 100% -2%, rgba(16,185,129,.06), transparent 52%), var(--bg); }
   header { padding:34px 22px 8px; max-width:1180px; margin:0 auto; }
   .brand { display:flex; align-items:center; gap:12px; }
   .brand svg { flex:0 0 auto; }
-  h1 { margin:0; font-size:27px; font-weight:800; letter-spacing:-.7px; }
-  .badge { color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.9px;
-    border:1px solid rgba(91,157,255,.3); background:rgba(91,157,255,.1); border-radius:999px; padding:4px 12px; }
+  h1 { margin:0; font-size:27px; font-weight:600; letter-spacing:-.7px; }
+  .badge { color:var(--accent); font-size:11px; font-weight:600; letter-spacing:.9px;
+    border:1px solid rgba(79,70,229,.3); background:rgba(79,70,229,.1); border-radius:999px; padding:4px 12px; }
   .sub { color:var(--muted); font-size:14px; margin-top:9px; max-width:880px; line-height:1.6; }
   main { max-width:1180px; margin:0 auto; padding:18px 22px 44px; }
   .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:14px; margin-bottom:18px; }
-  .card { background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(255,255,255,0)), var(--panel);
+  .card { background:linear-gradient(165deg,rgba(var(--ov),.04),rgba(var(--ov),0)), var(--panel);
     border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); }
   .card .k { color:var(--muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; }
-  .card .v { font-size:27px; font-weight:800; letter-spacing:-.9px; margin-top:7px; }
+  .card .v { font-size:27px; font-weight:600; letter-spacing:-.9px; margin-top:7px; }
   .card .v.accent{color:var(--accent);} .card .v.good{color:var(--good);}
   .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
     padding:20px 22px; margin-bottom:18px; box-shadow:var(--shadow); }
-  .panel h2 { margin:0 0 4px; font-size:16px; font-weight:700; letter-spacing:-.3px; }
+  .panel h2 { margin:0 0 4px; font-size:16px; font-weight:600; letter-spacing:-.3px; }
   .panel p { margin:0 0 15px; color:var(--muted); font-size:13px; line-height:1.55; }
   .grid2 { display:grid; grid-template-columns:1.25fr 1fr; gap:18px; } @media (max-width:900px){ .grid2{grid-template-columns:1fr;} }
   .grid3 { display:grid; grid-template-columns:1fr 1fr; gap:18px; } @media (max-width:820px){ .grid3{grid-template-columns:1fr;} }
   .tabs { display:flex; gap:9px; flex-wrap:wrap; margin-bottom:14px; }
-  .tab { background:rgba(255,255,255,.04); color:var(--muted); border:1px solid var(--line); border-radius:11px;
+  .tab { background:rgba(var(--ov),.04); color:var(--muted); border:1px solid var(--line); border-radius:11px;
     padding:8px 15px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s ease; }
-  .tab:hover { color:var(--ink); border-color:rgba(91,157,255,.4); }
-  .tab.on { background:var(--accent); color:#06121f; border-color:var(--accent); box-shadow:0 6px 18px rgba(91,157,255,.32); }
+  .tab:hover { color:var(--ink); border-color:rgba(79,70,229,.4); }
+  .tab.on { background:var(--accent); color:var(--onaccent); border-color:var(--accent); box-shadow:0 6px 18px rgba(79,70,229,.32); }
   .lanes { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
-  .lane { flex:1; min-width:150px; text-align:center; background:rgba(255,255,255,.03); color:var(--muted);
-    border:1px solid var(--line); border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; cursor:pointer; transition:all .15s; }
+  .lane { flex:1; min-width:150px; text-align:center; background:rgba(var(--ov),.03); color:var(--muted);
+    border:1px solid var(--line); border-radius:12px; padding:12px 16px; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; }
   .lane .sub { display:block; font-size:11px; font-weight:500; color:var(--muted); margin-top:2px; }
-  .lane:hover { color:var(--ink); border-color:rgba(91,157,255,.4); }
-  .lane.on { background:rgba(91,157,255,.14); color:var(--ink); border-color:var(--accent); }
+  .lane:hover { color:var(--ink); border-color:rgba(79,70,229,.4); }
+  .lane.on { background:rgba(79,70,229,.14); color:var(--ink); border-color:var(--accent); }
   .lane.on .sub { color:var(--accent); }
-  .policy { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:12px; padding:15px 17px; margin-bottom:14px; }
+  .policy { background:rgba(var(--ov),.03); border:1px solid var(--line); border-radius:12px; padding:15px 17px; margin-bottom:14px; }
   .policy .q { color:var(--ink); font-style:italic; font-size:15px; } .policy .c { color:var(--muted); font-size:13px; margin-top:7px; }
-  .pill { display:inline-block; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:9px;
+  .pill { display:inline-block; background:rgba(var(--ov),.04); border:1px solid var(--line); border-radius:9px;
     padding:4px 10px; margin:3px 5px 3px 0; font-size:12px; color:var(--muted); }
-  .pill b { color:var(--ink); font-weight:700; } .pill.bad b{ color:var(--bad);} .pill.good b{color:var(--good);}
+  .pill b { color:var(--ink); font-weight:600; } .pill.bad b{ color:var(--bad);} .pill.good b{color:var(--good);}
   canvas { max-height:250px; max-width:100%; }
   html, body { overflow-x:hidden; }
   .worldmap svg { width:100%; height:auto; display:block; }
-  .worldmap path { fill:rgba(255,255,255,.055); stroke:#0a0e14; stroke-width:.3; transition:fill .7s cubic-bezier(.4,0,.2,1); }
+  .worldmap path { fill:rgba(var(--ov),.055); stroke:var(--bg); stroke-width:.3; transition:fill .7s cubic-bezier(.4,0,.2,1); }
   table { width:100%; border-collapse:collapse; font-size:12.5px; }
-  th,td { text-align:right; padding:9px 10px; border-bottom:1px solid rgba(255,255,255,.045); white-space:nowrap; }
+  th,td { text-align:right; padding:9px 10px; border-bottom:1px solid rgba(var(--ov),.045); white-space:nowrap; }
   th:first-child,td:first-child { text-align:left; }
   th { color:var(--muted); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; }
-  tbody tr:hover { background:rgba(91,157,255,.06); }
+  tbody tr:hover { background:rgba(79,70,229,.06); }
   .foot { color:var(--muted); font-size:12px; padding:10px 22px 40px; max-width:1180px; margin:0 auto; line-height:1.6; }
-  .live-tool { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+  .live-tool { background:rgba(var(--ov),.03); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
   .live-tool label { display:block; color:var(--muted); font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; margin:10px 0 5px; }
   .live-tool textarea, .live-tool input, .live-tool select { width:100%; background:var(--bg); border:1px solid var(--line);
     border-radius:9px; color:var(--ink); padding:9px 11px; font-size:13px; font-family:inherit; }
   .live-tool textarea { min-height:62px; resize:vertical; line-height:1.5; }
   .live-row { display:flex; gap:10px; flex-wrap:wrap; } .live-row > div { flex:1; min-width:120px; }
-  .btn { background:var(--accent); color:#06121f; border:none; border-radius:10px; padding:9px 17px; font-size:13px;
-    font-weight:700; cursor:pointer; margin-top:12px; margin-right:8px; transition:filter .15s; }
+  .btn { background:var(--accent); color:var(--onaccent); border:none; border-radius:10px; padding:9px 17px; font-size:13px;
+    font-weight:600; cursor:pointer; margin-top:12px; margin-right:8px; transition:filter .15s; }
   .btn:hover { filter:brightness(1.08); } .btn:disabled { opacity:.45; cursor:default; }
-  .btn.ghost { background:rgba(255,255,255,.06); color:var(--ink); border:1px solid var(--line); }
+  .btn.ghost { background:rgba(var(--ov),.06); color:var(--ink); border:1px solid var(--line); }
   .result { margin-top:14px; min-height:18px; }
   .result .muted { color:var(--muted); font-size:12.5px; } .result .err { color:var(--bad); font-size:12.5px; }
-  .kv { font-size:13px; margin:4px 0; color:var(--muted); } .kv b { color:var(--ink); font-weight:700; }
+  .kv { font-size:13px; margin:4px 0; color:var(--muted); } .kv b { color:var(--ink); font-weight:600; }
   .chk { display:flex; align-items:center; gap:8px; margin-top:12px; color:var(--muted); font-size:12.5px; }
   .chk input { width:auto; }
-  .verdict { display:inline-block; border-radius:8px; padding:3px 10px; font-size:12px; font-weight:700; margin:2px 6px 2px 0; }
-  .verdict.ok { background:rgba(61,220,151,.14); color:var(--good); } .verdict.no { background:rgba(255,107,107,.14); color:var(--bad); }
-  .verdict.hold { background:rgba(246,196,84,.14); color:var(--warn); }
+  .verdict { display:inline-block; border-radius:8px; padding:3px 10px; font-size:12px; font-weight:600; margin:2px 6px 2px 0; }
+  .verdict.ok { background:rgba(16,185,129,.14); color:var(--good); } .verdict.no { background:rgba(220,38,38,.08); color:var(--bad); }
+  .verdict.hold { background:rgba(217,119,6,.10); color:var(--warn); }
   .tour { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
-  .tour .go { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:12px; padding:14px 16px;
+  .tour .go { background:rgba(var(--ov),.03); border:1px solid var(--line); border-radius:12px; padding:14px 16px;
     display:flex; flex-direction:column; gap:6px; }
   .tour .go b { font-size:14px; } .tour .go span { color:var(--muted); font-size:12.5px; line-height:1.5; flex:1; }
   .tour .go .btn { align-self:flex-start; margin-top:6px; }
-  .tour .lane-tag { color:var(--accent); font-size:10.5px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; }
+  .tour .lane-tag { color:var(--accent); font-size:10.5px; font-weight:600; letter-spacing:.7px; text-transform:uppercase; }
 </style>
 </head>
 <body>
 <header>
   <div class="brand">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#5b9dff" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4" fill="#5b9dff" stroke="none"/>
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4" fill="#4f46e5" stroke="none"/>
       <path d="M12 3v3.6M12 17.4V21M3 12h3.6M17.4 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5"/>
     </svg>
     <h1>Helm</h1><span class="badge">AUTONOMOUS MONEY LAYER</span>
+    <button class="themebtn" id="themeBtn" style="margin-left:auto" title="Switch light or dark"></button>
+    <a href="/live" style="margin-left:8px;background:var(--accent);color:var(--onaccent);font-weight:600;padding:8px 14px;border-radius:9px;text-decoration:none">&#9679; Open the control room</a>
   </div>
   <div class="sub">An autonomous money layer for a creator marketplace, settled on PayPal. One account, three sides: creators <b>earn</b> and get paid, anyone can <b>spend</b> as a buyer through signed-mandate agents, and the <b>platform</b> runs the treasury and <b>proves it is safe</b>: a zero-knowledge proof that the safety fund covers every liability without revealing a balance, and a formal (Z3) proof that an agent can never outspend its signed budget. AI proposes the judgment; deterministic code and cryptography dispose the money and the limits. Everything below is live on the real PayPal sandbox.</div>
 </header>
@@ -130,6 +140,7 @@ _TEMPLATE = """<!doctype html>
   <div class="panel" id="start">
     <h2>Start here: four things to try, each live in one click</h2>
     <p>Every button runs on the backend against the real PayPal sandbox and a live model. Nothing is a recording.</p>
+    <p><b>Best first stop:</b> the <a href="/live" style="color:var(--accent)">control room</a>. Act as a buyer, a creator or the operator, and watch every agent think, every PayPal call and every guardrail as it happens.</p>
     <div class="tour">
       <div class="go"><div class="lane-tag">Platform</div><b>Agents decide a payout</b><span>A risk analyst, a bull, a bear and a manager argue over who to pay this week. Code then moves only what the reserve allows.</span><button class="btn" data-go="2:operator">Run the agents</button></div>
       <div class="go"><div class="lane-tag">Spend</div><b>A buyer agent shops inside a signed budget</b><span>It finds a real product, screens listings for prompt injection, and settles through a PayPal hold that it cannot exceed.</span><button class="btn" data-go="1:buyer">Run the buyer</button></div>
@@ -142,6 +153,7 @@ _TEMPLATE = """<!doctype html>
     <p>You are one creator in a live marketplace of 120 others. What the platform owes creators and your own earnings are computed from real sales in it, net of the 10% platform fee. One set of books behind every tool below. An advance leaves the safety fund, a purchase holds your earnings on PayPal until you confirm delivery, a payout reduces what the platform owes, and the solvency proof, the P&amp;L and the audit desk all read these same numbers.</p>
     <div class="result" id="acct-body"><span class="muted">loading...</span></div>
   </div>
+  <div class="panel" style="margin-bottom:12px"><h2>The same policy engine at platform scale</h2><p>Below, the payout policy runs on a separate simulated platform of 5,000 creators in 10 countries, to show it scales. Your own account above is the live 120-creator marketplace every tool acts on.</p></div>
   <div class="cards" id="cards"></div>
 
   <div class="panel">
@@ -201,7 +213,11 @@ _TEMPLATE = """<!doctype html>
   const css = getComputedStyle(document.documentElement);
   const C = n => css.getPropertyValue(n).trim();
   const money = v => '$' + Number(v).toLocaleString(undefined,{maximumFractionDigits:0});
-  const FAINT='rgba(255,255,255,.055)';
+  const FAINT='rgba('+C('--ov')+',.055)';
+  { const tb=document.getElementById('themeBtn'), dk=document.documentElement.dataset.theme==='dark';
+    if (tb){ tb.innerHTML = dk ? '&#9728; Light' : '&#9790; Dark';
+      tb.onclick = () => { try{ localStorage.setItem('helm-theme', dk ? 'light' : 'dark'); }catch(e){}
+        if (dk) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme='dark'; location.reload(); }; } }
   if (window.Chart){
     Chart.defaults.color=C('--muted');
     Chart.defaults.borderColor=FAINT;
@@ -216,8 +232,8 @@ _TEMPLATE = """<!doctype html>
     Chart.defaults.plugins.legend.labels.boxWidth=9;
     Chart.defaults.plugins.legend.labels.usePointStyle=true;
     Chart.defaults.plugins.legend.labels.pointStyle='circle';
-    Object.assign(Chart.defaults.plugins.tooltip, {backgroundColor:'#0e1724', borderColor:'rgba(255,255,255,.1)',
-      borderWidth:1, cornerRadius:9, padding:11, titleColor:'#eef3fa', displayColors:false});
+    Object.assign(Chart.defaults.plugins.tooltip, {backgroundColor:C('--tipbg'), borderColor:'rgba('+C('--ov')+',.1)',
+      borderWidth:1, cornerRadius:9, padding:11, titleColor:C('--ink'), bodyColor:C('--ink2'), displayColors:false});
   }
   // modern scales: faint value grid, no category grid, no axis borders
   const SV = {x:{grid:{display:false},border:{display:false}}, y:{grid:{color:FAINT},border:{display:false},ticks:{maxTicksLimit:6}}};
@@ -239,10 +255,10 @@ _TEMPLATE = """<!doctype html>
 
   // AG Grid powers the two data grids, themed to the dashboard (sortable, filterable).
   const gridTheme = agGrid.themeQuartz.withParams({
-    backgroundColor:'#121824', foregroundColor:'#eef3fa',
-    headerBackgroundColor:'#121824', headerTextColor:'#8b9bb0',
-    borderColor:'rgba(255,255,255,.07)', rowHoverColor:'rgba(91,157,255,.08)',
-    oddRowBackgroundColor:'rgba(255,255,255,.02)', accentColor:'#5b9dff',
+    backgroundColor:C('--panel'), foregroundColor:C('--ink'),
+    headerBackgroundColor:C('--panel'), headerTextColor:C('--muted'), browserColorScheme:document.documentElement.dataset.theme==='dark'?'dark':'light',
+    borderColor:'rgba('+C('--ov')+',.07)', rowHoverColor:'rgba(79,70,229,.08)',
+    oddRowBackgroundColor:'rgba('+C('--ov')+',.02)', accentColor:C('--accent'),
     fontFamily:'inherit', fontSize:'13px', headerFontSize:'10.5px', wrapperBorderRadius:'12px',
   });
   const riskCell = p => { const r=p.value;
@@ -347,7 +363,7 @@ _TEMPLATE = """<!doctype html>
     const asof=document.getElementById('rAsOf'); if(asof) asof.textContent=ri.as_of;
     if (window.Chart){
       const nctx=document.getElementById('navChart').getContext('2d');
-      const ng=nctx.createLinearGradient(0,0,0,250); ng.addColorStop(0,'rgba(91,157,255,.30)'); ng.addColorStop(1,'rgba(91,157,255,0)');
+      const ng=nctx.createLinearGradient(0,0,0,250); ng.addColorStop(0,'rgba(79,70,229,.30)'); ng.addColorStop(1,'rgba(79,70,229,0)');
       new Chart(document.getElementById('navChart'), { type:'line',
       data:{ labels:ri.nav.dates, datasets:[{ label:'pool NAV (rebased to 100)', data:ri.nav.values,
         borderColor:C('--accent'), backgroundColor:ng, fill:true }]},
@@ -466,7 +482,7 @@ _TEMPLATE = """<!doctype html>
         show(o, (d.briefing?`<div class="kv" style="margin-bottom:8px">${esc(d.briefing)}</div>`:'')+
           w('week')+w('month')+w('year')+
           `<span class="pill">owed now <b>${money(d.creator.owed)}</b> (${money(d.creator.settled)} settled)</span>`+
-          `<div class="kv" style="margin-top:6px"><b>forecast</b> ${esc(f.text||f.summary||JSON.stringify(f).slice(0,160))}</div>`+
+          `<div class="kv" style="margin-top:6px"><b>forecast</b> ${f.next!=null?`next week about <b>${money(f.next)}</b> net, trending <b>${esc(f.direction||'flat')}</b>${f.pct_change!=null?` (${f.pct_change>0?'+':''}${(+f.pct_change).toFixed(1)}% vs the last 4 weeks)`:''} <span class="muted">(${esc(f.model||'')} forecast)</span>`:esc(f.text||f.summary||'')}</div>`+
           `<div class="kv"><b>make next</b> ${(rc.suggested_focus||[]).map(x=>`<span class="pill good">${esc(x)}</span>`).join('')} <span class="muted">${esc(rc.text||'')}</span></div>`+
           `<div style="margin-top:6px"><b>proposals</b>${props}</div>`+
           `<div class="kv" style="margin-top:6px"><b>tax</b> ${esc(t.summary||'')}</div>`); }; } },
@@ -617,7 +633,7 @@ _TEMPLATE = """<!doctype html>
       <div class="live-row"><div><input id="iv-tk" value="SPY"></div><div style="flex:0"><button class="btn ghost" id="iv-q">Live quote</button></div></div>
       <div class="result" id="iv-qout"></div>
       <label style="margin-top:14px">amount to invest across the basket</label>
-      <input id="iv-amt" type="number" value="1000">
+      <input id="iv-amt" type="number" value="250" min="1">
       <button class="btn" id="iv-run">Invest at live prices</button>
       <div class="result" id="iv-out"></div>`,
     wire(){ const q=document.getElementById('iv-q'), qo=document.getElementById('iv-qout'),
@@ -627,7 +643,7 @@ _TEMPLATE = """<!doctype html>
       b.onclick = async () => { busy(b,true); const r=await post('/api/invest',{amount:+document.getElementById('iv-amt').value}); busy(b,false);
         if(r.status!==200) return err(o,r); const d=r.body;
         const fills = d.fills.map(f=>`<span class="pill">${f.ticker} <b>${f.units} @ ${money(f.price)}</b></span>`).join('');
-        show(o, fills+`<div class="kv" style="margin-top:8px">backend: <b>${d.backend}</b> &middot; cost <b>${money(d.cost_basis)}</b> &middot; marked to market <b>${money(d.market_value)}</b></div>`+
+        show(o, fills+`<div class="kv" style="margin-top:8px">backend: <b>${d.backend}</b> &middot; cost <b>${money(d.cost_basis)}</b> &middot; marked to market <b>${money(d.market_value)}</b> &middot; <b>${money(d.from_earnings||0)}</b> came out of your earnings</div>`+
           (d.backend==='alpaca-paper'?'<div class="kv">routed as a real Alpaca paper order</div>':'')); }; } },
 
   { id:'mandate', label:'Agent mandate (crypto)', html:`
@@ -809,11 +825,11 @@ _TEMPLATE = """<!doctype html>
       b.onclick = async () => { busy(b,true);
         const r=await post('/api/customer/graph',{need:document.getElementById('cg-need').value, budget:+document.getElementById('cg-b').value});
         busy(b,false); if(r.status!==200) return err(o,r); const d=r.body;
-        const steps=(d.trace||[]).map(s=>`<span class="pill good">${esc(s)}</span>`).join(' &rarr; ');
+        const trail=(d.trace||[]).map(s=>`<span class="pill good">${esc(s)}</span>`).join(' &rarr; ');
         const q=(d.quarantined||[]).map(x=>`<div class="kv bad">quarantined: ${esc(x.title||'')}</div>`).join('');
         const c=d.choice||{}, au=d.authorization||{}, se=d.settlement||{};
         show(o, `<div class="kv muted">driver <b>${esc(d.driver||'')}</b> &middot; model ${esc(d.model||'')} &middot; search ${esc(d.backend||'')}</div>`+steps(d.nodes)+
-          `<div class="kv" style="margin-top:6px">${steps}</div>`+
+          `<div class="kv" style="margin-top:6px">${trail}</div>`+
           `<div class="kv" style="margin-top:8px"><b>understood</b> <span class="pill">${esc((d.intent||{}).query||'')}</span><span class="pill">${esc((d.intent||{}).category||'')}</span><span class="pill">&le; ${money((d.intent||{}).max_price)}</span></div>`+
           q+
           `<div class="kv" style="margin-top:6px"><b>chose</b> ${esc(c.title||c.reason||'nothing')} ${c.price!=null?money(c.price):''} <span class="muted">${esc(c.reason||'')}</span></div>`+
@@ -889,7 +905,8 @@ _TEMPLATE = """<!doctype html>
           `<div class="kv" style="margin-top:8px"><b>4 &middot; Compliance screen</b> ${cm}</div>`+
           ((d.grounding&&d.grounding.length)?`<div class="kv" style="margin-top:8px"><b>Grounded in</b> ${d.grounding.map(g=>`<span class="pill">${esc(g.topic)}</span>`).join('')}</div>`:'')+
           `<div class="kv" style="margin-top:8px"><b>5 &middot; Deterministic dispose</b></div>`+
-          `<span class="pill ${dec.status==='completed'?'good':''}">decision: ${esc(dec.status||'')}</span> <span class="pill">paid ${esc(paid)}</span>`+
+          (dec.status==='completed' ? `<span class="pill good">sent on PayPal Payouts</span> <span class="pill">paid ${esc(paid)}</span>`
+            : `<span class="pill bad">not sent</span> <span class="pill">would pay ${esc(paid)}</span>${dec.message?`<div class="kv" style="margin-top:6px;color:var(--bad)">${esc(dec.message)}${/INSUFFICIENT_FUNDS/.test(dec.message)?' (the platform PayPal sandbox balance is empty; nothing was paid and the books did not move)':''}</div>`:''}`)+
           (dec.safe_release_total!=null?`<div class="kv" style="margin-top:6px">The ${d.risk_multiplier}&times; multiplier sets a safe release of <b>${money(dec.safe_release_total)}</b>; the manager proposed ${money(dec.proposed_total)}${dec.proposed_total>dec.safe_release_total+0.005?', so code scaled it down to fit':', which fits'}.</div>`:'')+
           `<div class="kv muted" style="margin-top:4px">cash after ${money(dec.cash_after)} &middot; reserve ${dec.reserve_ok_after?'ok':'short'}${(dec.guardrail_overrides&&dec.guardrail_overrides.length)?' &middot; '+dec.guardrail_overrides.map(esc).join('; '):''}</div>`); }; } },
 
@@ -967,9 +984,9 @@ _TEMPLATE = """<!doctype html>
         show(co, rows); }; } },
 
   { id:'x402', label:'x402 micropayment', html:`
-      <p class="muted" style="margin:0 0 6px">Pay-per-request the x402 way: the server answers an unpaid request with HTTP 402 and its price, the agent pays the exact amount, and the resource unlocks. Settled on PayPal. A tampered amount is refused.</p>
+      <p class="muted" style="margin:0 0 6px">Pay-per-request the x402 way: the server answers an unpaid request with HTTP 402 and ITS price, the agent pays it only if it is within the agent's own ceiling, and the resource unlocks. Settled on PayPal. The caller can never name the price, and a tampered amount is refused.</p>
       <div class="live-row"><div><label>resource</label><input id="x4-res" value="premium-signal"></div>
-        <div style="flex:0 0 120px"><label>price</label><input id="x4-amt" type="number" step="0.01" value="0.25"></div></div>
+        <div style="flex:0 0 150px"><label>agent pays at most</label><input id="x4-amt" type="number" step="0.01" value="0.25"></div></div>
       <div class="chk"><input type="checkbox" id="x4-pay" checked><label for="x4-pay" style="margin:0;text-transform:none;letter-spacing:0;font-size:12.5px">pay (uncheck to see the raw 402 challenge)</label></div>
       <div class="chk"><input type="checkbox" id="x4-tamper"><label for="x4-tamper" style="margin:0;text-transform:none;letter-spacing:0;font-size:12.5px">tamper: pay 10x the agreed amount</label></div>
       <button class="btn" id="x4-run">Request the resource</button>
@@ -981,7 +998,7 @@ _TEMPLATE = """<!doctype html>
           tamper:document.getElementById('x4-tamper').checked});
         busy(b,false); if(r.status!==200) return err(o,r); const d=r.body;
         if(d.status===402 && !d.granted && d.requirements){ const opt=d.requirements.accepts[0];
-          return show(o, `<span class="verdict hold">HTTP 402 Payment Required</span><div class="kv" style="margin-top:6px">${esc(d.note||'')}</div>`+
+          return show(o, `<span class="verdict hold">HTTP 402 Payment Required</span><div class="kv" style="margin-top:6px">${esc(d.reason||d.note||'')}</div>`+
             `<span class="pill">${esc(opt.scheme)}</span><span class="pill">${money(opt.maxAmountRequired)} ${esc(opt.currency)}</span>`+
             `<span class="pill">payTo ${esc(opt.payTo)}</span><span class="pill">${esc(opt.network)}</span>`); }
         if(!d.granted) return show(o, `<span class="verdict no">payment refused</span> <span class="muted">${esc(d.reason)}</span>`);

@@ -28,12 +28,21 @@ from dataclasses import dataclass
 from .client import PayPalClient
 from .ledger import Ledger
 
-# PayPal's published sandbox test Visa (developer.paypal.com card testing); sandbox only.
-_SANDBOX_CARD = {"card": {"number": "4032039317984658", "expiry": "2030-12", "security_code": "123",
-                          "name": "Helm Sandbox Buyer",
-                          "billing_address": {"address_line_1": "1 Main St", "admin_area_2": "San Jose",
-                                              "admin_area_1": "CA", "postal_code": "95131",
-                                              "country_code": "US"}}}
+# PayPal's published sandbox test cards (developer.paypal.com card testing); sandbox only.
+# The sandbox can start refusing one card (PAYER_CANNOT_PAY) after heavy use, so a hold
+# moves on to the next card instead of failing.
+_SANDBOX_CARD_NUMBERS = ("4111111111111111", "4012888888881881", "4005519200000004", "4032039317984658")
+
+
+def _sandbox_card(number: str) -> dict:
+    return {"card": {"number": number, "expiry": "2030-12", "security_code": "123",
+                     "name": "Helm Sandbox Buyer",
+                     "billing_address": {"address_line_1": "1 Main St", "admin_area_2": "San Jose",
+                                         "admin_area_1": "CA", "postal_code": "95131",
+                                         "country_code": "US"}}}
+
+
+_SANDBOX_CARD = _sandbox_card(_SANDBOX_CARD_NUMBERS[0])
 
 
 @dataclass
@@ -107,6 +116,16 @@ def create_order(
     if payment_source:
         body["payment_source"] = payment_source
     resp = client.post("/v2/checkout/orders", body, request_id=client.new_request_id())
+    if payment_source and payment_source.get("card") and not accepted(resp) \
+            and "PAYER_CANNOT_PAY" in str(issue_of(resp)):
+        tried = payment_source["card"].get("number")
+        for number in _SANDBOX_CARD_NUMBERS:
+            if number == tried:
+                continue
+            body["payment_source"] = _sandbox_card(number)
+            resp = client.post("/v2/checkout/orders", body, request_id=client.new_request_id())
+            if accepted(resp) or "PAYER_CANNOT_PAY" not in str(issue_of(resp)):
+                break
     demo = bool(resp.get("_demo", client.demo))
     if not accepted(resp):
         return OrderResult("failed", None, round(float(amount), 2), intent, demo, resp, issue_of(resp))

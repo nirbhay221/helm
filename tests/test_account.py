@@ -33,6 +33,15 @@ def _earned(c):
     return c.get("/api/account").json()["my_earnings"]
 
 
+def test_live_advance_reads_the_ledger_not_the_claimed_earnings():
+    c = _client("t-adv-claim")
+    mine = _earned(c)
+    big = c.post("/api/advance", json={"proven_earnings": 1e9}).json()
+    assert big["proven_earnings"] == mine                 # a typed $1B is ignored
+    assert big["max_amount"] <= 0.8 * mine + 0.01
+    assert "verified unpaid earnings" in big["reason"]
+
+
 def test_advance_moves_the_fund_the_proof_and_the_pnl():
     c = _client("t-adv")
     start = c.get("/api/account").json()
@@ -46,7 +55,7 @@ def test_advance_moves_the_fund_the_proof_and_the_pnl():
     assert after["margin"] < start["margin"]
     pnl = c.post("/api/pnl", json={}).json()
     assert pnl["book_source"] == "your account's advance book"
-    assert pnl["book"][0]["creator"] == "you"
+    assert pnl["book"][0]["creator"] == "me"           # the live account always borrows as you
     zk = c.post("/api/reserves/prove", json={}).json()
     assert zk["from_account"] and zk["liabilities_bound"] and zk["solvent"]
 

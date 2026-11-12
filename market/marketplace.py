@@ -109,8 +109,22 @@ class Marketplace:
         bad = self._bad(o)
         return {"orders": len(o), "bad": len(bad),
                 "rate": round(len(bad) / len(o), 3) if o else 0.0,
-                "distinct_counterparties": len({x.buyer for x in bad})}
+                "distinct_counterparties": len({x.buyer for x in bad}),
+                "trust": trust_score(len(o) - len(bad), len(o))}
 
+
+
+def trust_score(good: int, n: int, z: float = 1.96) -> int:
+    """0 to 100: the lower end of the 95% Wilson interval on a seller's share of orders that were
+    NOT returned or charged back. Few sales means less certainty and a lower score, so a seller
+    with 3 clean sales does not outrank one with 400 sales and a 1% return rate."""
+    if n <= 0:
+        return 0
+    p = good / n
+    d = 1 + z * z / n
+    centre = p + z * z / (2 * n)
+    margin = z * ((p * (1 - p) + z * z / (4 * n)) / n) ** 0.5
+    return int(round(100 * max(0.0, (centre - margin) / d)))
 
 # --- a realistic world with planted abuse ----------------------------------
 _FIRST = {"US": ["James", "Olivia", "Noah"], "IN": ["Aarav", "Diya", "Arjun"],

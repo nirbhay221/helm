@@ -12,6 +12,8 @@ what they are owed, oldest balances first, and the batch recipients are real.
 """
 from __future__ import annotations
 
+import uuid
+
 from dataclasses import dataclass, field
 
 from paypal import Ledger, PayPalClient
@@ -95,7 +97,7 @@ def run_marketplace_live(
 
         res = create_payout(
             client=client, ledger=ledger, recipients=recipients,
-            sender_batch_id=f"helm-mkt-{t}", purpose=purpose,
+            sender_batch_id=f"helm-mkt-{t}-{uuid.uuid4().hex[:10]}", purpose=purpose,
         )
         run = PayoutRun(
             period=t, payout_total=round(obs.payout, 2), batch_id=res.batch_id,

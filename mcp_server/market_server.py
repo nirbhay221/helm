@@ -31,6 +31,33 @@ def build_market_server() -> MCPServer:
             return {"ticker": ticker.upper(), "error": str(exc)[:120]}
 
     @server.tool(
+        name="market_snapshot",
+        description=("For each ticker: the latest real price, the 3-month return and the annualised "
+                     "day-to-day volatility, from real daily closes. A failed ticker carries an error field."),
+    )
+    def market_snapshot(tickers: list[str]) -> dict:
+        from marketplace.market_data import snapshot
+        out = []
+        for t in tickers[:15]:
+            try:
+                out.append(snapshot(t))
+            except Exception as exc:
+                out.append({"ticker": t.upper(), "error": str(exc)[:120]})
+        return {"snapshots": out}
+
+    @server.tool(
+        name="market_news",
+        description=("The latest real news headlines for these companies (Alpaca market news, Benzinga), "
+                     "newest first, with the time and which of the tickers each one mentions."),
+    )
+    def market_news(tickers: list[str], limit: int = 12) -> dict:
+        from marketplace.market_data import news
+        try:
+            return {"news": news(tickers, limit)}
+        except Exception as exc:
+            return {"news": [], "error": str(exc)[:160]}
+
+    @server.tool(
         name="invest_payout",
         description=("Invest a notional dollar amount across the basket (US stocks, real estate, "
                      "restaurants) at live prices. Returns the fractional-unit fills, the cost "

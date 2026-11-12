@@ -50,6 +50,12 @@ _DEMO_CATALOG = [
 ]
 
 
+import contextvars as _cv
+# set only inside one control-room run that asks to plant a poisoned listing; a context variable,
+# so one visitor's attack toggle can never leak into another visitor's search
+LIVE_ATTACK: "_cv.ContextVar[bool]" = _cv.ContextVar("helm_live_attack", default=False)
+
+
 class Channel3Client:
     """Searches Channel3 for products, or a demo catalog when no key is configured."""
 

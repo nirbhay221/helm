@@ -82,3 +82,16 @@ def test_more_rounds_make_a_longer_debate():
     g.app = g._build()
     st = g.step("A fraud wave this week.")
     assert len([d for d in st["debate"] if d["role"] == "bull"]) == 2
+
+
+def test_a_second_round_runs_only_while_bull_and_bear_disagree():
+    g, _ = _build()
+    g.max_debate_rounds = 3
+    apart = {"debate_round": 1, "debate": [{"role": "bull", "round": 1, "pushes": 1.0},
+                                           {"role": "bear", "round": 1, "pushes": 1.5}]}
+    close = {"debate_round": 1, "debate": [{"role": "bull", "round": 1, "pushes": 1.1},
+                                           {"role": "bear", "round": 1, "pushes": 1.2}]}
+    capped = {**apart, "debate_round": 3}
+    assert g._debate_router(apart) == "continue"
+    assert g._debate_router(close) == "decide"
+    assert g._debate_router(capped) == "decide"

@@ -94,6 +94,8 @@ class Constraints:
     exclude_countries: tuple = ()            # pay no one from these countries this cycle
     max_risk: float = 1.0                    # never pay a creator riskier than this
     min_priority: float = 0.0                # only pay creators at least this urgent
+    max_amount_per_creator: float = 0.0      # dollar cap per creator this cycle (0 = no cap)
+    prioritize_countries: tuple = ()         # pay these countries first (soft, never excludes)
 
     def allows(self, c: "AllocCreator") -> bool:
         return (c.country not in self.exclude_countries
@@ -148,6 +150,8 @@ def allocate(creators: list[AllocCreator], budget: float, weights: Weights,
     x = {}
     for c in creators:
         ub = min(max(0.0, c.owed), cap) if con.allows(c) else 0.0   # held if policy forbids
+        if con.max_amount_per_creator > 0:
+            ub = min(ub, con.max_amount_per_creator)
         x[c.name] = solver.NumVar(0.0, ub, f"x_{c.name}")
     solver.Add(solver.Sum(list(x.values())) <= budget)
 
@@ -156,6 +160,8 @@ def allocate(creators: list[AllocCreator], budget: float, weights: Weights,
         net = 1.0 - c.withholding
         value = (weights.speed * c.priority + weights.tax * net
                  - weights.risk * c.risk - weights.fx * c.fx_cost)
+        if c.country in con.prioritize_countries:
+            value += 10.0               # dominates the other terms, so they are funded first
         obj.append(value * x[c.name])
     solver.Maximize(solver.Sum(obj))
 

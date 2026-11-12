@@ -106,10 +106,11 @@ def holt_winters(series, horizon: int = 4, season_length: int | None = None) -> 
         s_h = seas[(n + h - 1) % L] if seas is not None else 0.0
         path.append(round(float(max(0.0, level + h * trend + s_h)), 2))
     nxt = path[0] if path else round(float(level), 2)
-    base = float(x[-1]) if x[-1] else (float(level) or 1.0)
+    # momentum against the recent run rate (mean of the last four periods), not one noisy period,
+    # and the direction is read from the same number so the two can never disagree
+    base = float(np.mean(x[-4:])) or float(level) or 1.0
     pct = round(float((nxt - base) / abs(base) * 100), 1) if base else 0.0
-    tol = max(1e-6, 0.01 * abs(float(level)))          # under 1% of the level a week is flat
-    direction = "up" if trend > tol else ("down" if trend < -tol else "flat")
+    direction = "up" if pct > 3.0 else ("down" if pct < -3.0 else "flat")
     return {"next": float(nxt), "path": path, "trend": round(float(trend), 3),
             "level": round(float(level), 2), "direction": direction,
             "pct_change": pct, "model": "holt-winters" if seas is not None else "holt"}

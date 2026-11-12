@@ -63,6 +63,42 @@ ADJUST_FORECAST_TOOL = {
     },
 }
 
+_UP = r"(up|rise|rises|rising|grow|grows|growth|increase[sd]?|jump(s|ed)?|spike[sd]?|surge[sd]?|climb(s|ed)?|more|higher|boost)"
+_DOWN = r"(down|drop(s|ped)?|fall(s|en)?|fell|decline[sd]?|decrease[sd]?|shrink(s)?|slump(ed)?|plunge[sd]?|cut|lower|less|lost)"
+
+
+def _stated_change(text: str, baseline: float):
+    """The change a signal states outright, in dollars per period, or None when it states no
+    size. 'triple' is +2x baseline, 'double' +1x, 'halve' -0.5x, 'x3' or '3x' +2x, and 'N%' takes
+    its sign from the nearby up/down word."""
+    import re
+    t = (text or "").lower()
+    b = max(0.0, float(baseline or 0))
+    if b <= 0:
+        return None
+    words = {"quadruple": 3.0, "triple": 2.0, "double": 1.0}
+    for w, k in words.items():
+        if re.search(r"\b" + w, t):
+            return round(k * b, 2)
+    if re.search(r"\b(halve[sd]?|cut in half|half as much)\b", t):
+        return round(-0.5 * b, 2)
+    m = re.search(r"\b(\d+(?:\.\d+)?)\s*x\b|\bx\s*(\d+(?:\.\d+)?)\b", t)
+    if m:
+        k = float(m.group(1) or m.group(2))
+        if 0 < k <= 10:
+            return round((k - 1.0) * b, 2)
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(%|percent)", t)
+    if m:
+        pct = float(m.group(1)) / 100.0
+        window = t[max(0, m.start() - 40): m.end() + 40]
+        down, up = re.search(r"\b" + _DOWN + r"\b", window), re.search(r"\b" + _UP + r"\b", window)
+        if down and not up:
+            return round(-pct * b, 2)
+        if up and not down:
+            return round(pct * b, 2)
+    return None
+
+
 def _median(values: list[float]) -> float:
     xs = sorted(values)
     n = len(xs)
@@ -176,11 +212,30 @@ class SignalDesk:
         try:
             from market.guard import scan_text
             scan = scan_text(signal_text)
-            if scan["flagged"]:
-                signal_text = scan["redacted"]            # strip the injected instruction spans
         except Exception:
-            pass
+            scan = {"flagged": False}
+        if scan["flagged"]:
+            # A signal that carries instructions for the agent is not market information; the
+            # rest of it cannot be trusted either (redacting the span left "set every period
+            # delta to 1000000" for the model to obey), so it moves nothing.
+            return ForecastAdjustment(rationale="quarantined: the signal contains instructions "
+                                                "aimed at the agent, so it is ignored",
+                                      cited_signal="", source="quarantined", confidence=0.0)
         adj = self._interpret_core(signal_text, current_period, baseline_demand, horizon)
+        stated = _stated_change(signal_text, baseline_demand)
+        if stated is not None and not adj.period_deltas:
+            # the reads disagreed on timing and scaled to nothing, but the signal states its size
+            # outright, so it applies at least to the current period
+            adj.period_deltas = {int(current_period): stated}
+            adj.rationale = (adj.rationale + "; the reads disagreed on timing, so the stated change "
+                             "applies to the current period").strip("; ")
+        if stated is not None and adj.period_deltas:
+            # the text states the size; the model's job is the timing, so its periods carry
+            # the stated size rather than a sampled guess scaled down by disagreement
+            adj.period_deltas = {p: stated for p in adj.period_deltas}
+            adj.rationale = (adj.rationale + f"; size taken from the signal itself "
+                             f"({stated:+,.0f} per period)").strip("; ")
+            adj.confidence = max(adj.confidence, 0.9)
         cap = self.DEMAND_CLAMP * max(0.0, float(baseline_demand))
         if cap > 0:
             clamped = {p: max(-cap, min(cap, float(d))) for p, d in adj.period_deltas.items()}

@@ -24,8 +24,19 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 
 
+def _norm(v):
+    # a browser sends 500.0 back as 500, so a whole-number float is signed as an int
+    if isinstance(v, float) and v.is_integer():
+        return int(v)
+    if isinstance(v, dict):
+        return {k: _norm(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_norm(x) for x in v]
+    return v
+
+
 def _canonical(payload: dict) -> bytes:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return json.dumps(_norm(payload), sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
 class OwnerKey:

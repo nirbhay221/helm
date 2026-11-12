@@ -159,6 +159,12 @@ def create_payout(
         or resp.get("id")
         or f"BATCH-{sender_batch_id}"
     )
+    code = int(resp.get("_status_code", 201) or 201)
+    if not resp.get("_demo") and code >= 400:
+        issue = ((resp.get("details") or [{}])[0].get("issue")) or resp.get("name") or f"HTTP {code}"
+        return PayoutResult(status="failed", message=f"PayPal refused the payout batch: {issue}",
+                            total_amount=total, currency=currency, purpose=purpose,
+                            recipients=len(recipients), demo=False, raw=resp)
     status = "completed"
     ledger.record_movement("payout", "payout_batch", sender_batch_id, total, status)
     result_payload = {
@@ -228,3 +234,4 @@ def run_payouts_tool(arguments: dict, client: PayPalClient, ledger: Ledger) -> d
         "recipients": res.recipients,
         "demo": res.demo,
     }
+

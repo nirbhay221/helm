@@ -83,7 +83,8 @@ class OpState(TypedDict, total=False):
     max_debate_rounds: int
     risk_multiplier: float
     proposal: list              # [{creator, amount}]
-    compliance: list            # [{creator, decision, reasons}]
+    defaulted: list             # cleared creators the manager left out, paid their settled balance
+    compliance: list           # [{creator, decision, reasons}]
     grounding: list             # [{topic, source}] financial principles the agents applied
     decision: dict              # final dispose result
     driver: str                 # "model" | "fallback" (worst node wins)
@@ -120,14 +121,10 @@ class OperatorGraph:
 
     # --- graph wiring -------------------------------------------------------
     def _build(self):
+        from agent.tap import traced
         g = StateGraph(OpState)
-        g.add_node("signal_analyst", self.signal_analyst)
-        g.add_node("risk_analyst", self.risk_analyst)
-        g.add_node("bull", self.bull)
-        g.add_node("bear", self.bear)
-        g.add_node("manager", self.manager)
-        g.add_node("compliance_gate", self.compliance_gate)
-        g.add_node("dispose", self.dispose)
+        for n in ("signal_analyst", "risk_analyst", "bull", "bear", "manager", "compliance_gate", "dispose"):
+            g.add_node(n, traced("operator", n, getattr(self, n), _live_summary))
 
         g.set_entry_point("signal_analyst")
         g.add_edge("signal_analyst", "risk_analyst")
@@ -141,8 +138,16 @@ class OperatorGraph:
         g.add_edge("dispose", END)
         return g.compile()
 
+    DISAGREE = 0.2      # bull and bear this far apart on the multiplier get another round
+
     def _debate_router(self, state: OpState) -> str:
-        return "continue" if state.get("debate_round", 1) < self.max_debate_rounds else "decide"
+        """Another round only while the bull and the bear still disagree, up to the cap."""
+        rnd = state.get("debate_round", 1)
+        if rnd >= self.max_debate_rounds:
+            return "decide"
+        last = {d["role"]: d["pushes"] for d in state.get("debate", []) if d.get("round") == rnd}
+        gap = abs(last.get("bear", 1.0) - last.get("bull", 1.0))
+        return "continue" if gap > self.DISAGREE else "decide"
 
     # --- an LLM helper that returns structured JSON or signals fallback -----
     def _ask(self, system: str, user: str, schema: dict, temperature: float = 0.2):
@@ -303,7 +308,8 @@ class OperatorGraph:
             "risk_multiplier": {"type": "number"},
             "allocations": {"type": "array", "items": {"type": "object", "properties": {
                 "creator": {"type": "string"}, "amount": {"type": "number"}},
-                "required": ["creator", "amount"]}}}, "required": ["risk_multiplier", "allocations"]}}
+                "required": ["creator", "amount"]}}},
+            "required": ["risk_multiplier", "allocations"]}}
         system = ("You are the payout manager. Weigh the bull and bear arguments and the risk views, "
                   "then choose a risk_multiplier (>= 1.0; higher = hold more reserve) and the amount to "
                   "pay each creator you are NOT holding. Never pay a held creator. Prefer each creator's "
@@ -328,6 +334,19 @@ class OperatorGraph:
                         continue
                     if amt > 1e-6:
                         alloc.append({"creator": name, "amount": round(amt, 2)})
+            # Holding a creator's settled earnings is a decision with a stated reason, and only
+            # the risk analyst's hold verdict carries one. A cleared creator the manager left out
+            # (a quiet week once returned an empty allocation and paid no one) is paid their
+            # settled balance by default; the solver still caps the batch.
+            given = {a["creator"] for a in alloc}
+            defaulted = []
+            for c in state["observation"]["creators"]:
+                name, due = c["creator"], round(c.get("settled_owed", 0.0) or 0.0, 2)
+                if name not in holds and name not in given and due > 1e-6:
+                    alloc.append({"creator": name, "amount": due})
+                    defaulted.append(name)
+            if defaulted:
+                state["defaulted"] = defaulted
             state["risk_multiplier"] = mult
             state["proposal"] = alloc
             self._rec(state, drv, "manager")
@@ -366,3 +385,32 @@ class OperatorGraph:
         self.tools.current_signal = signal_text or ""
         init: OpState = {"debate_round": 0, "max_debate_rounds": self.max_debate_rounds}
         return self.app.invoke(init)
+
+
+def _live_summary(node: str, st: dict) -> dict:
+    """What the live view shows when an operator agent finishes: its own decision, in brief."""
+    if node == "signal_analyst":
+        r = st.get("signal_read") or {}
+        obs = st.get("observation") or {}
+        return {"caution": bool(r.get("suggests_caution")),
+                "read": str(r.get("rationale") or r.get("summary") or r.get("reading") or "")[:240],
+                "creators_in_view": len(obs.get("creators") or [])}
+    if node == "risk_analyst":
+        return {"verdicts": [{"creator": v.get("creator"), "verdict": v.get("verdict"),
+                              "reason": str(v.get("reason", ""))[:200]} for v in st.get("risk_views", [])]}
+    if node in ("bull", "bear"):
+        mine = [d for d in st.get("debate", []) if d.get("role") == node]
+        d = mine[-1] if mine else {}
+        return {"round": d.get("round"), "pushes": d.get("pushes"), "argument": str(d.get("argument", ""))[:600]}
+    if node == "manager":
+        prop = st.get("proposal", [])
+        return {"risk_multiplier": st.get("risk_multiplier"), "proposal": prop[:12],
+                "proposed_total": round(sum(a.get("amount", 0) for a in prop), 2),
+                "defaulted": st.get("defaulted", [])}
+    if node == "compliance_gate":
+        return {"screened": st.get("compliance", [])}
+    if node == "dispose":
+        d = st.get("decision") or {}
+        return {k: d.get(k) for k in ("status", "message", "paid_total", "paid", "safe_release_total", "proposed_total",
+                                      "cash_after", "reserve_ok_after", "guardrail_overrides")}
+    return {}

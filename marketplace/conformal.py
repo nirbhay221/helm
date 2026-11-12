@@ -108,43 +108,50 @@ class ConformalForecaster:
         return out
 
 
-def conformal_pd_band(history, alpha: float = 0.1) -> dict:
-    """A conformal band on a creator's probability of default.
+PRIOR_CV = 0.5          # what we assume about month-to-month swings before seeing any
+PRIOR_MONTHS = 2.0      # how many months of evidence that assumption is worth
+AHEAD = 6               # "how far could the estimate move over the next six months?"
 
-    The PD scorecard is fit to a simulated book with known outcomes, so we can hold
-    out a calibration slice, score |predicted_pd - outcome| on it, and use the
-    conformal quantile as the band half-width. A wider band means the estimate is
-    less trustworthy, which the advance engine uses to lend more conservatively.
-    Returns {pd, low, high, half_width, coverage}."""
-    from .advance import _pd_features, default_probability
-    pd_point = default_probability(history)
+
+def pd_uncertainty_band(history, alpha: float = 0.1, draws: int = 400) -> dict:
+    """How much a creator's default-risk estimate could still move, from THEIR OWN history.
+
+    A parametric bootstrap: fit the creator's level, swings (coefficient of variation) and
+    trend, shrunk toward a prior when the file is thin; simulate the next six months many
+    times; re-score default risk on observed + simulated months; the central (1 - alpha)
+    range of those scores is the band. A short or volatile history moves a lot when more
+    months arrive (wide band, smaller advance); a long steady one barely moves (narrow band).
+    Seeded from the history, so the same ledger always gets the same band.
+    Returns {pd, low, high, half_width, coverage, method}."""
+    from .advance import default_probability
+    xs = [float(x) for x in (history or []) if x is not None]
+    pd_point = default_probability(xs)
     try:
+        import hashlib
+
         import numpy as np
-        from .models import LogisticModel
-        rng = np.random.default_rng(7)
-        Xc, yc = [], []
-        for _ in range(600):                         # a fresh calibration book, same process
-            k = int(rng.integers(1, 13))
-            mean = float(rng.uniform(200, 5000))
-            cvt = float(rng.uniform(0.03, 1.2))
-            trt = float(rng.normal(0.0, 0.14))
-            hist = [max(0.0, mean * (1 + trt * t) * (1 + rng.normal(0, cvt))) for t in range(k)]
-            feats = _pd_features(hist)
-            if feats is None:
-                continue
-            thin = max(0.0, (6 - k) / 6.0)
-            z = -2.0 + 3.2 * cvt - 5.5 * trt + 1.4 * thin
-            outcome = 1.0 if rng.random() < 1.0 / (1.0 + np.exp(-z)) else 0.0
-            Xc.append(feats)
-            yc.append(outcome)
-        from .advance import _pd_model
-        model = _pd_model()
-        scores = [abs(float(model.predict_proba(x)) - y) for x, y in zip(Xc, yc)]
-        hw = conformal_quantile(scores, alpha)
-        hw = min(0.5, hw) if math.isfinite(hw) else 0.5
+        n = len(xs)
+        arr = np.asarray(xs, dtype=float) if n else np.asarray([0.0])
+        mean = float(arr.mean()) if n else 0.0
+        if n == 0 or mean <= 0:
+            raise ValueError("no positive history")
+        cv_obs = float(arr.std() / mean) if n > 1 else PRIOR_CV
+        cv = (n * cv_obs + PRIOR_MONTHS * PRIOR_CV) / (n + PRIOR_MONTHS)
+        slope = float(np.polyfit(np.arange(n), arr, 1)[0] / mean) if n > 2 else 0.0
+        slope *= n / (n + PRIOR_MONTHS)
+        seed = int(hashlib.sha256(",".join(f"{x:.2f}" for x in xs).encode()).hexdigest()[:8], 16)
+        rng = np.random.default_rng(seed)
+        level = float(np.mean(arr[-3:]))
+        sims = []
+        for _ in range(draws):
+            # the swings themselves are uncertain when there are few months to judge them by
+            cv_d = cv * float(np.sqrt(rng.chisquare(n + PRIOR_MONTHS) / (n + PRIOR_MONTHS)))
+            fut = [max(0.0, level * (1 + slope * (t + 1)) * (1 + rng.normal(0, cv_d))) for t in range(AHEAD)]
+            sims.append(default_probability(xs + fut))
+        low = float(np.quantile(sims, alpha / 2))
+        high = float(np.quantile(sims, 1 - alpha / 2))
+        low, high = min(low, pd_point), max(high, pd_point)
     except Exception:
-        hw = 0.15                                    # honest default band when numpy is unavailable
-    low = round(max(0.0, pd_point - hw), 3)
-    high = round(min(1.0, pd_point + hw), 3)
-    return {"pd": pd_point, "low": low, "high": high, "half_width": round(hw, 3),
-            "coverage": round(1.0 - alpha, 2)}
+        low, high = max(0.0, pd_point - 0.15), min(1.0, pd_point + 0.15)   # no data: a wide, honest default
+    return {"pd": pd_point, "low": round(low, 3), "high": round(high, 3), "half_width": round((high - low) / 2, 3),
+            "coverage": round(1.0 - alpha, 2), "method": "bootstrap over the creator's own history"}

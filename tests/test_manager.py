@@ -40,13 +40,21 @@ def test_recommendations_use_history_and_next_festival():
     assert rec["next_festival"] == "Valentine's"      # first festival on/after day 10
 
 
-def test_proposals_include_a_gated_advance_offer():
+def test_a_two_week_history_is_too_thin_to_lend_against_profitably():
+    # two weeks of sales put PD near 50%; a fee that covers PD x LGD would be above the ceiling,
+    # so the manager offers no advance rather than one that loses money on average
     mgr = CreatorManager(_market(), "s1", llm=LLMClient(env={}), now_day=10)
     props = mgr.proposals(SafetyFund(balance=10000.0), AdvanceEngine())
-    adv = [p for p in props if p["action"] == "take_advance"]
-    assert adv and adv[0]["needs_approval"] is True
-    assert adv[0]["pd"] > 0                            # risk-priced from the creator's earnings history
-    assert adv[0]["up_to"] <= round(0.8 * 180.0, 2)    # risk-adjusted, never above the unadjusted cap
+    assert not [p for p in props if p["action"] == "take_advance"]
+    assert all(p["needs_approval"] is True for p in props)
+
+
+def test_a_steady_history_gets_a_gated_advance_priced_to_cover_its_loss():
+    from marketplace.advance import ADVANCE_LGD, TARGET_RETURN
+    eng = AdvanceEngine()
+    o = eng.offer("steady", 1000.0, SafetyFund(10000.0), earnings_history=[200] * 12)
+    assert o.eligible and o.pd > 0
+    assert o.fee_rate >= o.pd * ADVANCE_LGD + TARGET_RETURN - 1e-9   # the fee pays for its own risk
 
 
 def test_briefing_is_grounded_without_a_key():

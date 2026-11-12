@@ -96,7 +96,11 @@ def test_operator_end_to_end_pays_the_clean_and_holds_the_rings(api):
 
 
 def test_operator_is_more_cautious_on_a_risk_signal(api):
+    # same books for both reads: otherwise the first run pays the clean creators and the second
+    # sees them owed nothing, which says nothing about how the signal changed the judgment
+    api.post("/api/account/reset")
     risk = _operator(api, SIGNAL_RISK)
+    api.post("/api/account/reset")
     calm = _operator(api, SIGNAL_CALM)
     _all_model(calm["nodes"], {"risk_analyst", "manager"})
     held = lambda d: sum(v["verdict"] == "hold" for v in d["risk_views"])

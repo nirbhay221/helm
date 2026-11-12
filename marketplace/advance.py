@@ -58,6 +58,10 @@ def _pd_features(history):
 
 
 _PD_MODEL = None
+THIN_FILE_PD = 0.25      # default-risk prior for a creator with no earnings history
+ADVANCE_LGD = 0.55       # share of an advance lost when a creator defaults (matches the P&L)
+TARGET_RETURN = 0.03     # return the fee must earn above expected loss
+MAX_FEE = 0.25           # above this the advance is declined rather than priced punitively
 
 
 def _pd_model():
@@ -136,6 +140,7 @@ class Advance:
     fee: float
     outstanding: float
     repay_pct: float
+    pd: float = 0.0          # the default probability the advance was priced at
 
 
 @dataclass
@@ -160,6 +165,12 @@ class AdvanceEngine:
         backable = fund.balance / (self.coverage_ratio * self.loss_rate)
         return max(0.0, round(backable - self.total_outstanding(), 2))
 
+    def fee_for(self, pd: float) -> float:
+        """The fee for a creator at this PD: the base plus a risk premium, but never less than
+        the expected loss (PD x LGD) plus a target return, so each advance is priced to pay
+        for its own risk."""
+        return round(max(self.fee_rate + self.pd_fee_premium * pd, pd * ADVANCE_LGD + TARGET_RETURN), 4)
+
     def offer(self, creator: str, proven_earnings: float, fund: SafetyFund,
               earnings_history=None) -> AdvanceOffer:
         if creator in self.loans:
@@ -167,9 +178,22 @@ class AdvanceEngine:
                                 "already-borrowing", "An advance is already outstanding for this creator.", 0.0)
         # per-creator risk: a riskier creator is lent a smaller share of earnings and
         # pays a higher fee. The caps below are unchanged, this prices WITHIN them.
-        pd = default_probability(earnings_history) if earnings_history else 0.0
+        # no history is a thin file: lenders price it as riskier, never as riskless
+        if earnings_history is None:
+            pd = 0.0                      # caller priced nothing: caps only
+        elif len(earnings_history) == 0:
+            pd = THIN_FILE_PD
+        else:
+            pd = default_probability(earnings_history)
         eff_rate = self.advance_rate * (1.0 - pd)
-        fee = round(self.fee_rate + self.pd_fee_premium * pd, 4)
+        # the fee must at least cover the expected loss (PD x LGD) plus a target return, or every
+        # risky advance loses money on average (6% + 0.3 x PD falls below 0.55 x PD past PD 24%)
+        fee = self.fee_for(pd)
+        if fee > MAX_FEE:
+            return AdvanceOffer(creator, False, 0.0, fee, self.repay_pct, "risk",
+                                f"Declined: at PD {int(pd * 100)}% a fee that covers the expected loss "
+                                f"would be {fee * 100:.0f}%, above the {MAX_FEE * 100:.0f}% ceiling, so no "
+                                f"advance can be priced fairly.", pd)
         caps = {
             "earnings": eff_rate * max(0.0, float(proven_earnings)),
             "fund-concentration": self.concentration * max(0.0, fund.balance),
@@ -178,7 +202,9 @@ class AdvanceEngine:
         binding = min(caps, key=caps.get)
         max_amount = round(max(0.0, caps[binding]), 2)
         risk_note = (f" Risk-priced: PD {int(pd * 100)}%, so up to {int(eff_rate * 100)}% of earnings "
-                     f"at a {fee * 100:.1f}% fee." if earnings_history else "")
+                     f"at a {fee * 100:.1f}% fee." if earnings_history else
+                     (f" No earnings history, so it is priced as a thin file (PD {int(pd * 100)}%)."
+                      if earnings_history is not None else ""))
         reason = (f"Capped by the smallest of: {int(eff_rate * 100)}% of proven earnings "
                   f"(${caps['earnings']:,.0f}), {int(self.concentration * 100)}% of the fund per borrower "
                   f"(${caps['fund-concentration']:,.0f}), and what the fund can still cover at "
@@ -198,7 +224,8 @@ class AdvanceEngine:
                     "offer": asdict(offer)}
         amount = round(float(amount), 2)
         fee = round(amount * offer.fee_rate, 2)          # risk-priced fee from the offer
-        self.loans[creator] = Advance(creator, amount, fee, round(amount + fee, 2), self.repay_pct)
+        self.loans[creator] = Advance(creator, amount, fee, round(amount + fee, 2), self.repay_pct,
+                                      pd=offer.pd)
         fund.balance = round(fund.balance - amount, 2)       # the fund fronts the cash
         return {"status": "advanced", "amount": amount, "fee": fee,
                 "outstanding": round(amount + fee, 2), "repay_pct": self.repay_pct,

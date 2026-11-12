@@ -35,6 +35,27 @@ FESTIVALS = [
 ]
 
 
+def _dollars(x):
+    """Earnings facts as the creator reads them: $1,234 rather than 1234.0."""
+    if isinstance(x, dict):
+        return {k: _dollars(v) for k, v in x.items()}
+    if isinstance(x, (int, float)) and not isinstance(x, bool):
+        return f"${x:,.0f}"
+    return x
+
+
+def _plain(p: dict) -> dict:
+    out = {"option": p["action"].replace("_", " ")}
+    for k, v in p.items():
+        if k in ("up_to", "suggested") and v is not None:
+            out[k.replace("_", " ")] = f"${float(v):,.0f}"
+        elif k == "fee_rate" and v is not None:
+            out["fee"] = f"{float(v) * 100:.0f}%"
+        elif k == "pd" and v is not None:
+            out["chance of not repaying"] = f"{float(v) * 100:.0f}%"
+    return out
+
+
 @dataclass
 class CreatorManager:
     market: Marketplace
@@ -186,20 +207,28 @@ class CreatorManager:
                                fee_rate=self.take_rate, period=period)
 
     # --- the plain-English briefing -----------------------------------------
-    def briefing(self, fund: SafetyFund | None = None, engine: AdvanceEngine | None = None) -> str:
+    def briefing(self, fund: SafetyFund | None = None, engine: AdvanceEngine | None = None,
+                 advance: dict | None = None) -> str:
+        """`advance` is the live offer exactly as Get paid early prices it, so the two never disagree."""
         fund = fund or SafetyFund(balance=0.0)
         engine = engine or AdvanceEngine()
         e, rec = self.earnings(), self.recommendations()
         props = self.proposals(fund, engine)
-        facts = {"earnings": e, "recommendations": rec,
-                 "proposals": [{k: p[k] for k in p if k != "why"} for p in props]}
+        if advance is not None:
+            props = [p for p in props if p["action"] != "take_advance"]
+            if advance.get("eligible") and advance.get("offer"):
+                props.insert(0, {"action": "take_advance", "up_to": advance["offer"], "fee_rate": advance.get("fee_rate"),
+                                 "pd": advance.get("pd"), "needs_approval": True})
+        facts = {"earnings": _dollars(e), "recommendations": rec, "options": [_plain(p) for p in props]}
         if self.llm.available:
             try:
                 msg = self.llm.chat(
                     messages=[{"role": "system", "content":
-                               "You are a creator's personal money manager. Write a short, warm, plain "
-                               "briefing (3-4 sentences) from these facts. Never invent numbers. Remind "
-                               "them any money move needs their approval."},
+                               "You are a creator's money manager. Write 3 short sentences from these facts: "
+                               "how the business is doing, what to make more of, and the best money option. "
+                               "No greeting, no preamble, no sign-off. Use the numbers exactly as written "
+                               "(dollars like $1,234, percents like 24%); never write raw decimals. Never "
+                               "invent a number."},
                               {"role": "user", "content": json.dumps(facts)}],
                     temperature=0.5, max_tokens=220)
                 txt = (msg or {}).get("content")

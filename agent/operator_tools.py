@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import math
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -181,13 +182,14 @@ class OperatorTools:
                        "note": f"creator earnings wk{self.sim.t}"}
                       for n, a in alloc.items() if a > 0 and n in self.creators]
 
-        status, batch_id, demo = "nothing_to_pay", None, self.client.demo
+        status, batch_id, demo, message = "nothing_to_pay", None, self.client.demo, ""
         if recipients:
             # guardrails 2+3: AUP purpose + approval threshold live inside create_payout
             res = create_payout(self.client, self.ledger, recipients,
-                                sender_batch_id=f"helm-op-{self.sim.t}", purpose="COMMISSION",
+                                sender_batch_id=f"helm-op-{self.sim.t}-{uuid.uuid4().hex[:10]}", purpose="COMMISSION",
                                 approval_threshold=self.approval_threshold, approved=bool(approved))
             status, batch_id, demo = res.status, res.batch_id, res.demo
+            message = res.message if status != "completed" else ""
             if status == "completed":
                 for n, a in alloc.items():
                     self.led.pay(n, a, self.sim.t)
@@ -205,7 +207,7 @@ class OperatorTools:
         self._safe_release = None                       # must re-size next cycle
 
         return {
-            "status": status, "batch_id": batch_id, "demo": demo,
+            "status": status, "batch_id": batch_id, "demo": demo, "message": message,
             "paid_total": round(paid, 2),
             "paid": [{"creator": n, "amount": a} for n, a in alloc.items() if a > 0],
             "cash_after": round(self.sim.cash, 2),

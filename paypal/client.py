@@ -79,6 +79,7 @@ class PayPalClient:
         # PayPal uses 200/201 for success; surface the JSON either way
         data = resp.json() if resp.content else {}
         data.setdefault("_status_code", resp.status_code)
+        _tap_paypal("POST", path, body, data)
         return data
 
     def post_multipart(self, path: str, input_json: dict, request_id: str | None = None) -> dict:
@@ -113,3 +114,35 @@ class PayPalClient:
             timeout=30,
         )
         return resp.json() if resp.content else {}
+
+
+def _tap_paypal(method: str, path: str, body: dict, data: dict) -> None:
+    """Tell the live view about a real PayPal call: which API, what came back, and the ids."""
+    from agent import tap
+    if not tap.active():
+        return
+    amt = None
+    try:
+        pu = (body or {}).get("purchase_units") or []
+        amt = (pu[0].get("amount") or {}).get("value") if pu else None
+        if amt is None and (body or {}).get("items"):
+            amt = sum(float((i.get("amount") or {}).get("value", 0)) for i in body["items"])
+    except Exception:
+        pass
+    payee = None
+    try:
+        payee = ((body or {}).get("purchase_units") or [{}])[0].get("payee", {}).get("email_address")
+    except Exception:
+        pass
+    auth = None
+    try:
+        auth = data["purchase_units"][0]["payments"]["authorizations"][0]["id"]
+    except Exception:
+        pass
+    issue = None
+    if int(data.get("_status_code", 200)) >= 400:
+        issue = ((data.get("details") or [{}])[0].get("issue")) or data.get("name")
+    tap.emit("paypal", method=method, path=path, http=data.get("_status_code"),
+             id=data.get("id") or (data.get("batch_header") or {}).get("payout_batch_id"),
+             status=data.get("status") or (data.get("batch_header") or {}).get("batch_status"),
+             amount=amt, payee=payee, authorization=auth, issue=issue)
