@@ -1,21 +1,63 @@
+<div align="center">
+
+<a href="https://184-194-177-73.sslip.io/live"><img src="media/hero.png" alt="Helm. Creators paid on time, buyers charged only for what actually arrives. Beside it, a payday receipt for a creator: the AI risk analyst says pay, a bull and a bear argue and a manager sets the amount, then code checks it is not more than she is owed, the safety fund stays covered and the sanctions screen is clear, and PayPal sends $444.50. A red stamp reads Checked by code, before a cent moved." width="100%"></a>
+
 # Helm
 
+**Creators paid on time. Buyers charged only for what actually arrives. A creator marketplace where AI
+agents shop, check deliveries, pay creators and invest their earnings, while code keeps every dollar
+inside the rules, settled on PayPal.**
+
 [![CI](https://github.com/nirbhay221/helm/actions/workflows/ci.yml/badge.svg)](https://github.com/nirbhay221/helm/actions/workflows/ci.yml)
-![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
-![PayPal sandbox](https://img.shields.io/badge/PayPal-sandbox-003087.svg)
+![PayPal sandbox](https://img.shields.io/badge/PayPal-sandbox-003087)
+![LangGraph](https://img.shields.io/badge/agents-LangGraph-6d4bd8)
+![MCP](https://img.shields.io/badge/MCP-3%20servers-1ac3eb)
+![tests](https://img.shields.io/badge/tests-314%20passing-2ea44f)
+[![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-**The money layer for a creator marketplace, run by AI agents and settled on PayPal.**
+**[▶ Try it live](https://184-194-177-73.sslip.io/live)** ·
+**[▶ Watch the video](https://devpost.com/software/helm-making-things-should-pay-on-time-and-fairly)** ·
+[How the agents work](#how-the-agents-work) ·
+[PayPal](#paypal) ·
+[What is real](#what-is-real-and-what-is-simulated) ·
+[Run it yourself](#run-it-yourself)
 
-AI agents shop for buyers, check deliveries, pay creators, invest their earnings and catch fraud
-rings. Every dollar they touch moves through PayPal, and deterministic code and cryptography keep
-each one inside rules the agents cannot break.
+<sub>Built for the PayPal AI Hackathon 2026. FastAPI, LangGraph agents on OpenAI gpt-5-nano and gpt-5-mini,
+PayPal Orders v2, Payouts, Catalog and Disputes, three MCP servers, hosted on AWS. No login, no keys and no
+setup are needed to try it, and everything runs on the PayPal sandbox, so no real money moves.</sub>
 
-- **Control room (start here):** https://184-194-177-73.sslip.io/live
+<br>
+
+<img src="media/demo.gif" alt="The live control room, recorded: the buyer agent shops inside a signed 65 dollar budget and the listing hiding a hijack is pulled before the AI reads it; the investment club's four agents read live prices and news over MCP, pick, revise and are blended by a manager, then code drops an off-list ticker and keeps 6 percent in cash; payday, where the AI proposes amounts and code caps each one before PayPal Payouts pays two creators $734.88." width="100%">
+
+<sub>Recorded from the live server on 12 November 2026, played at 2x speed.</sub>
+
+</div>
+
+## In 20 seconds
+
+If you make things for a living, getting paid is the part you control least, and the buyer on the other side
+has paid for something they have not seen yet. Every creator marketplace has a back office between those two
+people. Helm is that back office, run by AI agents that decide and code that sets the limits.
+
+- **"I need a botanical art print, 65 dollars."** The buyer's agent finds the item that fits, weighs price
+  against seller trust, and stays inside a budget the owner signed. A listing hiding an instruction to ignore
+  that budget is pulled before any model reads it.
+- **"Did it actually arrive?"** PayPal holds the money while a second AI checks the delivery against the
+  listing. Accept and the creator is paid; reject and the buyer is never charged.
+- **"Can I get paid early?"** An advance priced from the creator's own sales. The less certain their next six
+  months, the less it lends, and a fee that would be punishing is declined instead.
+- **"Invest with my club, but no oil companies."** Four AI agents read live prices and news over MCP, pick
+  alone, then see each other and revise. Code caps every company at 35% and keeps each person's money out of
+  what they ruled out, then Alpaca paper orders go out.
+- **"Who is a fraud ring?"** One scan follows shared cards, devices and IPs through a graph and freezes the
+  rings' money.
+- **Payday.** AI agents debate how much to release; code checks that nobody gets more than they are owed, the
+  fund stays covered and every payee clears the sanctions screen; only then does PayPal Payouts pay.
+- **How Helm earns.** 10% of each sale plus the fee on early pay, visible in the money flow as it happens.
+
+- **API:** `docs/openapi.json`, a Postman collection in `docs/` and a generated Python SDK in `sdk/python/`.
 - **Full console (every tool):** https://184-194-177-73.sslip.io
-- **Devpost entry and video (under 3 minutes):** https://devpost.com/software/helm-making-things-should-pay-on-time-and-fairly
-- **API:** `docs/openapi.json`, a Postman collection in `docs/`, and a generated Python SDK in `sdk/python/`
-
-No login, no keys and no setup are needed. Everything runs on the PayPal sandbox, so no real money moves.
 
 ---
 
